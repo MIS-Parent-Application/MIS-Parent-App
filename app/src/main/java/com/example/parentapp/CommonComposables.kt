@@ -126,7 +126,7 @@ fun StatBox(icon: Int, name: String, stat: String, comment: String) {
 
 @Preview(showBackground = true)
 @Composable
-fun StatBoxPreview() {
+fun ComposablePreview() {
     ParentAppTheme() {
         TextWithBG("text", Color.Blue)
     }

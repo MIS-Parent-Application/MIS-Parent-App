@@ -139,10 +139,6 @@ fun RecentAttendance() {
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-                Attendance(AttendanceStatus.PRESENT, LocalDate.of(2020, 2, 12))
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
                 Attendance(AttendanceStatus.PRESENT, LocalDate.of(2020, 2, 13))
                 Spacer(
                     modifier = Modifier.height(20.dp)
@@ -159,7 +155,166 @@ fun RecentAttendance() {
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-                Attendance(AttendanceStatus.PRESENT, LocalDate.of(2020, 2, 17))
+                AttendanceStats()
+            }
+        }
+    }
+}
+
+
+@Composable
+fun AttendanceStats() {
+    Surface(
+        color = Color.LightGray,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, Color.Gray)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+
+            ) {
+                Column(
+                    modifier = Modifier.weight(.5f)
+                ) {
+                    AttendanceVal(
+                        "Present",
+                        156,
+                        Color.Green,
+                        modifier = Modifier.weight(.5f)
+                    )
+                    Spacer(
+                        modifier = Modifier.height(15.dp)
+                    )
+                    AttendanceVal(
+                        "Absent",
+                        8,
+                        Color.Red,
+                        modifier = Modifier
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(.5f)
+                ) {
+                    AttendanceVal(
+                        "Late",
+                        4,
+                        Color.Red,
+                        modifier = Modifier.weight(.5f)
+                    )
+                    Spacer(
+                        modifier = Modifier.height(15.dp)
+                    )
+                    AttendanceVal(
+                        "Total Days",
+                        168,
+                        Color.Black,
+                        modifier = Modifier
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun AttendanceVal(name: String, statVal: Int, statColor: Color, modifier: Modifier) {
+    Column(
+
+    ) {
+        Text(
+            text = name
+        )
+        Text(
+            text = statVal.toString(),
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = statColor
+        )
+    }
+}
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun Attendance(status: AttendanceStatus, date: LocalDate) {
+    var icon: Int = 0
+    var statusStr = ""
+    var statusColor: Color? = null
+    when (status) {
+        AttendanceStatus.PRESENT -> {
+            icon = R.drawable.baseline_check_circle_24
+            statusStr = "Present"
+            statusColor = Color.Black
+        }
+        AttendanceStatus.LATE -> {
+            icon = R.drawable.baseline_access_time_24
+            statusStr = "Late"
+            statusColor = Color.Gray
+        }
+        AttendanceStatus.ABSENT -> {
+            icon = R.drawable.baseline_close_24
+            statusStr = "Absent"
+            statusColor = Color.Red
+        }
+        else -> {
+            icon = R.drawable.baseline_calendar_month_24
+            statusStr = "Holiday"
+            statusColor = Color.Magenta
+        }
+    }
+
+    Surface(
+        color = Color.White,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, Color.Gray)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(icon),
+                            contentDescription = "$statusStr icon"
+                        )
+                        Spacer(
+                            modifier = Modifier.width(20.dp)
+                        )
+                        Column(
+
+                        ) {
+                            Text(
+                                text = FormatDate(date, "MMM d")
+                            )
+                            Text(
+                                text = date.dayOfWeek.getDisplayName(
+                                    TextStyle.SHORT,
+                                    Locale.ENGLISH
+                                )
+                            )
+                        }
+                    }
+                }
+                TextWithBG(
+                    statusStr,
+                    statusColor
+                )
             }
         }
     }
@@ -325,88 +480,6 @@ enum class AttendanceStatus {
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun Attendance(status: AttendanceStatus, date: LocalDate) {
-    var icon: Int = 0
-    var statusStr = ""
-    var statusColor: Color? = null
-    when (status) {
-        AttendanceStatus.PRESENT -> {
-            icon = R.drawable.baseline_check_circle_24
-            statusStr = "Present"
-            statusColor = Color.Black
-        }
-        AttendanceStatus.LATE -> {
-            icon = R.drawable.baseline_access_time_24
-            statusStr = "Late"
-            statusColor = Color.Gray
-        }
-        AttendanceStatus.ABSENT -> {
-            icon = R.drawable.baseline_close_24
-            statusStr = "Absent"
-            statusColor = Color.Red
-        }
-        else -> {
-            icon = R.drawable.baseline_calendar_month_24
-            statusStr = "Holiday"
-            statusColor = Color.Magenta
-        }
-    }
-
-    Surface(
-        color = Color.White,
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, Color.Gray)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Image(
-                            painter = painterResource(icon),
-                            contentDescription = "$statusStr icon"
-                        )
-                        Spacer(
-                            modifier = Modifier.width(20.dp)
-                        )
-                        Column(
-
-                        ) {
-                            Text(
-                                text = FormatDate(date, "MMM d")
-                            )
-                            Text(
-                                text = date.dayOfWeek.getDisplayName(
-                                    TextStyle.SHORT,
-                                    Locale.ENGLISH
-                                )
-                            )
-                        }
-                    }
-                }
-                TextWithBG(
-                    statusStr,
-                    statusColor
-                )
-            }
-        }
-    }
-}
-
-
-@RequiresApi(Build.VERSION_CODES.O)
 fun FormatDate(date: LocalDate, pattern: String): String {
     val formatter = DateTimeFormatter.ofPattern(pattern)
     return date.format(formatter)
@@ -418,6 +491,6 @@ fun FormatDate(date: LocalDate, pattern: String): String {
 @Composable
 fun DashboardPreview() {
     ParentAppTheme {
-        Announcements()
+        RecentAttendance()
     }
 }
