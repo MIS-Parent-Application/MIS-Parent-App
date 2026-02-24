@@ -45,7 +45,7 @@ class StudentProfile : AppCompatActivity() {
 
 
 @Composable
-fun StudentProfilePage(modifier: Modifier = Modifier) {
+fun StudentProfilePage() {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,8 +99,8 @@ fun StudentProfilePage(modifier: Modifier = Modifier) {
                         modifier = Modifier.height(20.dp)
                     )
                     Column {
-                        Info(R.drawable.baseline_email_24, "email@email.com")
-                        Info(R.drawable.baseline_local_phone_24, "+292 (2923) 234 23211")
+                        Info(R.drawable.baseline_email_24, "example@email.com")
+                        Info(R.drawable.baseline_local_phone_24, "+Telephoneee")
                         Info(R.drawable.baseline_calendar_month_24, "Admitted: August 17, 2020")
                         Info(R.drawable.baseline_person_24, "Blood type")
                         Info(

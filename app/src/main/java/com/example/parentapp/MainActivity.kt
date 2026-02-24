@@ -1,6 +1,5 @@
 package com.example.parentapp
 
-import android.graphics.DashPathEffect
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -37,7 +36,6 @@ import com.example.parentapp.ui.theme.ParentAppTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Date
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -56,7 +54,7 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Dashboard(modifier: Modifier = Modifier) {
+fun Dashboard() {
     val scrollState = rememberScrollState()
 
     Column(
@@ -130,9 +128,7 @@ fun RecentAttendance() {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Column(
-
-            ) {
+            Column {
                 Text(
                     text = "Recent Attendance"
                 )
@@ -163,7 +159,7 @@ fun RecentAttendance() {
 
 
 @Composable
-fun AttendanceStats() {
+fun AttendanceStats(modifier: Modifier = Modifier) {
     Surface(
         color = Color.LightGray,
         shape = RoundedCornerShape(8.dp),
@@ -174,9 +170,7 @@ fun AttendanceStats() {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Row(
-
-            ) {
+            Row {
                 Column(
                     modifier = Modifier.weight(.5f)
                 ) {
@@ -223,9 +217,7 @@ fun AttendanceStats() {
 
 @Composable
 fun AttendanceVal(name: String, statVal: Int, statColor: Color, modifier: Modifier) {
-    Column(
-
-    ) {
+    Column {
         Text(
             text = name
         )
@@ -242,9 +234,9 @@ fun AttendanceVal(name: String, statVal: Int, statColor: Color, modifier: Modifi
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Attendance(status: AttendanceStatus, date: LocalDate) {
-    var icon: Int = 0
-    var statusStr = ""
-    var statusColor: Color? = null
+    var icon: Int
+    var statusStr: String
+    var statusColor: Color?
     when (status) {
         AttendanceStatus.PRESENT -> {
             icon = R.drawable.baseline_check_circle_24
@@ -296,11 +288,9 @@ fun Attendance(status: AttendanceStatus, date: LocalDate) {
                         Spacer(
                             modifier = Modifier.width(20.dp)
                         )
-                        Column(
-
-                        ) {
+                        Column {
                             Text(
-                                text = FormatDate(date, "MMM d")
+                                text = formatDate(date, "MMM d")
                             )
                             Text(
                                 text = date.dayOfWeek.getDisplayName(
@@ -334,12 +324,8 @@ fun Announcements() {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Column(
-
-            ) {
-                Row(
-
-                ) {
+            Column {
+                Row {
                     Text(
                         text = "Announcements",
                         modifier = Modifier.weight(1f)
@@ -418,12 +404,8 @@ fun Announcement(type: AnnouncementType, title: String, details: String, from: S
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Column(
-
-            ) {
-                Row(
-
-                ) {
+            Column {
+                Row {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f)
@@ -446,15 +428,13 @@ fun Announcement(type: AnnouncementType, title: String, details: String, from: S
                     text = details
                 )
                 Spacer(modifier = Modifier.height(15.dp))
-                Row(
-
-                ) {
+                Row {
                     Text(
                         text = from,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = FormatDate(date, "MMMM d, Y")
+                        text = formatDate(date, "MMMM d, Y")
                     )
                 }
             }
@@ -480,7 +460,7 @@ enum class AttendanceStatus {
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun FormatDate(date: LocalDate, pattern: String): String {
+fun formatDate(date: LocalDate, pattern: String): String {
     val formatter = DateTimeFormatter.ofPattern(pattern)
     return date.format(formatter)
 }
@@ -491,6 +471,6 @@ fun FormatDate(date: LocalDate, pattern: String): String {
 @Composable
 fun DashboardPreview() {
     ParentAppTheme {
-        RecentAttendance()
+        Dashboard()
     }
 }

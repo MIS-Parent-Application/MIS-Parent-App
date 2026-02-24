@@ -85,9 +85,7 @@ fun StatBox(icon: Int, name: String, stat: String, comment: String) {
             modifier = Modifier.fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Column(
-
-            ) {
+            Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -104,9 +102,7 @@ fun StatBox(icon: Int, name: String, stat: String, comment: String) {
                 Spacer(
                     modifier = Modifier.height(30.dp)
                 )
-                Column(
-
-                ) {
+                Column {
                     Text(
                         text = stat,
                         fontSize = 30.sp,
@@ -127,7 +123,7 @@ fun StatBox(icon: Int, name: String, stat: String, comment: String) {
 @Preview(showBackground = true)
 @Composable
 fun ComposablePreview() {
-    ParentAppTheme() {
+    ParentAppTheme {
         TextWithBG("text", Color.Blue)
     }
 }
