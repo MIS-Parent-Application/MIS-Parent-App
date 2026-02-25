@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.parentapp.ui.theme.ParentAppTheme
 
-class StudentProfile : AppCompatActivity() {
+class StudentProfilePage : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -45,7 +45,7 @@ class StudentProfile : AppCompatActivity() {
 
 
 @Composable
-fun StudentProfilePage() {
+fun StudentProfile() {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -143,6 +143,6 @@ fun Info(icon: Int, info: String) {
 @Composable
 fun StudentProfilePreview() {
     ParentAppTheme {
-        StudentProfilePage()
+        StudentProfile()
     }
 }
