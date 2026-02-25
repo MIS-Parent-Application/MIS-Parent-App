@@ -99,7 +99,7 @@ fun RecentAttendance() {
 
 
 @Composable
-fun AttendanceStats(modifier: Modifier = Modifier) {
+fun AttendanceStats() {
     Surface(
         color = Color.LightGray,
         shape = RoundedCornerShape(8.dp),
