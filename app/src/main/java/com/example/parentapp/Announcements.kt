@@ -187,7 +187,7 @@ fun Announcement(type: AnnouncementType, title: String, details: String, from: S
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
-fun AnnouncmentsPreview() {
+fun AnnouncementsPreview() {
     ParentAppTheme {
         Announcements()
     }
