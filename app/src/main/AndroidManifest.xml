@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ParentApp">
         <activity
+            android:name=".Announcements"
+            android:exported="false" />
+        <activity
+            android:name=".Attendance"
+            android:exported="false" />
+        <activity
             android:name=".CommonComposables"
             android:exported="false" />
         <activity
