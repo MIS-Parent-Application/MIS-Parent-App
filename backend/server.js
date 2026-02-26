@@ -178,3 +178,23 @@ app.listen(PORT, () => {
     console.log('  GET /api/student/:id/attendance');
     console.log('  GET /api/announcements');
 });
+
+//Documents API
+app.get('/api/documents', (req, res) => {
+    res.json({
+        documents: [
+            { id: 1, name: "Birth Certificate", type: "pdf", uploaded: "2024-01-15" },
+            { id: 2, name: "Medical Records", type: "pdf", uploaded: "2024-02-10" }
+        ]
+    });
+});
+
+//Messaging API
+app.get('/api/messages', (req, res) => {
+    res.json({
+        messages: [
+            { id: 1, from: "Mrs. Sharma", subject: "Parent Meeting", date: "2024-02-25", unread: true },
+            { id: 2, from: "Principal", subject: "Annual Day", date: "2024-02-20", unread: false }
+        ]
+    });
+});
