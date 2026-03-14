@@ -1,6 +1,5 @@
-package com.example.parentapp.ui.theme
+package com.mis.parentapp.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

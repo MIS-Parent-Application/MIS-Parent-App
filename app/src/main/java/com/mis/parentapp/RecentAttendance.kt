@@ -1,4 +1,4 @@
-package com.example.parentapp
+package com.mis.parentapp
 
 import android.os.Build
 import android.os.Bundle
@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.ui.theme.ParentAppTheme
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale

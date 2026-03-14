@@ -1,4 +1,4 @@
-package com.example.parentapp
+package com.mis.parentapp
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

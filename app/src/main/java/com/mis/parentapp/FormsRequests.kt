@@ -1,4 +1,4 @@
-package com.example.parentapp
+package com.mis.parentapp
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -6,7 +6,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.ui.theme.ParentAppTheme
 
 
 class FormsRequestsPage : AppCompatActivity() {

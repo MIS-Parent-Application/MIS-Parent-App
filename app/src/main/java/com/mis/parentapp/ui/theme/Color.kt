@@ -1,4 +1,4 @@
-package com.example.parentapp.ui.theme
+package com.mis.parentapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

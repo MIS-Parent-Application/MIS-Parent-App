@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.parentapp"
+    namespace = "com.mis.parentapp"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.parentapp"
+        applicationId = "com.mis.parentapp"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

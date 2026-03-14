@@ -1,4 +1,4 @@
-package com.example.parentapp.finance
+package com.mis.parentapp.finance
 
 import java.util.UUID
 

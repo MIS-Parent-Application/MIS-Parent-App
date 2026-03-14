@@ -1,4 +1,4 @@
-package com.example.parentapp.finance
+package com.mis.parentapp.finance
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,7 +9,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlin.compareTo
 
 @Composable
 fun FinancialDashboardScreen(viewModel: FinancialViewModel = viewModel()) {

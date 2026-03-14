@@ -1,4 +1,4 @@
-package com.example.parentapp.finance
+package com.mis.parentapp.finance
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

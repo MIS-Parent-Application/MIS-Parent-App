@@ -1,4 +1,4 @@
-package com.example.parentapp
+package com.mis.parentapp
 
 import org.junit.Test
 
