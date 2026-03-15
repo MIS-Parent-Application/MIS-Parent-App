@@ -31,16 +31,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
 class RecentAttendancePage : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ParentAppTheme {
-
+                RecentAttendance()
             }
         }
     }
@@ -70,24 +72,26 @@ fun RecentAttendance() {
         ) {
             Column {
                 Text(
-                    text = "Recent Attendance"
+                    text = "Recent Attendance",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
                 )
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-                Attendance(AttendanceStatus.PRESENT, LocalDate.of(2020, 2, 13))
+                Attendance(AttendanceStatus.PRESENT, LocalDate.of(2025, 2, 13))
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-                Attendance(AttendanceStatus.ABSENT, LocalDate.of(2020, 2, 14))
+                Attendance(AttendanceStatus.ABSENT, LocalDate.of(2025, 2, 14))
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-                Attendance(AttendanceStatus.HOLIDAY, LocalDate.of(2020, 2, 15))
+                Attendance(AttendanceStatus.HOLIDAY, LocalDate.of(2025, 2, 15))
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
-                Attendance(AttendanceStatus.LATE, LocalDate.of(2020, 2, 16))
+                Attendance(AttendanceStatus.LATE, LocalDate.of(2025, 2, 16))
                 Spacer(
                     modifier = Modifier.height(20.dp)
                 )
@@ -101,7 +105,7 @@ fun RecentAttendance() {
 @Composable
 fun AttendanceStats() {
     Surface(
-        color = Color.LightGray,
+        color = Color(0xFFF5F5F5),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, Color.Gray)
     ) {
@@ -117,8 +121,8 @@ fun AttendanceStats() {
                     AttendanceVal(
                         "Present",
                         156,
-                        Color.Green,
-                        modifier = Modifier.weight(.5f)
+                        Color(0xFF2E7D32),
+                        modifier = Modifier
                     )
                     Spacer(
                         modifier = Modifier.height(15.dp)
@@ -126,7 +130,7 @@ fun AttendanceStats() {
                     AttendanceVal(
                         "Absent",
                         8,
-                        Color.Red,
+                        Color(0xFFC62828),
                         modifier = Modifier
                     )
                 }
@@ -136,8 +140,8 @@ fun AttendanceStats() {
                     AttendanceVal(
                         "Late",
                         4,
-                        Color.Red,
-                        modifier = Modifier.weight(.5f)
+                        Color(0xFFEF6C00),
+                        modifier = Modifier
                     )
                     Spacer(
                         modifier = Modifier.height(15.dp)
@@ -157,9 +161,11 @@ fun AttendanceStats() {
 
 @Composable
 fun AttendanceVal(name: String, statVal: Int, statColor: Color, modifier: Modifier) {
-    Column {
+    Column(modifier = modifier) {
         Text(
-            text = name
+            text = name,
+            fontSize = 14.sp,
+            color = Color.Gray
         )
         Text(
             text = statVal.toString(),
@@ -176,27 +182,27 @@ fun AttendanceVal(name: String, statVal: Int, statColor: Color, modifier: Modifi
 fun Attendance(status: AttendanceStatus, date: LocalDate) {
     var icon: Int
     var statusStr: String
-    var statusColor: Color?
+    var statusColor: Color
     when (status) {
         AttendanceStatus.PRESENT -> {
             icon = R.drawable.baseline_check_circle_24
             statusStr = "Present"
-            statusColor = Color.Black
+            statusColor = Color(0xFF2E7D32)
         }
         AttendanceStatus.LATE -> {
             icon = R.drawable.baseline_access_time_24
             statusStr = "Late"
-            statusColor = Color.Gray
+            statusColor = Color(0xFFEF6C00)
         }
         AttendanceStatus.ABSENT -> {
             icon = R.drawable.baseline_close_24
             statusStr = "Absent"
-            statusColor = Color.Red
+            statusColor = Color(0xFFC62828)
         }
         else -> {
             icon = R.drawable.baseline_calendar_month_24
             statusStr = "Holiday"
-            statusColor = Color.Magenta
+            statusColor = Color(0xFF1565C0)
         }
     }
 
@@ -230,13 +236,16 @@ fun Attendance(status: AttendanceStatus, date: LocalDate) {
                         )
                         Column {
                             Text(
-                                text = formatDate(date, "MMM d")
+                                text = formatDateAttendance(date, "MMM d"),
+                                fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = date.dayOfWeek.getDisplayName(
-                                    TextStyle.SHORT,
+                                    TextStyle.FULL,
                                     Locale.ENGLISH
-                                )
+                                ),
+                                fontSize = 12.sp,
+                                color = Color.Gray
                             )
                         }
                     }
@@ -248,6 +257,12 @@ fun Attendance(status: AttendanceStatus, date: LocalDate) {
             }
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatDateAttendance(date: LocalDate, pattern: String): String {
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    return date.format(formatter)
 }
 
 
