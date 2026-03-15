@@ -30,14 +30,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class AnnouncementsPage : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ParentAppTheme {
-
+                Announcements()
             }
         }
     }
@@ -174,13 +176,19 @@ fun Announcement(type: AnnouncementType, title: String, details: String, from: S
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = formatDate(date, "MMMM d, Y")
+                        text = formatDateLocal(date, "MMMM d, Y")
                     )
                 }
             }
 
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatDateLocal(date: LocalDate, pattern: String): String {
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    return date.format(formatter)
 }
 
 
