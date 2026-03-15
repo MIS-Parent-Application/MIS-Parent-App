@@ -23,7 +23,7 @@ This app is part of a Management Information System (MIS) that improves transpar
 - 📄 **Project Documentation:**  
   https://docs.google.com/document/d/12nX_p62XZBdJY3RFJh4MCzTqaZNwWht3/edit
 
-- 🎨 **Figma Wireframe:**  
+- 🎨 **Figma Prototype:**  
   https://www.figma.com/design/UamtqxiDJKrvsQHnHENeFs/Parent-App?node-id=0-1&t=8DO0y4AMdGC7fp55-1
 
 ---
