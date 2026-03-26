@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Facebook
 import androidx.compose.material.icons.filled.Key
@@ -146,7 +147,8 @@ fun SignInScreen(
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black
                     ),
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
