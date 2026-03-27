@@ -29,12 +29,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
 import com.mis.parentapp.navigation.Services
@@ -95,14 +97,30 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Home,
+            //replace this later when testing for actual app
+            startDestination = DebugMenu,
+//            startDestination = Home,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable<DebugMenu> {
+                DebugMenuScreen(
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
+                    onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
+                )
+            }
             composable<SignUp> { backStackEntry ->
                 val args = backStackEntry.toRoute<SignUp>()
                 SignUpScreen(
                     backgroundResId = args.backgroundResId,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onNavigateToSignIn = {
+                        //pop back to SignIn if in the stack,
+                        //otherwise navigate using route
+                        navController.navigate(SignIn(backgroundResId = args.backgroundResId)) {
+                            popUpTo(Home) { saveState = true }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
             composable<SignIn> { backStackEntry ->
@@ -110,7 +128,10 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
                 SignInScreen(
                     backgroundResId = args.backgroundResId,
                     onBack = { navController.popBackStack() },
-                    onSignInSuccess = { /* Already inside MainScreen */ }
+                    onSignInSuccess = { /* Handle success */ },
+                    onNavigateToSignUp = {
+                        navController.navigate(SignUp(backgroundResId = args.backgroundResId))
+                    }
                 )
             }
             composable<Services> { ServicesScreen() }
