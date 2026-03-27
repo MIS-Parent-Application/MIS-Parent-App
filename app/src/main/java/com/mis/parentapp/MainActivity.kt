@@ -36,7 +36,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = OnBoarding) {
+    //original when testing actual app
+//    NavHost(navController = navController, startDestination = OnBoarding) {
+
+    //debug menu to launch specific pages
+    NavHost(navController = navController, startDestination = DebugMenu) {
         //remove this after dev
         composable<DebugMenu> {
             DebugMenuScreen(
