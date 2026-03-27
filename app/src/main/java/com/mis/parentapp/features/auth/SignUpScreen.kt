@@ -33,6 +33,7 @@ import com.mis.parentapp.ui.theme.AppTypes
 fun SignUpScreen(
     backgroundResId: Int,
     onBack: () -> Unit,
+    onNavigateToSignIn: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -125,7 +126,7 @@ fun SignUpScreen(
                             append(" Sign-in")
                         }
                     },
-                    modifier = Modifier.clickable { onBack() }
+                    modifier = Modifier.clickable { onNavigateToSignIn() }
                 )
             }
         }
@@ -168,5 +169,11 @@ private fun SignUpOptionRow(
 @Preview(widthDp = 412, heightDp = 917)
 @Composable
 private fun SignUpScreenPreview() {
-    SignUpScreen(backgroundResId = R.drawable.bg_one_sign_screen, onBack = {})
+    com.mis.parentapp.ui.theme.ParentAppTheme {
+        SignUpScreen(
+            backgroundResId = R.drawable.bg_one_sign_screen,
+            onBack = {},
+            onNavigateToSignIn = {} // Add this empty lambda
+        )
+    }
 }
