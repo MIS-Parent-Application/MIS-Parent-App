@@ -31,6 +31,7 @@ fun SignInScreen(
     backgroundResId: Int,
     onBack: () -> Unit,
     onSignInSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
@@ -174,7 +175,7 @@ fun SignInScreen(
                     color = ColorsDefaultTheme.color_On_yellow,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    modifier = Modifier.clickable { /* Navigate to SignUp */ }
+                    modifier = Modifier.clickable { onNavigateToSignUp() }
                 )
             }
 
@@ -231,5 +232,12 @@ private fun SignInOptionRow(
 @Preview(widthDp = 412, heightDp = 917)
 @Composable
 private fun SignInScreenPreview() {
-    SignInScreen(backgroundResId = R.drawable.student_image, onBack = {}, onSignInSuccess = {})
+    com.mis.parentapp.ui.theme.ParentAppTheme {
+        SignInScreen(
+            backgroundResId = R.drawable.student_image,
+            onBack = {},
+            onSignInSuccess = {},
+            onNavigateToSignUp = {}
+        )
+    }
 }
