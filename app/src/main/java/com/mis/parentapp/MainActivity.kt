@@ -17,7 +17,9 @@ import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.SignUp
+import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import androidx.navigation.NavOptionsBuilder
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,7 +36,18 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = OnBoarding) {
+    //original when testing actual app
+//    NavHost(navController = navController, startDestination = OnBoarding) {
+
+    //debug menu to launch specific pages
+    NavHost(navController = navController, startDestination = DebugMenu) {
+        //remove this after dev
+        composable<DebugMenu> {
+            DebugMenuScreen(
+                onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
+                onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
+            )
+        }
         composable<OnBoarding> {
             OnBoardingScreen(
                 onSignInClick = { backgroundResId ->
@@ -52,8 +65,11 @@ fun AppNavigation() {
                 onBack = { navController.popBackStack() },
                 onSignInSuccess = {
                     navController.navigate(MainContainer) {
-                        popUpTo(OnBoarding) { inclusive = true }
+                        popUpTo<OnBoarding> { inclusive = true }
                     }
+                },
+                onNavigateToSignUp = {
+                    navController.navigate(SignUp(args.backgroundResId))
                 }
             )
         }
@@ -61,7 +77,13 @@ fun AppNavigation() {
             val args = backStackEntry.toRoute<SignUp>()
             SignUpScreen(
                 backgroundResId = args.backgroundResId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onNavigateToSignIn = {
+                    navController.navigate(SignIn(args.backgroundResId)) {
+                        popUpTo<SignUp> { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
         composable<MainContainer> {
