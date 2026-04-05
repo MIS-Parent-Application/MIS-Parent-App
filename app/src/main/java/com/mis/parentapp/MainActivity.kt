@@ -12,18 +12,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
+import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.features.onboard.OnBoardingScreen
+import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.SignUp
-import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import androidx.navigation.NavOptionsBuilder
-import com.mis.parentapp.features.auth.AuthViewModel
-import com.mis.parentapp.navigation.Home
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
