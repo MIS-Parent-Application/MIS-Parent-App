@@ -32,6 +32,7 @@ import com.mis.parentapp.ui.theme.AppTypes
 @Composable
 fun SignUpScreen(
     backgroundResId: Int,
+    viewModel: AuthViewModel,
     onBack: () -> Unit,
     onNavigateToSignIn: () -> Unit,
     modifier: Modifier = Modifier
@@ -170,10 +171,10 @@ private fun SignUpOptionRow(
 @Composable
 private fun SignUpScreenPreview() {
     com.mis.parentapp.ui.theme.ParentAppTheme {
-        SignUpScreen(
-            backgroundResId = R.drawable.bg_one_sign_screen,
-            onBack = {},
-            onNavigateToSignIn = {} // Add this empty lambda
-        )
+//        SignUpScreen(
+//            backgroundResId = R.drawable.bg_one_sign_screen,
+//            onBack = {},
+//            onNavigateToSignIn = {} // Add this empty lambda
+//        )
     }
 }
