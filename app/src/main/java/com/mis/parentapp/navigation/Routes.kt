@@ -2,6 +2,10 @@ package com.mis.parentapp.navigation
 
 import kotlinx.serialization.Serializable
 
+//for dev purposes only
+@Serializable
+object DebugMenu
+
 @Serializable object OnBoarding
 @Serializable data class SignUp(val backgroundResId: Int)
 @Serializable data class SignIn(val backgroundResId: Int)
