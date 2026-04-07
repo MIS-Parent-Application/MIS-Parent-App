@@ -234,7 +234,7 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
 
 @Composable
 fun PaymentHistorySection(modifier: Modifier = Modifier) {
-    var amount: Int = 500;
+    val amount = 500
     Column(
         verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.Top),
         modifier = modifier.fillMaxWidth()
@@ -288,8 +288,8 @@ fun PaymentHistorySection(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val paidExpenses = Text(
-                text = "PHP ${amount} ",
+            Text(
+                text = "PHP $amount",
                 color = Color(0xFF1B4D13),
                 style = TextStyle(fontSize = 64.sp, fontWeight = FontWeight.Black)
             )
