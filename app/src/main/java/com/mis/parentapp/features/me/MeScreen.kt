@@ -166,6 +166,7 @@ fun MenuSection(title: String, items: List<MeMenuItem>) {
                     tint = ColorsDefaultTheme.color_On_surface
                 )
                 Text(
+
                     text = item.label,
                     fontSize = 16.sp,
                     color = Color(0xFF1B4D13).copy(alpha = 0.8f)

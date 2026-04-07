@@ -14,6 +14,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -159,7 +163,7 @@ fun ContributionDuesSection() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Contribution dues",
+            text = "Miscellaneous Expenses",
             color = Color(0xFF1B4D13),
             style = AppTypes.type_H2,
             fontWeight = FontWeight.Bold
@@ -230,6 +234,7 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
 
 @Composable
 fun PaymentHistorySection(modifier: Modifier = Modifier) {
+    var amount: Int = 500;
     Column(
         verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.Top),
         modifier = modifier.fillMaxWidth()
@@ -242,14 +247,23 @@ fun PaymentHistorySection(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold
         )
 
+        //Making button navigate
+        var selectedLabel by remember { mutableStateOf("Last month") }
+        val displayText = when (selectedLabel) {
+            "Last year" -> "Showing data for the last 12 months."
+            "Last month" -> "Showing data for the last 30 days."
+            "Last week" -> "Showing data for the last 7 days."
+            else -> ""
+        }
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             listOf("Last year", "Last month", "Last week").forEach { label ->
-                val isSelected = label == "Last month"
+                val isSelected = label == selectedLabel
                 Button(
-                    onClick = { },
+                    onClick = { selectedLabel = label },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
@@ -262,21 +276,22 @@ fun PaymentHistorySection(modifier: Modifier = Modifier) {
                 }
             }
         }
-        
+
+        Text(
+            text = displayText,
+            style = AppTypes.type_M3_label_small
+        )
+        //
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = "400",
+            val paidExpenses = Text(
+                text = "PHP ${amount} ",
                 color = Color(0xFF1B4D13),
                 style = TextStyle(fontSize = 64.sp, fontWeight = FontWeight.Black)
-            )
-            Text(
-                text = "PHP",
-                color = Color(0xFF1B4D13),
-                style = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.Light)
             )
             Text(
                 text = "Overall total dues paid",
@@ -285,6 +300,7 @@ fun PaymentHistorySection(modifier: Modifier = Modifier) {
             )
         }
 
+        //
         Text(
             text = "Break down of fees",
             color = Color(0xFF1B4D13),
