@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,13 +41,45 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
-@Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
-    Body(modifier)
+enum class HomeSubScreen {
+    None, Notifications, UpcomingEvents, RecentActivities
 }
 
 @Composable
-fun Body(modifier: Modifier = Modifier) {
+fun HomeScreen(modifier: Modifier = Modifier) {
+    var currentSubScreen by remember { mutableStateOf(HomeSubScreen.None) }
+
+    when (currentSubScreen) {
+        HomeSubScreen.Notifications -> {
+            NotificationScreen(onBackClick = { currentSubScreen = HomeSubScreen.None })
+        }
+        HomeSubScreen.UpcomingEvents -> {
+            UpcomingEventsScreen(onBackClick = { currentSubScreen = HomeSubScreen.None })
+        }
+        HomeSubScreen.RecentActivities -> {
+            RecentActivitiesScreen(onBackClick = { currentSubScreen = HomeSubScreen.None })
+        }
+        HomeSubScreen.None -> {
+            Body(
+                modifier = modifier,
+                onNotificationClick = { currentSubScreen = HomeSubScreen.Notifications },
+                onFilterClick = { label ->
+                    when (label) {
+                        "Upcoming events" -> currentSubScreen = HomeSubScreen.UpcomingEvents
+                        "Recent activities" -> currentSubScreen = HomeSubScreen.RecentActivities
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun Body(
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit,
+    onFilterClick: (String) -> Unit
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
@@ -85,7 +118,7 @@ fun Body(modifier: Modifier = Modifier) {
                         contentDescription = "Notifications",
                         modifier = Modifier
                             .requiredSize(32.dp)
-                            .clickable { /* Handle notification click */ }
+                            .clickable { onNotificationClick() }
                     )
                     Image(
                         painter = painterResource(id = R.drawable.studentswitcher),
@@ -113,7 +146,7 @@ fun Body(modifier: Modifier = Modifier) {
                     val buttonContainerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5)
                     val buttonContentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
                     Button(
-                        onClick = { },
+                        onClick = { onFilterClick(label) },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = buttonContainerColor,
