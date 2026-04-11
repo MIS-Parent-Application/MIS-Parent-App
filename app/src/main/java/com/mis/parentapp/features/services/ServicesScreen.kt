@@ -6,14 +6,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +43,45 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
+data class PeriodOption(val label: String, val displayText: String, val amountLabel: String)
+data class FeeItem(val invoice: String, val item: String, val option: String, val date: String)
+
+object PeriodData {
+    val options = listOf(
+        PeriodOption("Last year", "Showing data for the last 12 months.", "Total dues paid this year"),
+        PeriodOption("Last month", "Showing data for the last 30 days.", "Total dues paid this month"),
+        PeriodOption("Last week", "Showing data for the last 7 days.", "Total dues paid this week"),
+        PeriodOption("Total", "Showing all time data.", "Overall total dues paid")
+    )
+
+    val lastYearFees = listOf(
+        FeeItem("#02130001", "School uniform", "G-Cash", "03-10-25 | 9:00 AM"),
+        FeeItem("#02130002", "P.E. uniform set", "G-Cash", "03-15-25 | 10:30 AM"),
+        FeeItem("#02130003", "Workbook set", "Cash", "04-01-25 | 8:45 AM"),
+        FeeItem("#02130004", "Laboratory fee", "G-Cash", "05-20-25 | 2:00 PM"),
+        FeeItem("#02130005", "School ID", "Cash", "06-05-25 | 11:15 AM"),
+        FeeItem("#02130006", "Yearbook fee", "G-Cash", "07-18-25 | 3:30 PM"),
+        FeeItem("#02130007", "Field trip fee", "Cash", "08-22-25 | 9:15 AM"),
+        FeeItem("#02130008", "Library fee", "G-Cash", "09-10-25 | 1:00 PM")
+    )
+
+    val lastMonthFees = listOf(
+        FeeItem("#02134560", "School uniform", "G-Cash", "01-05-26 | 8:00 AM"),
+        FeeItem("#02134561", "Workbook set", "Cash", "01-10-26 | 10:00 AM"),
+        FeeItem("#02134562", "Laboratory fee", "G-Cash", "01-15-26 | 1:30 PM"),
+        FeeItem("#02134563", "School ID", "Cash", "01-20-26 | 3:00 PM"),
+        FeeItem("#02134564", "Library fee", "G-Cash", "01-28-26 | 11:00 AM")
+    )
+
+    val lastWeekFees = listOf(
+        FeeItem("#02134565", "P.E. uniform set", "G-Cash", "02-25-26 | 2:00 PM"),
+        FeeItem("#02134566", "Uniform set", "G-Cash", "02-25-26 | 2:16 PM"),
+        FeeItem("#02134567", "Workbook set", "Cash", "02-26-26 | 9:30 AM")
+    )
+
+    val totalFees = lastYearFees + lastMonthFees + lastWeekFees
+}
+
 @Composable
 fun ServicesScreen(modifier: Modifier = Modifier) {
     Body(modifier)
@@ -46,6 +89,16 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun Body(modifier: Modifier = Modifier) {
+    var selectedIndex by remember { mutableStateOf(1) }
+
+    val feeList = when (selectedIndex) {
+        0 -> PeriodData.lastYearFees
+        1 -> PeriodData.lastMonthFees
+        2 -> PeriodData.lastWeekFees
+        3 -> PeriodData.totalFees
+        else -> PeriodData.lastMonthFees
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
@@ -53,12 +106,10 @@ fun Body(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        item {
-            HeaderSection()
-        }
-        item {
-            FilterButtonsSection()
-        }
+        item { HeaderSection() }
+
+        item { FilterButtonsSection() }
+
         item {
             Image(
                 painter = painterResource(id = R.drawable.program),
@@ -70,12 +121,73 @@ fun Body(modifier: Modifier = Modifier) {
                 contentScale = ContentScale.FillWidth
             )
         }
+
+        item { ContributionDuesSection() }
+
         item {
-            ContributionDuesSection()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .wrapContentWidth()
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                PeriodData.options.forEachIndexed { index, option ->
+                    val isSelected = index == selectedIndex
+                    Button(
+                        onClick = { selectedIndex = index },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
+                            contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text(text = option.label, style = AppTypes.type_M3_label_small)
+                    }
+                }
+            }
         }
+
         item {
-            PaymentHistorySection(modifier = Modifier.padding(horizontal = 16.dp))
+            Text(
+                text = PeriodData.options[selectedIndex].displayText,
+                style = AppTypes.type_M3_label_small,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
+
+        item {
+            Text(
+                text = PeriodData.options[selectedIndex].amountLabel,
+                style = AppTypes.type_M3_label_small,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+
+        if (feeList.isEmpty()) {
+            item {
+                Text(
+                    text = "No records found.",
+                    style = AppTypes.type_M3_label_small,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        } else {
+            items(count = feeList.size, key = { feeList[it].invoice }) { index ->
+                FeeCard(
+                    invoice = feeList[index].invoice,
+                    item = feeList[index].item,
+                    option = feeList[index].option,
+                    date = feeList[index].date,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(32.dp)) }
     }
 }
 
@@ -128,6 +240,8 @@ fun HeaderSection() {
 
 @Composable
 fun FilterButtonsSection() {
+    var selectedFilter by remember { mutableStateOf("Accounting") }
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -137,9 +251,9 @@ fun FilterButtonsSection() {
             .horizontalScroll(rememberScrollState())
     ) {
         listOf("Accounting", "Forms & documents", "Payment options").forEach { label ->
-            val isSelected = label == "Accounting"
+            val isSelected = label == selectedFilter
             Button(
-                onClick = { },
+                onClick = { selectedFilter = label },
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
@@ -168,7 +282,6 @@ fun ContributionDuesSection() {
             style = AppTypes.type_H2,
             fontWeight = FontWeight.Bold
         )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -193,7 +306,9 @@ fun ContributionDuesSection() {
                 containerColor = ColorsDefaultTheme.color_Primary_green,
                 contentColor = ColorsDefaultTheme.color_Yellow
             ),
-            modifier = Modifier.fillMaxWidth().height(40.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
         ) {
             Text(text = "Pay all", style = AppTypes.type_M3_label_small)
         }
@@ -233,93 +348,10 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
 }
 
 @Composable
-fun PaymentHistorySection(modifier: Modifier = Modifier) {
-    val amount = 500
-    Column(
-        verticalArrangement = Arrangement.spacedBy(32.dp, Alignment.Top),
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "Payment history",
-            color = Color(0xFF1B4D13),
-            style = AppTypes.type_H1,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        //Making button navigate
-        var selectedLabel by remember { mutableStateOf("Last month") }
-        val displayText = when (selectedLabel) {
-            "Last year" -> "Showing data for the last 12 months."
-            "Last month" -> "Showing data for the last 30 days."
-            "Last week" -> "Showing data for the last 7 days."
-            else -> ""
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            listOf("Last year", "Last month", "Last week").forEach { label ->
-                val isSelected = label == selectedLabel
-                Button(
-                    onClick = { selectedLabel = label },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
-                        contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                    modifier = Modifier.height(36.dp)
-                ) {
-                    Text(text = label, style = AppTypes.type_M3_label_small)
-                }
-            }
-        }
-
-        Text(
-            text = displayText,
-            style = AppTypes.type_M3_label_small
-        )
-        //
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "PHP $amount",
-                color = Color(0xFF1B4D13),
-                style = TextStyle(fontSize = 64.sp, fontWeight = FontWeight.Black)
-            )
-            Text(
-                text = "Overall total dues paid",
-                color = Color(0xFF1B4D13),
-                style = AppTypes.type_Caption
-            )
-        }
-
-        //
-        Text(
-            text = "Break down of fees",
-            color = Color(0xFF1B4D13),
-            style = AppTypes.type_Caption,
-            fontWeight = FontWeight.Bold
-        )
-
-        FeeCard(invoice = "#02134566", item = "Uniform set", option = "G-Cash", date = "02-25-26 | 2:16 PM")
-        FeeCard(invoice = "#02134565", item = "P.E. uniform set", option = "G-Cash", date = "02-25-26 | 2:00 PM")
-        
-        Spacer(modifier = Modifier.height(32.dp))
-    }
-}
-
-@Composable
-fun FeeCard(invoice: String, item: String, option: String, date: String) {
+fun FeeCard(invoice: String, item: String, option: String, date: String, modifier: Modifier = Modifier) {
     val borderColor = Color(0xFF1B4D13)
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(ColorsDefaultTheme.color_Surface)
@@ -341,14 +373,22 @@ fun FeeCard(invoice: String, item: String, option: String, date: String) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
                     tint = Color(0xFF1B4D13),
                     modifier = Modifier.size(24.dp)
                 )
-                Text(text = "PAID", style = AppTypes.type_H2, color = Color(0xFF1B4D13), fontWeight = FontWeight.Bold)
+                Text(
+                    text = "PAID",
+                    style = AppTypes.type_H2,
+                    color = Color(0xFF1B4D13),
+                    fontWeight = FontWeight.Bold
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(text = "Invoice receipt", style = AppTypes.type_Caption, color = Color.Gray)
@@ -361,7 +401,7 @@ fun FeeCard(invoice: String, item: String, option: String, date: String) {
                 modifier = Modifier.size(24.dp)
             )
         }
-        
+
         HorizontalDivider(color = Color(0xFFE0E0E0))
 
         Row(
