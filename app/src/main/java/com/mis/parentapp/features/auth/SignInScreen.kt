@@ -30,6 +30,7 @@ import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 @Composable
 fun SignInScreen(
     backgroundResId: Int,
+    viewModel: AuthViewModel,
     onBack: () -> Unit,
     onSignInSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit,
@@ -37,6 +38,7 @@ fun SignInScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = modifier.fillMaxSize()) {
         // 1. Static Background passed from Onboarding
@@ -155,7 +157,20 @@ fun SignInScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { onSignInSuccess() },
+                    onClick = {
+                        if (email.isNotEmpty() && password.isNotEmpty()) {
+                            viewModel.signIn(
+                                email = email,
+                                pass = password,
+                                onSuccess = { onSignInSuccess() },
+                                onError = { message ->
+                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        } else {
+                            android.widget.Toast.makeText(context, "Please fill all fields", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -235,11 +250,11 @@ private fun SignInOptionRow(
 @Composable
 private fun SignInScreenPreview() {
     com.mis.parentapp.ui.theme.ParentAppTheme {
-        SignInScreen(
-            backgroundResId = R.drawable.student_image,
-            onBack = {},
-            onSignInSuccess = {},
-            onNavigateToSignUp = {}
-        )
+//        SignInScreen(
+//            backgroundResId = R.drawable.student_image,
+//            onBack = {},
+//            onSignInSuccess = {},
+//            onNavigateToSignUp = {}
+//        )
     }
 }

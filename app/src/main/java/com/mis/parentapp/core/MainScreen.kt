@@ -1,5 +1,6 @@
 package com.mis.parentapp.core
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -18,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.DebugMenuScreen
+import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
@@ -45,11 +48,18 @@ import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun MainScreen(onSignOut: () -> Unit = {}) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    //init database
+    val database = remember { com.mis.parentapp.data.AppDatabase.getDatabase(context) }
+    val authViewModel = remember { AuthViewModel(database.userDao()) }
 
     val bottomTabs = listOf(
         BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
@@ -98,8 +108,8 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
         NavHost(
             navController = navController,
             //replace this later when testing for actual app
-            startDestination = DebugMenu,
-//            startDestination = Home,
+//            startDestination = DebugMenu,
+            startDestination = Home,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<DebugMenu> {
@@ -113,6 +123,7 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
                 SignUpScreen(
                     backgroundResId = args.backgroundResId,
                     onBack = { navController.popBackStack() },
+                    viewModel = authViewModel,
                     onNavigateToSignIn = {
                         //pop back to SignIn if in the stack,
                         //otherwise navigate using route
@@ -128,7 +139,13 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
                 SignInScreen(
                     backgroundResId = args.backgroundResId,
                     onBack = { navController.popBackStack() },
-                    onSignInSuccess = { /* Handle success */ },
+                    viewModel = authViewModel,
+                    onSignInSuccess = {
+                        navController.navigate(Home) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
                     onNavigateToSignUp = {
                         navController.navigate(SignUp(backgroundResId = args.backgroundResId))
                     }
