@@ -6,21 +6,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +41,7 @@ import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import kotlinx.coroutines.launch
 
 data class PeriodOption(val label: String, val displayText: String, val amountLabel: String)
 data class FeeItem(val invoice: String, val item: String, val option: String, val date: String)
@@ -87,9 +87,12 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
     Body(modifier)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Body(modifier: Modifier = Modifier) {
-    var selectedIndex by remember { mutableStateOf(1) }
+    var selectedIndex by remember { mutableIntStateOf(1) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     val feeList = when (selectedIndex) {
         0 -> PeriodData.lastYearFees
@@ -99,100 +102,202 @@ fun Body(modifier: Modifier = Modifier) {
         else -> PeriodData.lastMonthFees
     }
 
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.Start,
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        item { HeaderSection() }
-
-        item { FilterButtonsSection() }
-
-        item {
-            Image(
-                painter = painterResource(id = R.drawable.program),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.FillWidth
-            )
-        }
-
-        item { ContributionDuesSection() }
-
-        item {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .wrapContentWidth()
-                    .horizontalScroll(rememberScrollState())
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = Color.White,
+                modifier = Modifier.fillMaxWidth(0.80f)
             ) {
-                PeriodData.options.forEachIndexed { index, option ->
-                    val isSelected = index == selectedIndex
-                    Button(
-                        onClick = { selectedIndex = index },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
-                            contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Text(text = option.label, style = AppTypes.type_M3_label_small)
+                DrawerContent(
+                    onClose = { scope.launch { drawerState.close() } }
+                )
+            }
+        }
+    ) {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.Start,
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            item {
+                HeaderSection(
+                    onHamburgerClick = { scope.launch { drawerState.open() } }
+                )
+            }
+
+            item {
+                Image(
+                    painter = painterResource(id = R.drawable.program),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.FillWidth
+                )
+            }
+
+            item { ContributionDuesSection() }
+
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .wrapContentWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    PeriodData.options.forEachIndexed { index, option ->
+                        val isSelected = index == selectedIndex
+                        Button(
+                            onClick = { selectedIndex = index },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
+                                contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                            modifier = Modifier.height(36.dp)
+                        ) {
+                            Text(text = option.label, style = AppTypes.type_M3_label_small)
+                        }
                     }
                 }
             }
-        }
 
-        item {
-            Text(
-                text = PeriodData.options[selectedIndex].displayText,
-                style = AppTypes.type_M3_label_small,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-
-        item {
-            Text(
-                text = PeriodData.options[selectedIndex].amountLabel,
-                style = AppTypes.type_M3_label_small,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-
-        if (feeList.isEmpty()) {
             item {
                 Text(
-                    text = "No records found.",
+                    text = PeriodData.options[selectedIndex].displayText,
                     style = AppTypes.type_M3_label_small,
-                    color = Color.Gray,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
-        } else {
-            items(count = feeList.size, key = { feeList[it].invoice }) { index ->
-                FeeCard(
-                    invoice = feeList[index].invoice,
-                    item = feeList[index].item,
-                    option = feeList[index].option,
-                    date = feeList[index].date,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-        }
 
-        item { Spacer(modifier = Modifier.height(32.dp)) }
+            item {
+                Text(
+                    text = PeriodData.options[selectedIndex].amountLabel,
+                    style = AppTypes.type_M3_label_small,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            if (feeList.isEmpty()) {
+                item {
+                    Text(
+                        text = "No records found.",
+                        style = AppTypes.type_M3_label_small,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            } else {
+                items(count = feeList.size, key = { feeList[it].invoice }) { index ->
+                    FeeCard(
+                        invoice = feeList[index].invoice,
+                        item = feeList[index].item,
+                        option = feeList[index].option,
+                        date = feeList[index].date,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(32.dp)) }
+        }
     }
 }
 
 @Composable
-fun HeaderSection() {
+fun DrawerContent(onClose: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Drawer header with close button and student switcher
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Menu",
+                style = AppTypes.type_H2,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1B4D13)
+            )
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Close menu",
+                    tint = Color(0xFF1B4D13)
+                )
+            }
+        }
+
+        HorizontalDivider(color = Color(0xFFE0E0E0))
+
+        // Student switcher section
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "Student",
+                style = AppTypes.type_M3_label_small,
+                color = Color.Gray
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(ColorsDefaultTheme.color_Surface)
+                    .padding(12.dp)
+                    .clickable { }
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.studentswitcher),
+                    contentDescription = "Student Switcher",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+                Column {
+                    Text(
+                        text = "Switch Student",
+                        style = AppTypes.type_Body_Small,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1B4D13)
+                    )
+                    Text(
+                        text = "Tap to change active student",
+                        style = AppTypes.type_Caption,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+
+        HorizontalDivider(color = Color(0xFFE0E0E0))
+
+        // Filter section
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "Categories",
+                style = AppTypes.type_M3_label_small,
+                color = Color.Gray
+            )
+            FilterButtonsSection()
+        }
+    }
+}
+
+@Composable
+fun HeaderSection(onHamburgerClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -225,15 +330,18 @@ fun HeaderSection() {
                     .size(32.dp)
                     .clickable { }
             )
-            Image(
-                painter = painterResource(id = R.drawable.studentswitcher),
-                contentDescription = "Student Switcher",
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .clickable { },
-                contentScale = ContentScale.Crop
-            )
+            // Hamburger menu icon replacing the student switcher
+            IconButton(
+                onClick = onHamburgerClick,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Open menu",
+                    tint = Color(0xFF1B4D13),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }
@@ -242,13 +350,11 @@ fun HeaderSection() {
 fun FilterButtonsSection() {
     var selectedFilter by remember { mutableStateOf("Accounting") }
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .horizontalScroll(rememberScrollState())
     ) {
         listOf("Accounting", "Forms & documents", "Payment options").forEach { label ->
             val isSelected = label == selectedFilter
@@ -260,7 +366,9 @@ fun FilterButtonsSection() {
                     contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                modifier = Modifier.height(36.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(36.dp)
             ) {
                 Text(text = label, style = AppTypes.type_M3_label_small)
             }
