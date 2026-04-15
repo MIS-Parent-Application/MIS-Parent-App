@@ -91,7 +91,8 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
 @Composable
 fun Body(modifier: Modifier = Modifier) {
     var selectedIndex by remember { mutableIntStateOf(1) }
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
     val feeList = when (selectedIndex) {
@@ -102,29 +103,19 @@ fun Body(modifier: Modifier = Modifier) {
         else -> PeriodData.lastMonthFees
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = Color.White,
-                modifier = Modifier.fillMaxWidth(0.80f)
-            ) {
-                DrawerContent(
-                    onClose = { scope.launch { drawerState.close() } }
-                )
-            }
-        }
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.Start,
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
         ) {
             item {
                 HeaderSection(
-                    onHamburgerClick = { scope.launch { drawerState.open() } }
+                    onHamburgerClick = {
+                        showBottomSheet = true
+                    }
                 )
             }
 
@@ -207,36 +198,41 @@ fun Body(modifier: Modifier = Modifier) {
 
             item { Spacer(modifier = Modifier.height(32.dp)) }
         }
+
+        // Bottom Sheet
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showBottomSheet = false },
+                sheetState = sheetState,
+                containerColor = Color.White,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            ) {
+                BottomSheetContent(
+                    onClose = {
+                        scope.launch { sheetState.hide() }.invokeOnCompletion {
+                            if (!sheetState.isVisible) showBottomSheet = false
+                        }
+                    }
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun DrawerContent(onClose: () -> Unit) {
+fun BottomSheetContent(onClose: () -> Unit) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // Drawer header with close button and student switcher
+        // Header row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Menu",
-                style = AppTypes.type_H2,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1B4D13)
-            )
-            IconButton(onClick = onClose) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Close menu",
-                    tint = Color(0xFF1B4D13)
-                )
-            }
         }
 
         HorizontalDivider(color = Color(0xFFE0E0E0))
@@ -330,7 +326,6 @@ fun HeaderSection(onHamburgerClick: () -> Unit) {
                     .size(32.dp)
                     .clickable { }
             )
-            // Hamburger menu icon replacing the student switcher
             IconButton(
                 onClick = onHamburgerClick,
                 modifier = Modifier.size(36.dp)
@@ -352,11 +347,9 @@ fun FilterButtonsSection() {
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
-        listOf("Accounting", "Forms & documents", "Payment options").forEach { label ->
+        listOf("Forms and request", "Payment options", "Documents", "FAQs").forEach { label ->
             val isSelected = label == selectedFilter
             Button(
                 onClick = { selectedFilter = label },
