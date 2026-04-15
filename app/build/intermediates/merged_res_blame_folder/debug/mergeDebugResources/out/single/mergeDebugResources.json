@@ -1,0 +1,166 @@
+[
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_material_symbols_owl.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/material_symbols_owl.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_video_conference_streamline_bangalore.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/video_conference_streamline_bangalore.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-xxxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-xhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_formkit_date.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/formkit_date.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-mdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_mdi_light_phone.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/mdi_light_phone.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_boxicons_wallet_filled.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/boxicons_wallet_filled.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_bg_one_sign_screen.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/bg_one_sign_screen.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_bg_two_sign_screen.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/bg_two_sign_screen.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_ic_outline_watch_later.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/ic_outline_watch_later.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/xml_data_extraction_rules.xml.flat",
+        "source": "com.mis.parentapp-main-41:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-hdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-hdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_fluent_color_megaphone_loud_32.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/fluent_color_megaphone_loud_32.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-xxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-mdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_studentswitcher.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/studentswitcher.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_student_image.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/student_image.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_bg_four_sign_screen.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/bg_four_sign_screen.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_ph_bell.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/ph_bell.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_cover_photo_parent.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/cover_photo_parent.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_coldea_logo_jk1jkwfg_1.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/coldea_logo_jk1jkwfg_1.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_cover_photo.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/cover_photo.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_program.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/program.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_bg_three_sign_screen.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/bg_three_sign_screen.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-xxxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_basil_current_location_outline.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/basil_current_location_outline.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_hugeicons_school.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/hugeicons_school.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-xxhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_school_logo.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/school_logo.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_card.png.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/card.png"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-xhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.mis.parentapp-main-41:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/xml_backup_rules.xml.flat",
+        "source": "com.mis.parentapp-main-41:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_fluent_person_16_regular.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/fluent_person_16_regular.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_boxicons_calendar_check_filled.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/boxicons_calendar_check_filled.xml"
+    },
+    {
+        "merged": "com.mis.parentapp-debug-39:/drawable_material_symbols_light_physical_therapy_outline.xml.flat",
+        "source": "com.mis.parentapp-main-41:/drawable/material_symbols_light_physical_therapy_outline.xml"
+    }
+]

@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.mis.parentapp-mergeDebugResources-37:/values-v30/values-v30.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Juliana\\.gradle\\caches\\9.3.1\\transforms\\ab46c1357332f90eec97b2a97fa6ca45\\workspace\\transformed\\material3\\res\\values-v30\\values-v30.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "72",
+                        "endOffsets": "123"
+                    }
+                }
+            ]
+        }
+    ]
+}
