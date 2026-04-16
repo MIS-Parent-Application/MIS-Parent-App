@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch // ADDED: For closing the bottom sheet
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
@@ -33,9 +34,15 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StudentScreen(modifier: Modifier = Modifier) {
+// CHANGED: Added navigation parameters so the main app can switch screens
+fun StudentScreen(
+    modifier: Modifier = Modifier,
+    onNavigateToAcademic: () -> Unit = {},
+    onNavigateToAttendance: () -> Unit = {}
+) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope() // ADDED: To handle smooth bottom sheet closing
 
     Box(modifier = modifier.fillMaxSize().background(Color.White)) {
         // Cover Photo Background
@@ -53,7 +60,7 @@ fun StudentScreen(modifier: Modifier = Modifier) {
             item {
                 HeaderIcons(onMenuClick = { showBottomSheet = true })
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(20.dp))
             }
@@ -95,12 +102,31 @@ fun StudentScreen(modifier: Modifier = Modifier) {
                 containerColor = Color.White,
                 dragHandle = { BottomSheetDefaults.DragHandle() }
             ) {
-                StudentMenuContent()
+                // CHANGED: Pass the click events into the menu content
+                StudentMenuContent(
+                    onAcademicClick = {
+                        coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
+                            if (!sheetState.isVisible) {
+                                showBottomSheet = false
+                                onNavigateToAcademic()
+                            }
+                        }
+                    },
+                    onAttendanceClick = {
+                        coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
+                            if (!sheetState.isVisible) {
+                                showBottomSheet = false
+                                onNavigateToAttendance()
+                            }
+                        }
+                    }
+                )
             }
         }
     }
 }
 
+// ... HeaderIcons remains exactly the same ...
 @Composable
 fun HeaderIcons(onMenuClick: () -> Unit) {
     Row(
@@ -140,8 +166,12 @@ fun HeaderIcons(onMenuClick: () -> Unit) {
     }
 }
 
+// CHANGED: Added click handlers
 @Composable
-fun StudentMenuContent() {
+fun StudentMenuContent(
+    onAcademicClick: () -> Unit,
+    onAttendanceClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -151,27 +181,31 @@ fun StudentMenuContent() {
         StudentMenuItem(
             icon = Icons.Outlined.PersonOutline,
             title = "About Student",
-            description = "Know the information that you student has."
+            description = "Know the information that you student has.",
+            onClick = { /* Handle About Student */ }
         )
         StudentMenuItem(
             icon = Icons.Default.School,
             title = "Monitor Academic",
-            description = "Check the progress and milestone of your student."
+            description = "Check the progress and milestone of your student.",
+            onClick = onAcademicClick // Linked
         )
         StudentMenuItem(
             icon = Icons.Outlined.EventAvailable,
             title = "Track Attendance",
-            description = "Be updated to your student attendance."
+            description = "Be updated to your student attendance.",
+            onClick = onAttendanceClick // Linked
         )
     }
 }
 
+// CHANGED: Added the onClick parameter
 @Composable
-fun StudentMenuItem(icon: ImageVector, title: String, description: String) {
+fun StudentMenuItem(icon: ImageVector, title: String, description: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Handle menu item click */ },
+            .clickable { onClick() }, // Linked the click event here
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -197,6 +231,7 @@ fun StudentMenuItem(icon: ImageVector, title: String, description: String) {
     }
 }
 
+// ... All other composables (SwitcherSection, StudentProfileInfo, AcademicProgramSection, ProgramItem, ClassScheduleSection, ScheduleCardSmall, ContactsSection, ContactItem) remain exactly the same ...
 @Composable
 fun SwitcherSection() {
     Row(
@@ -409,7 +444,7 @@ fun ContactsSection() {
         )
         ContactItem(name = "John Doe B. McClure", relation = "Parent", phone = "+63 1234567890", isEmergency = false)
         ContactItem(name = "Thomas B. McClure", relation = "Emergency contact", phone = "+63 1234567890", isEmergency = true)
-        
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
