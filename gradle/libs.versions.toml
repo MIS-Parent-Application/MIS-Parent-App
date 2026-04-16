@@ -1,5 +1,7 @@
 [versions]
+student-monitoring
 # Cleaned up duplicates, kept the highest versions
+
 agp = "9.1.1"
 coreKtx = "1.18.0"
 junit = "4.13.2"

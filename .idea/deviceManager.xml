@@ -5,11 +5,11 @@
       <list>
         <ColumnSorterState>
           <option name="column" value="Name" />
-<<<<<<< HEAD
+ student-monitoring
           <option name="order" value="DESCENDING" />
-=======
+
           <option name="order" value="ASCENDING" />
->>>>>>> 679327f9721ce9e162b4da248ddfe5989b5b0521
+          <option name="order" value="DESCENDING" />master
         </ColumnSorterState>
       </list>
     </option>

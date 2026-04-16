@@ -4,7 +4,8 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-<<<<<<< HEAD
+ student-monitoring
+ master
         <DropdownSelection timestamp="2026-04-15T17:01:53.003753200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
@@ -21,11 +22,11 @@
             </Target>
           </targets>
         </DialogSelection>
+ student-monitoring
       </SelectionState>
       <SelectionState runConfigName="StudentScreenPreview">
         <option name="selectionMode" value="DROPDOWN" />
-=======
->>>>>>> 679327f9721ce9e162b4da248ddfe5989b5b0521
+ master
       </SelectionState>
     </selectionStates>
   </component>
