@@ -1,0 +1,21 @@
+Common composables reference
+
+Header (mainHeader: String, subHeader: String)
+- used in headers for each pages/activity
+params:
+    mainHeader - The top text, large fontsize with bold fontweight
+    subHeader - the bottom text, smaller fontsize, slightly grey fontcolor
+
+StatBox (icon: Int, name: String, stat: String, comment: String)
+- used in the dashboard stats
+params:
+    icon - The icon for the stat. Get reference from R.drawables
+    name - Stat name
+    stat - The value to dispay, larger with bold fontweight
+    comment - extra info for the stat, smaller with green font
+
+TextWithBG (text: String, bgColor: Color)
+- a text with background color
+params:
+    text - Text to display
+    bgColor - background color

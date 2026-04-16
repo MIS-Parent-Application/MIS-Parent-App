@@ -1,4 +1,5 @@
 [versions]
+# Cleaned up duplicates, kept the highest versions
 agp = "9.1.1"
 coreKtx = "1.18.0"
 junit = "4.13.2"
@@ -12,6 +13,10 @@ navigationCompose = "2.9.7"
 kotlinxSerializationJson = "1.10.0"
 material3 = "1.4.0"
 roomCommonJvm = "2.8.4"
+appcompat = "1.6.1"
+material = "1.10.0"
+activity = "1.12.4"
+constraintlayout = "2.1.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +38,10 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
