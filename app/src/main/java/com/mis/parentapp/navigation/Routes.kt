@@ -14,3 +14,12 @@ object DebugMenu
 @Serializable object Home
 @Serializable object Student
 @Serializable object MainContainer
+
+@Serializable
+object Notification
+
+@Serializable
+object UpcomingEvents
+
+@Serializable
+object RecentActivities

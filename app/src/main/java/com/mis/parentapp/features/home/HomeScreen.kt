@@ -1,5 +1,6 @@
 package com.mis.parentapp.features.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,40 +37,55 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
+import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.navigation.Notification
+import com.mis.parentapp.navigation.RecentActivities
+import com.mis.parentapp.navigation.UpcomingEvents
 
-enum class HomeSubScreen {
-    None, Notifications, UpcomingEvents, RecentActivities
-}
+
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    var currentSubScreen by remember { mutableStateOf(HomeSubScreen.None) }
+    // This controller only handles navigation INSIDE the Home tab
+    val homeNavController = rememberNavController()
 
-    when (currentSubScreen) {
-        HomeSubScreen.Notifications -> {
-            NotificationScreen(onBackClick = { currentSubScreen = HomeSubScreen.None })
-        }
-        HomeSubScreen.UpcomingEvents -> {
-            UpcomingEventsScreen(onBackClick = { currentSubScreen = HomeSubScreen.None })
-        }
-        HomeSubScreen.RecentActivities -> {
-            RecentActivitiesScreen(onBackClick = { currentSubScreen = HomeSubScreen.None })
-        }
-        HomeSubScreen.None -> {
+    NavHost(
+        navController = homeNavController,
+        startDestination = Home,
+        modifier = modifier.fillMaxSize()
+    ) {
+        composable<Home> {
             Body(
-                modifier = modifier,
-                onNotificationClick = { currentSubScreen = HomeSubScreen.Notifications },
+                onNotificationClick = {
+                    homeNavController.navigate(Notification)
+                },
                 onFilterClick = { label ->
                     when (label) {
-                        "Upcoming events" -> currentSubScreen = HomeSubScreen.UpcomingEvents
-                        "Recent activities" -> currentSubScreen = HomeSubScreen.RecentActivities
+                        "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
+                        "Recent activities" -> homeNavController.navigate(RecentActivities)
                     }
                 }
             )
+        }
+
+        composable<Notification> {
+            // Pass a lambda to handle the back button within the sub-screen
+            NotificationScreen(onBackClick = { homeNavController.popBackStack() })
+        }
+
+        composable<UpcomingEvents> {
+            UpcomingEventsScreen(onBackClick = { homeNavController.popBackStack() })
+        }
+
+        composable<RecentActivities> {
+            RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
         }
     }
 }
