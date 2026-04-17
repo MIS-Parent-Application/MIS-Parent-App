@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+<<<<<<< HEAD
+=======
+/backend/node_modules
+>>>>>>> 679327f9721ce9e162b4da248ddfe5989b5b0521

@@ -24,4 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Parent App"
 include(":app")
- 
+rootProject.name = "ParentApp"
+include(":app")
+
