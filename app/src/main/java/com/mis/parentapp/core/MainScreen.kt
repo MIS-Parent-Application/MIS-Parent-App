@@ -49,7 +49,7 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
-fun MainScreen(onSignOut: () -> Unit = {}) {
+fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
