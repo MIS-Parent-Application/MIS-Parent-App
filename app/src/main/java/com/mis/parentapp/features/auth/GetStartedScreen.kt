@@ -15,7 +15,7 @@ import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 
 @Composable
-fun OnBoardingScreen(
+fun GetStartedScreen(
     onNavigateToSignIn: (Int) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {

@@ -14,7 +14,7 @@ import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
-import com.mis.parentapp.features.auth.OnBoardingScreen
+import com.mis.parentapp.features.auth.GetStartedScreen
 import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
@@ -43,7 +43,7 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {
-            OnBoardingScreen(
+            GetStartedScreen(
                 onNavigateToSignIn = { bgId ->
                     navController.navigate(SignIn(bgId))
                 }
