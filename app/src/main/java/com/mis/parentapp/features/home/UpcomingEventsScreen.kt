@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -19,12 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
+import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
@@ -40,9 +42,14 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpcomingEventsScreen(
-    onBackClick: () -> Unit,
-    viewModel: EventsViewModel = viewModel()
+    onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val repo = EventRepository(db.eventDao())
+    val viewModel: EventsViewModel = viewModel(
+        factory = EventsViewModel.provideFactory(repo)
+    )
     val allUpcomingEvents by viewModel.upcomingEvents.collectAsState()
     var selectedFilter by remember { mutableStateOf("All") }
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
@@ -60,7 +67,17 @@ fun UpcomingEventsScreen(
         EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
     } else {
         Scaffold(
-            topBar = { /* ... keep your existing TopAppBar code ... */ },
+            topBar = {
+                TopAppBar(
+                    title = { Text("Upcoming Events") },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+            },
             containerColor = Color.White
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
@@ -132,7 +149,6 @@ fun EventSection(title: String, events: List<com.mis.parentapp.data.EventItem>, 
     }
 }
 
-private fun LazyItemScope.onEventClick(p1: com.mis.parentapp.data.EventItem) {}
 
 @Composable
 fun EventCard(event: com.mis.parentapp.data.EventItem, onClick: () -> Unit) {

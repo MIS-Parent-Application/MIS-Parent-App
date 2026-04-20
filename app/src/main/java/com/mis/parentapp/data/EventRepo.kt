@@ -4,19 +4,16 @@ import kotlinx.coroutines.flow.Flow
 
 class EventRepository(private val eventDao: EventDao) {
 
+    // These look at the DB (which was filled by your SQL seed)
     fun getRecentEvents() = eventDao.getEventsByType("RECENT")
     fun getUpcomingEvents() = eventDao.getEventsByType("UPCOMING")
 
     suspend fun refreshEvents() {
-        // Mocking API Response
-        val mockApiData = listOf(
-            // Recent Events
-            EventItem(101, "Recent School Fest", "School-wide", "20.4.2026", "Desc...", "RECENT"),
-            // Upcoming Events
-            EventItem(1, "Science Exhibition", "School-wide", "25.5.2026", "Desc...", "UPCOMING"),
-            EventItem(2, "Graduation Gala", "College", "28.5.2026", "Desc...", "UPCOMING", "Postponed"),
-            EventItem(3, "Sports Meet", "College", "01.6.2026", "Desc...", "UPCOMING")
+        val mockEvents = listOf(
+            EventItem(1, "Science Fair", "Academic", "2026-05-10", "Description...", "UPCOMING", "Normal"),
+            EventItem(2, "PTA Meeting", "Meeting", "2026-04-15", "Description...", "RECENT", "Normal"),
+            EventItem(3, "Sports Day", "Sports", "2026-06-20", "Description...", "UPCOMING", "Postponed")
         )
-        eventDao.insertEvents(mockApiData)
+        eventDao.insertEvents(mockEvents)
     }
 }
