@@ -16,7 +16,6 @@ import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.OnBoardingScreen
 import com.mis.parentapp.features.auth.SignInScreen
-import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
@@ -70,19 +69,6 @@ fun AppNavigation() {
             )
         }
 
-        composable<SignUp> { backStackEntry ->
-            val args = backStackEntry.toRoute<SignUp>()
-            SignUpScreen(
-                backgroundResId = args.backgroundResId,
-                viewModel = authViewModel,
-                onBack = { navController.popBackStack() },
-                onNavigateToSignIn = {
-                    navController.navigate(SignIn(args.backgroundResId)) {
-                        popUpTo(SignUp(args.backgroundResId)) { inclusive = true }
-                    }
-                }
-            )
-        }
 
         composable<MainContainer> {
             MainScreen()

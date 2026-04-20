@@ -37,7 +37,6 @@ import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.auth.SignInScreen
-import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
@@ -118,22 +117,7 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
                     onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
                 )
             }
-            composable<SignUp> { backStackEntry ->
-                val args = backStackEntry.toRoute<SignUp>()
-                SignUpScreen(
-                    backgroundResId = args.backgroundResId,
-                    onBack = { navController.popBackStack() },
-                    viewModel = authViewModel,
-                    onNavigateToSignIn = {
-                        //pop back to SignIn if in the stack,
-                        //otherwise navigate using route
-                        navController.navigate(SignIn(backgroundResId = args.backgroundResId)) {
-                            popUpTo(Home) { saveState = true }
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
+
             composable<SignIn> { backStackEntry ->
                 val args = backStackEntry.toRoute<SignIn>()
                 SignInScreen(
