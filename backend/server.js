@@ -105,9 +105,10 @@ app.get('/api/parent/dashboard', (req, res) => {
             id: id,
             name: mockStudents[id].name,
             grade: mockStudents[id].grade,
+
             attendance: mockStudents[id].attendance,
             gpa: mockStudents[id].gpa,
-            pendingPayments: 1 // Mock
+            pendingPayments: 0
         })),
         unreadAnnouncements: mockAnnouncements.filter(a => a.urgent).length,
         upcomingEvents: ["Parent-Teacher Meeting - March 5", "Annual Day - March 15"]

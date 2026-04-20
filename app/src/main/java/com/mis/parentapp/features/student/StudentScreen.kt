@@ -87,8 +87,6 @@ fun StudentScreen(
                         AcademicProgramSection()
                         Spacer(modifier = Modifier.height(32.dp))
                         ClassScheduleSection()
-                        Spacer(modifier = Modifier.height(32.dp))
-                        ContactsSection()
                     }
                 }
             }
@@ -430,65 +428,6 @@ fun ScheduleCardSmall(
                 fontSize = 12.sp,
                 color = if (isHighlight) Color.White.copy(alpha = 0.9f) else ColorsDefaultTheme.color_On_surface
             )
-        }
-    }
-}
-
-@Composable
-fun ContactsSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            text = "Contacts",
-            style = AppTypes.type_H1,
-            color = ColorsDefaultTheme.color_Primary_green_container
-        )
-        ContactItem(name = "John Doe B. McClure", relation = "Parent", phone = "+63 1234567890", isEmergency = false)
-        ContactItem(name = "Thomas B. McClure", relation = "Emergency contact", phone = "+63 1234567890", isEmergency = true)
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = { },
-                modifier = Modifier.weight(1f).height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ColorsDefaultTheme.color_Primary_green_container)
-            ) {
-                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text("Make a call", style = AppTypes.type_M3_label_small)
-            }
-            Button(
-                onClick = { },
-                modifier = Modifier.weight(1f).height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = ColorsDefaultTheme.color_On_surface)
-            ) {
-                Text("Edit contacts", style = AppTypes.type_M3_label_small)
-            }
-        }
-    }
-}
-
-@Composable
-fun ContactItem(name: String, relation: String, phone: String, isEmergency: Boolean) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(id = R.drawable.fluent_person_16_regular), contentDescription = null, modifier = Modifier.size(24.dp))
-            Text(text = name, style = AppTypes.type_Body_Small, fontWeight = FontWeight.Bold)
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isEmergency) ColorsDefaultTheme.color_Error else ColorsDefaultTheme.color_Primary_green_container)
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Text(text = relation, color = Color.White, style = AppTypes.type_Caption, fontSize = 10.sp)
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(id = R.drawable.mdi_light_phone), contentDescription = null, modifier = Modifier.size(24.dp))
-            Text(text = phone, style = AppTypes.type_Body_Small, color = ColorsDefaultTheme.color_Outline)
         }
     }
 }
