@@ -12,8 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ParentApp">
         <activity
-<<<<<<< HEAD
-=======
             android:name=".Announcements"
             android:exported="false" />
         <activity
@@ -26,7 +24,6 @@
             android:name=".StudentProfile"
             android:exported="false" />
         <activity
->>>>>>> 679327f9721ce9e162b4da248ddfe5989b5b0521
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"

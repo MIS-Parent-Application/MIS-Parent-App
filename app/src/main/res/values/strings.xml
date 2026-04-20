@@ -1,7 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-<<<<<<< HEAD
     <string name="app_name">Parent App</string>
-=======
-    <string name="app_name">ParentApp</string>
->>>>>>> 679327f9721ce9e162b4da248ddfe5989b5b0521
 </resources>
