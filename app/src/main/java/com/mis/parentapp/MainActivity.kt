@@ -14,6 +14,7 @@ import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.OnBoardingScreen
 import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.navigation.MainContainer
@@ -42,6 +43,14 @@ fun AppNavigation() {
     val authViewModel = remember { AuthViewModel(database.userDao()) }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
+        composable<OnBoarding> {
+            OnBoardingScreen(
+                onNavigateToSignIn = { bgId ->
+                    navController.navigate(SignIn(bgId))
+                }
+            )
+        }
+
         composable<SignIn> { backStackEntry ->
             val args = backStackEntry.toRoute<SignIn>()
             SignInScreen(
