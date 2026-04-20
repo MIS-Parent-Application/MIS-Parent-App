@@ -17,8 +17,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun DebugMenuScreen(
-    onNavigateToSignIn: (Int) -> Unit,
-    onNavigateToSignUp: (Int) -> Unit
+    onNavigateToSignIn: (Int) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -42,12 +41,5 @@ fun DebugMenuScreen(
         }
         
         Spacer(modifier = Modifier.height(16.dp))
-        
-        Button(
-            onClick = { onNavigateToSignUp(0) }, // Passing 0 as default backgroundResId
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Go to Sign Up")
-        }
     }
 }

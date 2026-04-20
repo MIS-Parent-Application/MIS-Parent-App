@@ -19,7 +19,6 @@ import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -59,11 +58,6 @@ fun AppNavigation() {
                 onSignInSuccess = {
                     navController.navigate(MainContainer) {
                         popUpTo(OnBoarding) { inclusive = true }
-                    }
-                },
-                onNavigateToSignUp = {
-                    navController.navigate(SignUp(args.backgroundResId)) {
-                        popUpTo(SignIn(args.backgroundResId)) { inclusive = true }
                     }
                 }
             )

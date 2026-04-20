@@ -43,7 +43,6 @@ import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
 import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
@@ -113,8 +112,7 @@ fun MainScreen() {
         ) {
             composable<DebugMenu> {
                 DebugMenuScreen(
-                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
-                    onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
                 )
             }
 
@@ -129,9 +127,6 @@ fun MainScreen() {
                             popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
-                    },
-                    onNavigateToSignUp = {
-                        navController.navigate(SignUp(backgroundResId = args.backgroundResId))
                     }
                 )
             }
