@@ -37,20 +37,18 @@ import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.auth.SignInScreen
-import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
 import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
-fun MainScreen(onSignOut: () -> Unit = {}) {
+fun MainScreen() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -114,26 +112,10 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
         ) {
             composable<DebugMenu> {
                 DebugMenuScreen(
-                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
-                    onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
                 )
             }
-            composable<SignUp> { backStackEntry ->
-                val args = backStackEntry.toRoute<SignUp>()
-                SignUpScreen(
-                    backgroundResId = args.backgroundResId,
-                    onBack = { navController.popBackStack() },
-                    viewModel = authViewModel,
-                    onNavigateToSignIn = {
-                        //pop back to SignIn if in the stack,
-                        //otherwise navigate using route
-                        navController.navigate(SignIn(backgroundResId = args.backgroundResId)) {
-                            popUpTo(Home) { saveState = true }
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
+
             composable<SignIn> { backStackEntry ->
                 val args = backStackEntry.toRoute<SignIn>()
                 SignInScreen(
@@ -145,9 +127,6 @@ fun MainScreen(onSignOut: () -> Unit = {}) {
                             popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
-                    },
-                    onNavigateToSignUp = {
-                        navController.navigate(SignUp(backgroundResId = args.backgroundResId))
                     }
                 )
             }

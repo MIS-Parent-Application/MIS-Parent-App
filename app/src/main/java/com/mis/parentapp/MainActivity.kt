@@ -14,12 +14,11 @@ import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.GetStartedScreen
 import com.mis.parentapp.features.auth.SignInScreen
-import com.mis.parentapp.features.auth.SignUpScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +41,14 @@ fun AppNavigation() {
     val authViewModel = remember { AuthViewModel(database.userDao()) }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
+        composable<OnBoarding> {
+            GetStartedScreen(
+                onNavigateToSignIn = { bgId ->
+                    navController.navigate(SignIn(bgId))
+                }
+            )
+        }
+
         composable<SignIn> { backStackEntry ->
             val args = backStackEntry.toRoute<SignIn>()
             SignInScreen(
@@ -52,28 +59,10 @@ fun AppNavigation() {
                     navController.navigate(MainContainer) {
                         popUpTo(OnBoarding) { inclusive = true }
                     }
-                },
-                onNavigateToSignUp = {
-                    navController.navigate(SignUp(args.backgroundResId)) {
-                        popUpTo(SignIn(args.backgroundResId)) { inclusive = true }
-                    }
                 }
             )
         }
 
-        composable<SignUp> { backStackEntry ->
-            val args = backStackEntry.toRoute<SignUp>()
-            SignUpScreen(
-                backgroundResId = args.backgroundResId,
-                viewModel = authViewModel,
-                onBack = { navController.popBackStack() },
-                onNavigateToSignIn = {
-                    navController.navigate(SignIn(args.backgroundResId)) {
-                        popUpTo(SignUp(args.backgroundResId)) { inclusive = true }
-                    }
-                }
-            )
-        }
 
         composable<MainContainer> {
             MainScreen()
