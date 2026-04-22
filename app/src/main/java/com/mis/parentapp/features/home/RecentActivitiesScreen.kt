@@ -1,34 +1,46 @@
 package com.mis.parentapp.features.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.data.EventItem
+import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentActivitiesScreen(onBackClick: () -> Unit) {
+fun RecentActivitiesScreen(
+    onBackClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val viewModel: EventsViewModel = viewModel(
+        factory = EventsViewModel.provideFactory(
+            EventRepository(AppDatabase.getDatabase(context).eventDao())
+        )
+    )
+    
+    // Fix: Remove redundant 'initial' to help type inference
+    val events by viewModel.recentEvents.collectAsState()
+    
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
+    val groupedEvents = events.groupBy { it.category }
 
     if (selectedEvent != null) {
         EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
@@ -42,15 +54,9 @@ fun RecentActivitiesScreen(onBackClick: () -> Unit) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    actions = {
-                        IconButton(onClick = { /* Handle menu */ }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                        }
-                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
                 )
-            },
-            containerColor = Color.White
+            }
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
                 RecentFilterRow()
@@ -60,26 +66,14 @@ fun RecentActivitiesScreen(onBackClick: () -> Unit) {
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    item {
-                        EventSection(
-                            title = "School-wide",
-                            events = listOf(
-                                EventItem(101, "School event", "School-wide", "25.5.2026"),
-                                EventItem(102, "School event", "School-wide", "25.5.2026")
-                            ),
-                            onEventClick = { selectedEvent = it }
-                        )
-                    }
-
-                    item {
-                        EventSection(
-                            title = "College",
-                            events = listOf(
-                                EventItem(103, "College event", "College", "25.5.2026"),
-                                EventItem(104, "College event", "College", "25.5.2026")
-                            ),
-                            onEventClick = { selectedEvent = it }
-                        )
+                    groupedEvents.forEach { (category, eventList) ->
+                        item {
+                            EventSection(
+                                title = category,
+                                events = eventList,
+                                onEventClick = { selectedEvent = it }
+                            )
+                        }
                     }
                 }
             }

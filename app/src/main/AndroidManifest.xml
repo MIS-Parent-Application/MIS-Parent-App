@@ -15,10 +15,10 @@
         android:theme="@style/Theme.ParentApp"
         android:usesCleartextTraffic="true">
 
+        android:theme="@style/Theme.ParentApp">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ParentApp">
 
             <intent-filter>

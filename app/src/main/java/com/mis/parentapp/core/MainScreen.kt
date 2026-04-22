@@ -18,12 +18,23 @@ import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.features.auth.SignInScreen
+import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.navigation.DebugMenu
+import com.mis.parentapp.navigation.Home
+import com.mis.parentapp.navigation.Me
+import com.mis.parentapp.navigation.Services
+import com.mis.parentapp.navigation.SignIn
+import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import androidx.compose.ui.tooling.preview.Preview
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun MainScreen() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -82,6 +93,25 @@ fun MainScreen() {
             composable("me") {
                 Text("ME SCREEN WORKING")
                 MeScreen()
+            composable<DebugMenu> {
+                DebugMenuScreen(
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
+                )
+            }
+
+            composable<SignIn> { backStackEntry ->
+                val args = backStackEntry.toRoute<SignIn>()
+                SignInScreen(
+                    backgroundResId = args.backgroundResId,
+                    onBack = { navController.popBackStack() },
+                    viewModel = authViewModel,
+                    onSignInSuccess = {
+                        navController.navigate(Home) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
         }
     }
