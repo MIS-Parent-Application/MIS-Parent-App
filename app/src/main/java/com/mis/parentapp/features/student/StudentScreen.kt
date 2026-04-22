@@ -31,6 +31,7 @@ import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.data.Student
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +43,36 @@ fun StudentScreen(
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    // 🔥 STUDENT LIST (ADD HERE)
+    val students = listOf(
+        Student(
+            studentId = "123456789",
+            name = "Nathaniel B. McClure",
+            course = "BSIT - 3rd year",
+            year = "",
+            schedules = emptyList(),
+            attendanceScore = 0.0,
+            gpa = 0.0,
+            pendingPayment = 0.0,
+            notificationCount = 0
+        ),
+        Student(
+            studentId = "987654321",
+            name = "Second Student",
+            course = "BSCS - 2nd year",
+            year = "",
+            schedules = emptyList(),
+            attendanceScore = 0.0,
+            gpa = 0.0,
+            pendingPayment = 0.0,
+            notificationCount = 0
+        )
+    )
+
+    // 🔥 STATE (THIS CONTROLS SWITCHING)
+    var selectedStudent by remember { mutableStateOf(students[0]) }
+
 
     Box(
         modifier = modifier
@@ -91,7 +122,7 @@ fun StudentScreen(
                     // 🔥 HEADER ICONS (KEEP THIS EXACT)
                     HeaderIcons { showBottomSheet = true }
 
-                    // 🔥 NAME + DETAILS + SWITCHER (INSIDE IMAGE)
+                    // 🔥 NAME + SWITCHER (UPDATED)
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -101,40 +132,46 @@ fun StudentScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
 
-                        // TEXT
+                        // 🔥 TEXT (DYNAMIC NOW)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Nathaniel B. McClure",
+                                selectedStudent.name,
                                 color = Color.White,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text("BSIT - 3rd year", color = Color.White)
-                            Text("ID number: 123456789", color = Color.White)
+                            Text(
+                                selectedStudent.course,
+                                color = Color.White
+                            )
+                            Text(
+                                "ID number: ${selectedStudent.studentId}",
+                                color = Color.White
+                            )
                         }
 
-                        // 🔥 TWO CIRCLES (RIGHT SIDE, SAME LINE)
+                        // 🔥 SWITCHER (CLICKABLE)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                            Image(
-                                painter = painterResource(id = R.drawable.student_image),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, Color.White, CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
+                            students.forEach { student ->
 
-                            Image(
-                                painter = painterResource(id = R.drawable.profile_2398783_1280),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, Color.White, CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
+                                Image(
+                                    painter = painterResource(id = R.drawable.student_image),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            2.dp,
+                                            if (student == selectedStudent) Color.Green else Color.White,
+                                            CircleShape
+                                        )
+                                        .clickable {
+                                            selectedStudent = student
+                                        },
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
                     }
                 }
