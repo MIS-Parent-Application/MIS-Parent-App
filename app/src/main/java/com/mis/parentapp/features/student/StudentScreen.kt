@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch // ADDED: For closing the bottom sheet
+import kotlinx.coroutines.launch
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
@@ -34,7 +34,6 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// CHANGED: Added navigation parameters so the main app can switch screens
 fun StudentScreen(
     modifier: Modifier = Modifier,
     onNavigateToAcademic: () -> Unit = {},
@@ -42,53 +41,124 @@ fun StudentScreen(
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope() // ADDED: To handle smooth bottom sheet closing
+    val coroutineScope = rememberCoroutineScope()
 
-    Box(modifier = modifier.fillMaxSize().background(Color.White)) {
-        // Cover Photo Background
-        Image(
-            painter = painterResource(id = R.drawable.student_image),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(240.dp),
-            contentScale = ContentScale.Crop,
-            colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.3f), androidx.compose.ui.graphics.BlendMode.Darken)
-        )
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        LazyColumn {
+
+            // 🔥 IMAGE + HEADER
             item {
-                HeaderIcons(onMenuClick = { showBottomSheet = true })
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(380.dp) // 🔥 longer image
+                ) {
+
+                    // 🔥 BACKGROUND IMAGE WITH ROUNDED BOTTOM
+                    Image(
+                        painter = painterResource(id = R.drawable.bgpic),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(
+                                RoundedCornerShape(
+                                    bottomStart = 32.dp,
+                                    bottomEnd = 32.dp
+                                )
+                            )
+                    )
+
+
+                    // 🔥 DARK OVERLAY (optional but makes text readable)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(
+                                RoundedCornerShape(
+                                    bottomStart = 32.dp,
+                                    bottomEnd = 32.dp
+                                )
+                            )
+                            .background(Color.Black.copy(alpha = 0.25f))
+                    )
+
+                    // 🔥 HEADER ICONS (KEEP THIS EXACT)
+                    HeaderIcons { showBottomSheet = true }
+
+                    // 🔥 NAME + DETAILS + SWITCHER (INSIDE IMAGE)
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+
+                        // TEXT
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Nathaniel B. McClure",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text("BSIT - 3rd year", color = Color.White)
+                            Text("ID number: 123456789", color = Color.White)
+                        }
+
+                        // 🔥 TWO CIRCLES (RIGHT SIDE, SAME LINE)
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                            Image(
+                                painter = painterResource(id = R.drawable.student_image),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, Color.White, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+
+                            Image(
+                                painter = painterResource(id = R.drawable.profile_2398783_1280),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, Color.White, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                }
             }
 
+            // 🔥 WHITE CARD
             item {
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            item {
-                SwitcherSection()
-            }
-
-            item {
-                // Main Content Card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                         .background(Color.White)
-                        .padding(bottom = 32.dp)
                 ) {
-                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                        Spacer(modifier = Modifier.height(28.dp))
-                        StudentProfileInfo()
-                        Spacer(modifier = Modifier.height(28.dp))
-                        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(28.dp))
+                    Column(
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         AcademicProgramSection()
-                        Spacer(modifier = Modifier.height(32.dp))
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
                         ClassScheduleSection()
-                        Spacer(modifier = Modifier.height(32.dp))
-                        ContactsSection()
                     }
                 }
             }
@@ -97,29 +167,11 @@ fun StudentScreen(
         if (showBottomSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState,
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                containerColor = Color.White,
-                dragHandle = { BottomSheetDefaults.DragHandle() }
+                sheetState = sheetState
             ) {
-                // CHANGED: Pass the click events into the menu content
                 StudentMenuContent(
-                    onAcademicClick = {
-                        coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
-                            if (!sheetState.isVisible) {
-                                showBottomSheet = false
-                                onNavigateToAcademic()
-                            }
-                        }
-                    },
-                    onAttendanceClick = {
-                        coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
-                            if (!sheetState.isVisible) {
-                                showBottomSheet = false
-                                onNavigateToAttendance()
-                            }
-                        }
-                    }
+                    onAcademicClick = {},
+                    onAttendanceClick = {}
                 )
             }
         }
@@ -434,64 +486,9 @@ fun ScheduleCardSmall(
     }
 }
 
-@Composable
-fun ContactsSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            text = "Contacts",
-            style = AppTypes.type_H1,
-            color = ColorsDefaultTheme.color_Primary_green_container
-        )
-        ContactItem(name = "John Doe B. McClure", relation = "Parent", phone = "+63 1234567890", isEmergency = false)
-        ContactItem(name = "Thomas B. McClure", relation = "Emergency contact", phone = "+63 1234567890", isEmergency = true)
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = { },
-                modifier = Modifier.weight(1f).height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ColorsDefaultTheme.color_Primary_green_container)
-            ) {
-                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text("Make a call", style = AppTypes.type_M3_label_small)
-            }
-            Button(
-                onClick = { },
-                modifier = Modifier.weight(1f).height(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = ColorsDefaultTheme.color_On_surface)
-            ) {
-                Text("Edit contacts", style = AppTypes.type_M3_label_small)
-            }
-        }
-    }
-}
 
-@Composable
-fun ContactItem(name: String, relation: String, phone: String, isEmergency: Boolean) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(id = R.drawable.fluent_person_16_regular), contentDescription = null, modifier = Modifier.size(24.dp))
-            Text(text = name, style = AppTypes.type_Body_Small, fontWeight = FontWeight.Bold)
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isEmergency) ColorsDefaultTheme.color_Error else ColorsDefaultTheme.color_Primary_green_container)
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Text(text = relation, color = Color.White, style = AppTypes.type_Caption, fontSize = 10.sp)
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(id = R.drawable.mdi_light_phone), contentDescription = null, modifier = Modifier.size(24.dp))
-            Text(text = phone, style = AppTypes.type_Body_Small, color = ColorsDefaultTheme.color_Outline)
-        }
-    }
-}
+
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable
