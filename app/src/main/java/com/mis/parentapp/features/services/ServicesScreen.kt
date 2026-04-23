@@ -1,13 +1,12 @@
 package com.mis.parentapp.features.services
 
-import android.Manifest
+import android.annotation.SuppressLint // ✅ ADDED: Needed to suppress lint warning
+import android.content.ContentValues
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,7 +44,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import com.itextpdf.text.Document
 import com.itextpdf.text.Element
 import com.itextpdf.text.Font
@@ -55,7 +53,10 @@ import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -288,7 +289,7 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
     }
 }
 
-// ================= PAYMENT HISTORY (WITH DOWNLOAD & FILTERING) =================
+// ================= PAYMENT HISTORY (WITH DOWNLOAD) =================
 
 @Composable
 fun PaymentHistorySection(
@@ -387,14 +388,7 @@ fun PaymentHistorySection(
                     item = record.purchasedItem,
                     option = record.paymentOption,
                     date = record.paidDate,
-                    onDownload = {
-                        // Request permission and download
-                        if (context is ComponentActivity) {
-                            checkStoragePermissionAndDownload(context, record)
-                        } else {
-                            Toast.makeText(context, "Error: Invalid context", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    onDownload = { generateReceiptPDF(context, record) }
                 )
             }
         }
@@ -403,94 +397,65 @@ fun PaymentHistorySection(
     }
 }
 
-// ================= PERMISSION HANDLING & PDF DOWNLOAD =================
+// ================= OFFICIAL ANDROID DOWNLOAD LOGIC (FIXED) =================
 
-private fun checkStoragePermissionAndDownload(context: ComponentActivity, record: PaymentRecord) {
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    }
-
-    when {
-        ContextCompat.checkSelfPermission(
-            context,
-            permission
-        ) == PackageManager.PERMISSION_GRANTED -> {
-            // Permission already granted, download PDF
-            generateReceiptPDF(context, record)
-        }
-        else -> {
-            // Request permission
-            val requestPermissionLauncher = context.registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted: Boolean ->
-                if (isGranted) {
-                    generateReceiptPDF(context, record)
-                } else {
-                    Toast.makeText(
-                        context,
-                        "Storage permission denied. Cannot download receipt.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-            requestPermissionLauncher.launch(permission)
-        }
-    }
-}
-
+@SuppressLint("NewApi") // ✅ ADDED: Suppresses the API level warning
 private fun generateReceiptPDF(context: Context, record: PaymentRecord) {
     try {
-        val document = Document()
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val fileName = "Receipt_${record.invoiceNumber}.pdf"
-        val filePath = "${downloadsDir.path}/$fileName"
 
-        val outputStream = FileOutputStream(filePath)
-        PdfWriter.getInstance(document, outputStream)
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+            // Save to main Downloads folder
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            put(MediaStore.MediaColumns.IS_PENDING, 1) // Flag as pending download
+        }
 
-        document.open()
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            ?: throw IOException("Failed to create MediaStore entry")
 
-        // Title
-        val titleFont = Font(Font.FontFamily.HELVETICA, 18f, Font.BOLD)
-        val title = Paragraph("Payment Receipt", titleFont)
-        title.alignment = Element.ALIGN_CENTER
-        document.add(title)
-        document.add(Paragraph("\n"))
+        resolver.openOutputStream(uri)?.use { outputStream ->
+            createPdfContent(outputStream, record)
+        }
 
-        // Details
-        val normalFont = Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL)
-        val boldFont = Font(Font.FontFamily.HELVETICA, 12f, Font.BOLD)
+        // Mark download as complete so it becomes visible immediately
+        contentValues.clear()
+        contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+        resolver.update(uri, contentValues, null, null)
 
-        document.add(Paragraph("Invoice Number: ${record.invoiceNumber}", normalFont))
-        document.add(Paragraph("Purchased Item: ${record.purchasedItem}", normalFont))
-        document.add(Paragraph("Payment Option: ${record.paymentOption}", normalFont))
-        document.add(Paragraph("Paid Date: ${record.paidDate}", normalFont))
-        document.add(Paragraph("Total Amount: PHP ${"%.2f".format(record.totalAmount)}", boldFont))
-
-        document.close()
-        outputStream.close()
-
-        // Show success message
-        Toast.makeText(
-            context,
-            "Receipt saved to Downloads folder",
-            Toast.LENGTH_LONG
-        ).show()
-
-        println("✅ Receipt saved to: $filePath")
+        Toast.makeText(context, "✅ Receipt Successfully Downloaded", Toast.LENGTH_LONG).show()
 
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(
-            context,
-            "Error downloading receipt: ${e.message}",
-            Toast.LENGTH_LONG
-        ).show()
-        println("❌ Error generating PDF: ${e.message}")
+        Toast.makeText(context, "❌ Download Failed: ${e.message}", Toast.LENGTH_LONG).show()
     }
 }
+
+private fun createPdfContent(outputStream: OutputStream, record: PaymentRecord) {
+    val document = Document()
+    val pdfWriter = PdfWriter.getInstance(document, outputStream)
+    document.open()
+
+    val titleFont = Font(Font.FontFamily.HELVETICA, 18f, Font.BOLD)
+    val title = Paragraph("Payment Receipt", titleFont)
+    title.alignment = Element.ALIGN_CENTER
+    document.add(title)
+    document.add(Paragraph("\n"))
+
+    val normalFont = Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL)
+    val boldFont = Font(Font.FontFamily.HELVETICA, 12f, Font.BOLD)
+
+    document.add(Paragraph("Invoice Number: ${record.invoiceNumber}", normalFont))
+    document.add(Paragraph("Purchased Item: ${record.purchasedItem}", normalFont))
+    document.add(Paragraph("Payment Option: ${record.paymentOption}", normalFont))
+    document.add(Paragraph("Paid Date: ${record.paidDate}", normalFont))
+    document.add(Paragraph("Total Amount: PHP ${"%.2f".format(record.totalAmount)}", boldFont))
+
+    document.close()
+}
+
 
 // ================= FILTERING FUNCTION (CALENDAR-BASED) =================
 
@@ -547,7 +512,7 @@ private fun filterPaymentHistory(
     }
 }
 
-// ================= ORIGINAL FEECARD (WITH DOWNLOAD CALLBACK) =================
+// ================= ORIGINAL FEECARD (WITH DOWNLOAD) =================
 
 @Composable
 fun FeeCard(

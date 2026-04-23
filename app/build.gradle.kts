@@ -49,8 +49,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.room.common.jvm)
+    // ❌ REMOVED line 52: implementation(libs.androidx.material3) - DUPLICATE, doesn't exist
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -61,13 +61,9 @@ dependencies {
 
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
-
-    // 3. Room Compiler (The code generator - uses KSP)
     ksp("androidx.room:room-compiler:$room_version")
-
-    // 4. Kotlin Extensions and Coroutines support for Room
     implementation("androidx.room:room-ktx:$room_version")
 
-    // ✅ I-ADD ANI ANG PDF DEPENDENCY:
+    // ✅ ADDED: PDF dependency to fix download crash
     implementation("com.itextpdf:itextg:5.5.10")
 }
