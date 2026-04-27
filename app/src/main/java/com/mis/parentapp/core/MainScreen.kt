@@ -36,7 +36,7 @@ import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
-import com.mis.parentapp.features.auth.SignInScreen
+import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
@@ -120,7 +120,7 @@ fun MainScreen() {
 
             composable<SignIn> { backStackEntry ->
                 val args = backStackEntry.toRoute<SignIn>()
-                SignInScreen(
+                UsernameSignInScreen(
                     backgroundResId = args.backgroundResId,
                     onBack = { navController.popBackStack() },
                     viewModel = authViewModel,

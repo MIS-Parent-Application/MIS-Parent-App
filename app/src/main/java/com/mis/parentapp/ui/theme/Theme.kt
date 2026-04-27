@@ -47,6 +47,8 @@ object ColorsDefaultTheme {
     val color_On_surface = Color(0xFF1C1B1F)
     val color_Outline = Color(0xFF79747E)
 
+    val text_color = Color(0xFFFFFFFF)
+
     // Legacy references (kept for compatibility)
     val color_Surface_surface = color_Surface
     val color_Surface_on_surface = color_On_surface

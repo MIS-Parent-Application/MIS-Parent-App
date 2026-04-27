@@ -5,10 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Facebook
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +14,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,17 +22,18 @@ import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
+import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.data.UserDAO
+import com.mis.parentapp.data.UserEntity
 
 @Composable
-fun SignInScreen(
+fun PasswordSignInScreen(
     backgroundResId: Int,
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onSignInSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -74,6 +72,11 @@ fun SignInScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
+                Image(
+                    painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(90.dp)
+                )
                 Text(
                     text = "Back",
                     color = ColorsDefaultTheme.color_Primary_on_green,
@@ -82,29 +85,25 @@ fun SignInScreen(
                         .clickable { onBack() },
                     style = AppTypes.type_Body_Small
                 )
-                Image(
-                    painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(90.dp)
-                )
+
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(366.dp))
 
             Text(
-                text = "Sign In",
-                color = Color.White,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold
+                text = stringResource(id = R.string.username_msg),
+                color = ColorsDefaultTheme.text_color,
+                fontSize = 36.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Empowering parents with real-time updates. Your dashboard is ready.",
+                text = stringResource(id = R.string.username_sub_msg),
                 color = Color.White.copy(alpha = 0.7f),
-                fontSize = 28.sp,
-                lineHeight = 38.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Light
             )
 
@@ -116,24 +115,6 @@ fun SignInScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                TextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    placeholder = { Text("Email", color = Color.Gray) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = ColorsDefaultTheme.color_Surface,
-                        unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    singleLine = true
-                )
-
                 TextField(
                     value = password,
                     onValueChange = { password = it },
@@ -156,9 +137,9 @@ fun SignInScreen(
 
                 Button(
                     onClick = {
-                        if (email.isNotEmpty() && password.isNotEmpty()) {
+                        if (password.isNotEmpty()) {
                             viewModel.signIn(
-                                email = email,
+                                email = "", // PasswordSignInScreen should ideally have email or receive it
                                 pass = password,
                                 onSuccess = { onSignInSuccess() },
                                 onError = { message ->
@@ -184,75 +165,28 @@ fun SignInScreen(
                         fontSize = 16.sp
                     )
                 }
-
-                Text(
-                    text = "Create an account",
-                    color = ColorsDefaultTheme.color_On_yellow,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    modifier = Modifier.clickable { onNavigateToSignUp() }
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Social Sign-in options
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                SignInOptionRow(icon = Icons.Filled.Key, text = "Other sign-in options")
-                SignInOptionRow(icon = Icons.Filled.AccountCircle, text = "Sign in with Google")
-                SignInOptionRow(icon = Icons.Filled.Facebook, text = "Sign in with Facebook")
             }
         }
     }
 }
 
+
+@Preview(showBackground = true)
 @Composable
-private fun SignInOptionRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    painterRes: Int? = null,
-    text: String
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth(0.65f)
-    ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                tint = Color.White
-            )
-        } else if (painterRes != null) {
-            Image(
-                painter = painterResource(id = painterRes),
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
+fun PasswordSignInScreenPreview() {
+    ParentAppTheme {
+        // Provide a dummy UserDAO for the AuthViewModel in the preview
+        val dummyUserDao = object : UserDAO {
+            override suspend fun registerUser(user: UserEntity) {}
+            override suspend fun loginUser(email: String, password: String): UserEntity? = null
         }
-        Text(
-            text = text,
-            color = Color.White,
-            style = AppTypes.type_Body_Small,
-            fontSize = 15.sp
+        val viewModel = remember { AuthViewModel(dummyUserDao) }
+
+        PasswordSignInScreen(
+            backgroundResId = R.drawable.bg_one_sign_screen,
+            viewModel = viewModel,
+            onBack = {},
+            onSignInSuccess = {}
         )
-    }
-}
-
-@Preview(widthDp = 412, heightDp = 917)
-@Composable
-private fun SignInScreenPreview() {
-    com.mis.parentapp.ui.theme.ParentAppTheme {
-//        SignInScreen(
-//            backgroundResId = R.drawable.student_image,
-//            onBack = {},
-//            onSignInSuccess = {},
-//            onNavigateToSignUp = {}
-//        )
     }
 }
