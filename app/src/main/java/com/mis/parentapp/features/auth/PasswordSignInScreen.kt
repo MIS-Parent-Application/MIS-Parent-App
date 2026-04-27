@@ -28,6 +28,7 @@ import com.mis.parentapp.data.UserEntity
 
 @Composable
 fun PasswordSignInScreen(
+    email: String,
     backgroundResId: Int,
     viewModel: AuthViewModel,
     onBack: () -> Unit,
@@ -38,35 +39,42 @@ fun PasswordSignInScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = modifier.fillMaxSize()) {
-        // 1. Static Background passed from Onboarding
-        Image(
-            painter = painterResource(id = backgroundResId),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+            Image(
+                painter = painterResource(id = backgroundResId),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
 
-        // 2. Dark/Green Overlay
+        // 2. BOTTOM GRADIENT
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.5f),
-                            Color(0xFF0D230D).copy(alpha = 0.9f)
-                        )
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.26f),
+                            ColorsDefaultTheme.color_On_yellow.copy(alpha = 0.20f),
+                            ColorsDefaultTheme.color_Primary_green_container.copy(alpha = 0.90f),
+                            ColorsDefaultTheme.color_Primary_green_container
+                        ),
+                        startY = 600f
                     )
                 )
         )
 
-        // 3. Content
+        // 3. UI CONTENT
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 40.dp)
+                .padding(24.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
         ) {
-            // Header: Back Button and Logo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -75,41 +83,39 @@ fun PasswordSignInScreen(
                 Image(
                     painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
                     contentDescription = "Logo",
-                    modifier = Modifier.size(90.dp)
+                    modifier = Modifier.size(85.dp)
                 )
                 Text(
                     text = "Back",
-                    color = ColorsDefaultTheme.color_Primary_on_green,
+                    color = ColorsDefaultTheme.color_Surface,
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .clickable { onBack() },
                     style = AppTypes.type_Body_Small
                 )
-
             }
 
-            Spacer(modifier = Modifier.height(366.dp))
+            Spacer(modifier = Modifier.height(330.dp))
 
             Text(
-                text = stringResource(id = R.string.username_msg),
+                text = stringResource(id = R.string.auth_msg),
                 color = ColorsDefaultTheme.text_color,
                 fontSize = 36.sp,
-                lineHeight = 32.sp,
+                lineHeight = 44.sp,
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = stringResource(id = R.string.username_sub_msg),
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 24.sp,
+                text = stringResource(id = R.string.password_sub_msg) + " " + "for $email",
+                color = ColorsDefaultTheme.text_color.copy(alpha = 0.8f),
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Light
             )
 
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(22.dp))
 
-            // Login Fields
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -118,7 +124,7 @@ fun PasswordSignInScreen(
                 TextField(
                     value = password,
                     onValueChange = { password = it },
-                    placeholder = { Text("Password", color = Color.Gray) },
+                    placeholder = { Text(stringResource(id = R.string.password_hint), color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp)),
@@ -127,62 +133,87 @@ fun PasswordSignInScreen(
                         unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
+                        focusedTextColor = ColorsDefaultTheme.color_On_surface,
+                        unfocusedTextColor = ColorsDefaultTheme.color_On_surface
                     ),
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(22.dp))
 
-                Button(
-                    onClick = {
-                        if (password.isNotEmpty()) {
-                            viewModel.signIn(
-                                email = "", // PasswordSignInScreen should ideally have email or receive it
-                                pass = password,
-                                onSuccess = { onSignInSuccess() },
-                                onError = { message ->
-                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            )
-                        } else {
-                            android.widget.Toast.makeText(context, "Please fill all fields", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ColorsDefaultTheme.color_Primary_green_container
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Sign-in",
-                        color = ColorsDefaultTheme.color_Primary_on_green,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
-                    )
+                    Row(
+                        modifier = Modifier.padding(end = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        repeat(3) { index ->
+                            val isActiveStep = index <= 2
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(5.dp)
+                                    .background(
+                                        color = if (isActiveStep) ColorsDefaultTheme.color_Primary_green else Color.White,
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Button(
+                        onClick = {
+                            if (password.isNotEmpty()) {
+                                viewModel.signIn(
+                                    email = email,
+                                    pass = password,
+                                    onSuccess = { onSignInSuccess() },
+                                    onError = { message ->
+                                        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            } else {
+                                android.widget.Toast.makeText(context, "Please enter your password", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier
+                            .width(180.dp)
+                            .height(60.dp),
+                        shape = RoundedCornerShape(26.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ColorsDefaultTheme.color_Primary_green
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.sign_in_btn_text),
+                            color = ColorsDefaultTheme.color_Surface,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
-}
 
 
 @Preview(showBackground = true)
 @Composable
 fun PasswordSignInScreenPreview() {
     ParentAppTheme {
-        // Provide a dummy UserDAO for the AuthViewModel in the preview
         val dummyUserDao = object : UserDAO {
             override suspend fun registerUser(user: UserEntity) {}
             override suspend fun loginUser(email: String, password: String): UserEntity? = null
         }
         val viewModel = remember { AuthViewModel(dummyUserDao) }
-
         PasswordSignInScreen(
+            email = "test@example.com",
             backgroundResId = R.drawable.bg_one_sign_screen,
             viewModel = viewModel,
             onBack = {},

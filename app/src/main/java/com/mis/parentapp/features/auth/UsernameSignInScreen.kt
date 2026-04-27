@@ -23,24 +23,18 @@ import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import com.mis.parentapp.data.UserDAO
-import com.mis.parentapp.data.UserEntity
 
 @Composable
 fun UsernameSignInScreen(
     backgroundResId: Int,
-    viewModel: AuthViewModel,
     onBack: () -> Unit,
-    onSignInSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit,
+    onNavigateToPassword: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = modifier.fillMaxSize()) {
-        // 1. Static Background passed from Onboarding
         Image(
             painter = painterResource(id = backgroundResId),
             contentDescription = null,
@@ -48,27 +42,32 @@ fun UsernameSignInScreen(
             contentScale = ContentScale.Crop
         )
 
-        // 2. Dark/Green Overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.5f),
-                            Color(0xFF0D230D).copy(alpha = 0.9f)
-                        )
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.26f),
+                            ColorsDefaultTheme.color_On_yellow.copy(alpha = 0.20f),
+                            ColorsDefaultTheme.color_Primary_green_container.copy(alpha = 0.90f),
+                            ColorsDefaultTheme.color_Primary_green_container
+                        ),
+                        startY = 600f
                     )
                 )
         )
 
-        // 3. Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 40.dp)
+                .padding(24.dp)
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
         ) {
-            // Header: Back Button and Logo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -77,41 +76,39 @@ fun UsernameSignInScreen(
                 Image(
                     painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
                     contentDescription = "Logo",
-                    modifier = Modifier.size(90.dp)
+                    modifier = Modifier.size(85.dp)
                 )
                 Text(
                     text = "Back",
-                    color = ColorsDefaultTheme.color_Primary_on_green,
+                    color = ColorsDefaultTheme.color_Surface,
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .clickable { onBack() },
                     style = AppTypes.type_Body_Small
                 )
-
             }
 
-            Spacer(modifier = Modifier.height(366.dp))
+            Spacer(modifier = Modifier.height(330.dp))
 
             Text(
-                text = stringResource(id = R.string.username_msg),
+                text = stringResource(id = R.string.auth_msg),
                 color = ColorsDefaultTheme.text_color,
                 fontSize = 36.sp,
-                lineHeight = 32.sp,
+                lineHeight = 44.sp,
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = stringResource(id = R.string.username_sub_msg),
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 24.sp,
+                color = ColorsDefaultTheme.text_color.copy(alpha = 0.8f),
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Light
             )
 
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(22.dp))
 
-            // Login Fields
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -120,7 +117,7 @@ fun UsernameSignInScreen(
                 TextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = { Text("Email", color = Color.Gray) },
+                    placeholder = { Text(stringResource(id = R.string.username_hint), color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp)),
@@ -129,85 +126,77 @@ fun UsernameSignInScreen(
                         unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
+                        focusedTextColor = ColorsDefaultTheme.color_On_surface,
+                        unfocusedTextColor = ColorsDefaultTheme.color_On_surface
                     ),
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
                 )
 
-                TextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = { Text("Password", color = Color.Gray) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = ColorsDefaultTheme.color_Surface,
-                        unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    singleLine = true
-                )
+                Spacer(modifier = Modifier.height(22.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = {
-                        if (email.isNotEmpty() && password.isNotEmpty()) {
-                            viewModel.signIn(
-                                email = email,
-                                pass = password,
-                                onSuccess = { onSignInSuccess() },
-                                onError = { message ->
-                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            )
-                        } else {
-                            android.widget.Toast.makeText(context, "Please fill all fields", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ColorsDefaultTheme.color_Primary_green_container
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Sign-in",
-                        color = ColorsDefaultTheme.color_Primary_on_green,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
-                    )
+                    Row(
+                        modifier = Modifier.padding(end = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        repeat(3) { index ->
+                            val isActiveStep = index <= 1
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(5.dp)
+                                    .background(
+                                        color = if (isActiveStep) ColorsDefaultTheme.color_Primary_green else Color.White,
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Button(
+                        onClick = {
+                            if (email.isNotEmpty()) {
+                                onNavigateToPassword(email)
+                            } else {
+                                android.widget.Toast.makeText(context, "Please enter your email", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier
+                            .width(180.dp)
+                            .height(60.dp),
+                        shape = RoundedCornerShape(26.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ColorsDefaultTheme.color_Primary_green
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.next_btn_txt),
+                            color = ColorsDefaultTheme.color_Surface,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun UsernameSignInScreenPreview() {
     ParentAppTheme {
-        // Provide a dummy UserDAO for the AuthViewModel in the preview
-        val dummyUserDao = object : UserDAO {
-            override suspend fun registerUser(user: UserEntity) {}
-            override suspend fun loginUser(email: String, password: String): UserEntity? = null
-        }
-        val viewModel = remember { AuthViewModel(dummyUserDao) }
-
         UsernameSignInScreen(
             backgroundResId = R.drawable.bg_one_sign_screen,
-            viewModel = viewModel,
             onBack = {},
-            onSignInSuccess = {},
-            onNavigateToSignUp = {}
+            onNavigateToPassword = {}
         )
     }
 }

@@ -16,10 +16,11 @@ import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.GetStartedScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
+import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.SignUp
+import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,21 +55,27 @@ fun AppNavigation() {
             val args = backStackEntry.toRoute<SignIn>()
             UsernameSignInScreen(
                 backgroundResId = args.backgroundResId,
+                onBack = { navController.popBackStack() },
+                onNavigateToPassword = { email ->
+                    navController.navigate(PasswordSignIn(args.backgroundResId, email))
+                }
+            )
+        }
+
+        composable<PasswordSignIn> { backStackEntry ->
+            val args = backStackEntry.toRoute<PasswordSignIn>()
+            PasswordSignInScreen(
+                email = args.email,
+                backgroundResId = args.backgroundResId,
                 viewModel = authViewModel,
                 onBack = { navController.popBackStack() },
                 onSignInSuccess = {
                     navController.navigate(MainContainer) {
                         popUpTo(OnBoarding) { inclusive = true }
                     }
-                },
-                onNavigateToSignUp = {
-                    navController.navigate(SignUp(args.backgroundResId)) {
-                        popUpTo(SignIn(args.backgroundResId)) { inclusive = true }
-                    }
                 }
             )
         }
-
 
         composable<MainContainer> {
             MainScreen()

@@ -35,12 +35,12 @@ object ColorsDefaultTheme {
     
     // Yellow colors
     val color_Yellow = Color(0xFFDEF731)
-    val color_Yellow_container = Color(0xFFFAFD0B)
+    //val color_Yellow_container = Color(0xFFFAFD0B)
     val color_On_yellow = Color(0xFFE6EA85)
 
     // Error colors
     val color_Error = Color(0xFFB3261E)
-    val color_On_error = Color(0xFFFFFFFF)
+    //val color_On_error = Color(0xFFFFFFFF)
 
     // Surface colors
     val color_Surface = Color(0xFFF6FDE7)
@@ -50,9 +50,9 @@ object ColorsDefaultTheme {
     val text_color = Color(0xFFFFFFFF)
 
     // Legacy references (kept for compatibility)
-    val color_Surface_surface = color_Surface
+   // val color_Surface_surface = color_Surface
     val color_Surface_on_surface = color_On_surface
-    val color_Background_on_background = Color(0xFF1C1B1F)
+    //val color_Background_on_background = Color(0xFF1C1B1F)
 }
 
 object AppTypes {

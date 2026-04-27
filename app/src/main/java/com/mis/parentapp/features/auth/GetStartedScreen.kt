@@ -1,5 +1,6 @@
 package com.mis.parentapp.features.auth
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -26,6 +27,7 @@ import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.yield
+import kotlin.math.absoluteValue
 
 @Composable
 fun GetStartedScreen(
@@ -44,7 +46,10 @@ fun GetStartedScreen(
         while (true) {
             yield()
             delay(5000)
-            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+            pagerState.animateScrollToPage(
+                page = pagerState.currentPage + 1,
+                animationSpec = tween(durationMillis = 2000)
+            )
         }
     }
 
@@ -59,12 +64,14 @@ fun GetStartedScreen(
             Image(
                 painter = painterResource(id = imageResId),
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop, // Added missing comma here
-                colorFilter = ColorFilter.tint(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    blendMode = androidx.compose.ui.graphics.BlendMode.Darken
-                )
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        val pageOffset =
+                            ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).absoluteValue
+                        alpha = 1f - pageOffset.coerceIn(0f, 1f)
+                    },
+                contentScale = ContentScale.Crop,
             )
         }
 
@@ -161,7 +168,7 @@ fun GetStartedScreen(
                 ) {
                     Text(
                         text = stringResource(id = R.string.get_started_btn_text),
-                        color = Color.White,
+                        color = ColorsDefaultTheme.color_Surface,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )

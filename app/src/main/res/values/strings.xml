@@ -8,9 +8,9 @@
     <string name="get_started_btn_text">Get Started</string>
 
     <!-- Sign In screen strings -->
-    <string name="username_msg">Let\'s start by signing you in.</string>
+    <string name="auth_msg">Let\'s start by signing you in</string>
     <string name="username_sub_msg">Enter your username below</string>
-    <string name="password_sub_msg">Enter your password below</string>
+    <string name="password_sub_msg">Enter your password </string>
     <string name="username_hint">Username</string>
     <string name="password_hint">Password</string>
     <string name="sign_in_btn_text">Sign In</string>
