@@ -6,16 +6,16 @@
   <tr>
     <td align="center">
       <a href="https://github.com/CarlXT">
-        <img src="https://avatars.githubusercontent.com/u/122094952?v=4" width="100" style="border-radius:50%; display:block;" alt="CarlXT"/><br />
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/CarlXT.png" width="100px;" alt="CarlXT"/>
         <sub><b>Carl Sagario</b></sub>
-        <sub><b>Tech lead</b></sub>
+        <p><b>Tech lead</b></p>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/Fallen032">
-        <img src="https://avatars.githubusercontent.com/u/94450839?v=4" width="100px;" style="border-radius:50%;" alt="Fallen032"/><br />
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Falleb032.png" width="100px;" alt="Fallen032"/>
         <sub><b>Serge Keneth Lim</b></sub>
-        <sub><b>Developer</b></sub>
+        <p><b>Developer</b></p>
       </a>
     </td>
   </tr>
