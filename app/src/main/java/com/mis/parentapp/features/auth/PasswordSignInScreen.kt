@@ -28,7 +28,7 @@ import com.mis.parentapp.data.UserEntity
 
 @Composable
 fun PasswordSignInScreen(
-    email: String,
+    username: String,
     backgroundResId: Int,
     viewModel: AuthViewModel,
     onBack: () -> Unit,
@@ -108,7 +108,7 @@ fun PasswordSignInScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = stringResource(id = R.string.password_sub_msg) + " " + "for $email",
+                text = stringResource(id = R.string.password_sub_msg) + " " + "for $username",
                 color = ColorsDefaultTheme.text_color.copy(alpha = 0.8f),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Light
@@ -170,7 +170,7 @@ fun PasswordSignInScreen(
                         onClick = {
                             if (password.isNotEmpty()) {
                                 viewModel.signIn(
-                                    email = email,
+                                    username = username,
                                     pass = password,
                                     onSuccess = { onSignInSuccess() },
                                     onError = { message ->
@@ -213,7 +213,7 @@ fun PasswordSignInScreenPreview() {
         }
         val viewModel = remember { AuthViewModel(dummyUserDao) }
         PasswordSignInScreen(
-            email = "test@example.com",
+            username = "test@example.com",
             backgroundResId = R.drawable.bg_one_sign_screen,
             viewModel = viewModel,
             onBack = {},
