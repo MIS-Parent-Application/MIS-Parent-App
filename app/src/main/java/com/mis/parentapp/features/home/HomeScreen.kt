@@ -21,8 +21,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,10 +53,34 @@ import com.mis.parentapp.navigation.UpcomingEvents
 
 
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    // This controller only handles navigation INSIDE the Home tab
     val homeNavController = rememberNavController()
+    // State for the bottom drawer
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState()
+    var showSheet by remember { mutableStateOf(false) }
+
+    // This handles the bottom drawer visibility and content
+    if (showSheet) {
+        androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            // Drawer Content
+            HomeMenuDrawer(
+                onItemClick = { route ->
+                    showSheet = false // Close drawer
+                    when (route) {
+                        "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
+                        "Recent activities" -> homeNavController.navigate(RecentActivities)
+                        // Add "Analytics" here if you create a route for it later
+                    }
+                }
+            )
+        }
+    }
 
     NavHost(
         navController = homeNavController,
@@ -63,20 +89,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     ) {
         composable<Home> {
             Body(
-                onNotificationClick = {
-                    homeNavController.navigate(Notification)
-                },
-                onFilterClick = { label ->
-                    when (label) {
-                        "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
-                        "Recent activities" -> homeNavController.navigate(RecentActivities)
-                    }
-                }
+                onNotificationClick = { homeNavController.navigate(Notification) },
+                onMenuClick = { showSheet = true } // Trigger drawer
             )
         }
 
         composable<Notification> {
-            // Pass a lambda to handle the back button within the sub-screen
             NotificationScreen(onBackClick = { homeNavController.popBackStack() })
         }
 
@@ -94,7 +112,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 fun Body(
     modifier: Modifier = Modifier,
     onNotificationClick: () -> Unit,
-    onFilterClick: (String) -> Unit
+    onMenuClick: () -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -114,70 +132,46 @@ fun Body(
                 Image(
                     painter = painterResource(id = R.drawable.school_logo),
                     contentDescription = "School Logo",
-                    modifier = Modifier
-                        .requiredSize(56.dp)
-                        .clickable { /* Handle logo click */ }
+                    modifier = Modifier.requiredSize(56.dp)
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.formkit_date),
                         contentDescription = "Date",
-                        modifier = Modifier
-                            .requiredSize(32.dp)
-                            .clickable { /* Handle date click */ }
+                        modifier = Modifier.requiredSize(28.dp)
                     )
                     Image(
                         painter = painterResource(id = R.drawable.ph_bell),
                         contentDescription = "Notifications",
                         modifier = Modifier
-                            .requiredSize(32.dp)
+                            .requiredSize(28.dp)
                             .clickable { onNotificationClick() }
                     )
                     Image(
                         painter = painterResource(id = R.drawable.studentswitcher),
                         contentDescription = "Student Switcher",
                         modifier = Modifier
-                            .requiredSize(36.dp)
-                            .clip(CircleShape)
-                            .clickable { /* Handle switcher click */ },
+                            .requiredSize(32.dp)
+                            .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
-                }
-            }
-        }
-        item {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .horizontalScroll(rememberScrollState())
-            ) {
-                listOf("All", "Analytics", "Upcoming events", "Recent activities").forEach { label ->
-                    val isSelected = label == "All"
-                    val buttonContainerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5)
-                    val buttonContentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
-                    Button(
-                        onClick = { onFilterClick(label) },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = buttonContainerColor,
-                            contentColor = buttonContentColor
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                        modifier = Modifier.height(36.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            style = AppTypes.type_M3_label_small)
+                    // NEW BURGER MENU ICON
+                    androidx.compose.material3.IconButton(onClick = onMenuClick) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = ColorsDefaultTheme.color_Primary_green
+                        )
                     }
                 }
             }
         }
+
+        // Horizontal filter buttons have been REMOVED as requested
+
         item {
             Image(
                 painter = painterResource(id = R.drawable.card),
@@ -189,62 +183,84 @@ fun Body(
                 contentScale = ContentScale.FillWidth
             )
         }
+
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = "Quick Stats",
-                    color = Color(0xFF1B4D13),
-                    style = AppTypes.type_H1,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    StatCard(
-                        label = "Attendance",
-                        value = "98%",
-                        iconRes = R.drawable.boxicons_calendar_check_filled,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        label = "GPA",
-                        value = "1.5",
-                        iconRes = R.drawable.material_symbols_owl,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    StatCard(
-                        label = "Pending due",
-                        value = "0.00",
-                        iconRes = R.drawable.boxicons_wallet_filled,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        label = "Notifications",
-                        value = "2",
-                        iconRes = R.drawable.fluent_color_megaphone_loud_32,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+            QuickStatsSection()
         }
+
         item {
             SectionPlaceholder(title = "Upcoming Events", emptyText = "No events yet.")
         }
         item {
             SectionPlaceholder(title = "Recent Activities", emptyText = "No activities yet.")
+        }
+    }
+}
+
+@Composable
+fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 32.dp, start = 16.dp, end = 16.dp)
+    ) {
+        Text(
+            text = "Menu",
+            style = AppTypes.type_H1,
+            color = Color(0xFF1B4D13),
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        val menuItems = listOf("Analytics", "Upcoming events", "Recent activities")
+        menuItems.forEach { label ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onItemClick(label) }
+                    .padding(vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = label,
+                    style = AppTypes.type_H1.copy(fontSize = 18.sp),
+                    color = ColorsDefaultTheme.color_Surface_on_surface
+                )
+            }
+            androidx.compose.material3.HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+        }
+    }
+}
+
+// Extracted for cleanliness
+@Composable
+fun QuickStatsSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Quick Stats",
+            color = Color(0xFF1B4D13),
+            style = AppTypes.type_H1,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard("Attendance", "98%", R.drawable.boxicons_calendar_check_filled, Modifier.weight(1f))
+            StatCard("GPA", "1.5", R.drawable.material_symbols_owl, Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard("Pending due", "0.00", R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
+            StatCard("Notifications", "2", R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
         }
     }
 }
@@ -267,8 +283,8 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
             colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
         )
         Text(
-            text = label, 
-            style = AppTypes.type_Caption, 
+            text = label,
+            style = AppTypes.type_Caption,
             color = Color(0xFF1C1B1F),
             modifier = Modifier.align(Alignment.TopEnd)
         )
@@ -290,8 +306,8 @@ fun SectionPlaceholder(title: String, emptyText: String) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = title, 
-            color = Color(0xFF1B4D13), 
+            text = title,
+            color = Color(0xFF1B4D13),
             style = AppTypes.type_H1,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
@@ -311,8 +327,8 @@ fun SectionPlaceholder(title: String, emptyText: String) {
                 contentScale = ContentScale.Fit
             )
             Text(
-                text = emptyText, 
-                style = AppTypes.type_Body_Small, 
+                text = emptyText,
+                style = AppTypes.type_Body_Small,
                 color = ColorsDefaultTheme.color_Primary_on_green,
                 modifier = Modifier.padding(top = 8.dp)
             )
