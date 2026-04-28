@@ -81,7 +81,6 @@ object AppTypes {
     )
 }
 
-
 @Composable
 fun ParentAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

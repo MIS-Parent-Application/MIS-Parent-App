@@ -4,51 +4,51 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
+import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.GetStartedScreen
 import com.mis.parentapp.features.auth.SignInScreen
-import com.mis.parentapp.features.auth.SignUpScreen
-import com.mis.parentapp.features.onboard.OnBoardingScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             ParentAppTheme {
-                AppNavigation()
+                MainScreen()
             }
         }
     }
+}
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val database = remember { AppDatabase.getDatabase(context) }
+    val authViewModel = remember { AuthViewModel(database.userDao()) }
+
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {
-            OnBoardingScreen(
-                onSignInClick = { backgroundResId ->
-                    navController.navigate(SignIn(backgroundResId))
-                },
-                onCreateAccountClick = { backgroundResId ->
-                    navController.navigate(SignUp(backgroundResId))
+            GetStartedScreen(
+                onNavigateToSignIn = { bgId ->
+                    navController.navigate(SignIn(bgId))
                 }
             )
         }
+
         composable<SignIn> { backStackEntry ->
             val args = backStackEntry.toRoute<SignIn>()
             SignInScreen(
                 backgroundResId = args.backgroundResId,
+                viewModel = authViewModel,
                 onBack = { navController.popBackStack() },
                 onSignInSuccess = {
                     navController.navigate(MainContainer) {
@@ -57,13 +57,8 @@ fun AppNavigation() {
                 }
             )
         }
-        composable<SignUp> { backStackEntry ->
-            val args = backStackEntry.toRoute<SignUp>()
-            SignUpScreen(
-                backgroundResId = args.backgroundResId,
-                onBack = { navController.popBackStack() }
-            )
-        }
+
+
         composable<MainContainer> {
             MainScreen()
         }

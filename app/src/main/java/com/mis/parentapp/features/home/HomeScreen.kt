@@ -1,5 +1,7 @@
 package com.mis.parentapp.features.home
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,18 +38,93 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
+import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.navigation.Notification
+import com.mis.parentapp.navigation.RecentActivities
+import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.network.ParentDashboard
+
+
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    Body(modifier)
+    // This controller only handles navigation INSIDE the Home tab
+    val homeNavController = rememberNavController()
+
+    NavHost(
+        navController = homeNavController,
+        startDestination = Home,
+        modifier = modifier.fillMaxSize()
+    ) {
+        composable<Home> {
+            Body(
+                onNotificationClick = {
+                    homeNavController.navigate(Notification)
+                },
+                onFilterClick = { label ->
+                    when (label) {
+                        "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
+                        "Recent activities" -> homeNavController.navigate(RecentActivities)
+                    }
+                }
+            )
+        }
+
+        composable<Notification> {
+            // Pass a lambda to handle the back button within the sub-screen
+            NotificationScreen(onBackClick = { homeNavController.popBackStack() })
+        }
+
+        composable<UpcomingEvents> {
+            UpcomingEventsScreen(onBackClick = { homeNavController.popBackStack() })
+        }
+
+        composable<RecentActivities> {
+            RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
+        }
+    }
 }
 
 @Composable
-fun Body(modifier: Modifier = Modifier) {
+fun Body(
+
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit,
+    onFilterClick: (String) -> Unit
+)
+{
+
+    var attendance by remember { mutableStateOf("98%") }
+    var gpa by remember { mutableStateOf("1.5") }
+    var pending by remember { mutableStateOf("0.00") }
+    var notifications by remember { mutableStateOf("2") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val data = RetrofitInstance.api.getDashboard()
+
+            Log.d("API_TEST", "SUCCESS: $data")
+
+            val child = data.children.firstOrNull()
+
+            attendance = child?.attendance ?: "98%"
+            gpa = child?.gpa?.toString() ?: "1.5"
+            pending = child?.pendingPayments?.toString() ?: "0.00"
+            notifications = data.unreadAnnouncements.toString()
+
+        } catch (e: Exception) {
+            Log.e("API_TEST", "ERROR: ${e.message}")
+        }
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
@@ -85,7 +163,7 @@ fun Body(modifier: Modifier = Modifier) {
                         contentDescription = "Notifications",
                         modifier = Modifier
                             .requiredSize(32.dp)
-                            .clickable { /* Handle notification click */ }
+                            .clickable { onNotificationClick() }
                     )
                     Image(
                         painter = painterResource(id = R.drawable.studentswitcher),
@@ -113,7 +191,7 @@ fun Body(modifier: Modifier = Modifier) {
                     val buttonContainerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5)
                     val buttonContentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
                     Button(
-                        onClick = { },
+                        onClick = { onFilterClick(label) },
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = buttonContainerColor,
@@ -154,20 +232,20 @@ fun Body(modifier: Modifier = Modifier) {
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     StatCard(
                         label = "Attendance",
-                        value = "98%",
+                        value = attendance,
                         iconRes = R.drawable.boxicons_calendar_check_filled,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         label = "GPA",
-                        value = "1.5",
+                        value = gpa,
                         iconRes = R.drawable.material_symbols_owl,
                         modifier = Modifier.weight(1f)
                     )
@@ -178,13 +256,13 @@ fun Body(modifier: Modifier = Modifier) {
                 ) {
                     StatCard(
                         label = "Pending due",
-                        value = "0.00",
+                        value = pending,
                         iconRes = R.drawable.boxicons_wallet_filled,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         label = "Notifications",
-                        value = "2",
+                        value = notifications,
                         iconRes = R.drawable.fluent_color_megaphone_loud_32,
                         modifier = Modifier.weight(1f)
                     )
@@ -218,8 +296,8 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
             colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
         )
         Text(
-            text = label, 
-            style = AppTypes.type_Caption, 
+            text = label,
+            style = AppTypes.type_Caption,
             color = Color(0xFF1C1B1F),
             modifier = Modifier.align(Alignment.TopEnd)
         )
@@ -241,8 +319,8 @@ fun SectionPlaceholder(title: String, emptyText: String) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = title, 
-            color = Color(0xFF1B4D13), 
+            text = title,
+            color = Color(0xFF1B4D13),
             style = AppTypes.type_H1,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
@@ -262,8 +340,8 @@ fun SectionPlaceholder(title: String, emptyText: String) {
                 contentScale = ContentScale.Fit
             )
             Text(
-                text = emptyText, 
-                style = AppTypes.type_Body_Small, 
+                text = emptyText,
+                style = AppTypes.type_Body_Small,
                 color = ColorsDefaultTheme.color_Primary_on_green,
                 modifier = Modifier.padding(top = 8.dp)
             )
