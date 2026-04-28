@@ -1,9 +1,10 @@
 package com.mis.parentapp.features.services
 
-import android.annotation.SuppressLint // ✅ ADDED: Needed to suppress lint warning
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
-import android.os.Build
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
@@ -44,17 +45,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.itextpdf.text.Document
-import com.itextpdf.text.Element
-import com.itextpdf.text.Font
-import com.itextpdf.text.Paragraph
+import com.itextpdf.text.*
+import com.itextpdf.text.pdf.PdfPCell
+import com.itextpdf.text.pdf.PdfPTable
 import com.itextpdf.text.pdf.PdfWriter
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import java.io.File
-import java.io.FileOutputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
@@ -66,7 +65,8 @@ data class PaymentRecord(
     val purchasedItem: String,
     val paymentOption: String,
     val paidDate: String,
-    val totalAmount: Double
+    val totalAmount: Double,
+    val pdfBreakdown: String = ""
 )
 
 // ================= SERVICES SCREEN =================
@@ -397,9 +397,9 @@ fun PaymentHistorySection(
     }
 }
 
-// ================= OFFICIAL ANDROID DOWNLOAD LOGIC (FIXED) =================
+// ================= OFFICIAL ANDROID DOWNLOAD LOGIC =================
 
-@SuppressLint("NewApi") // ✅ ADDED: Suppresses the API level warning
+@SuppressLint("NewApi")
 private fun generateReceiptPDF(context: Context, record: PaymentRecord) {
     try {
         val fileName = "Receipt_${record.invoiceNumber}.pdf"
@@ -407,9 +407,8 @@ private fun generateReceiptPDF(context: Context, record: PaymentRecord) {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-            // Save to main Downloads folder
             put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-            put(MediaStore.MediaColumns.IS_PENDING, 1) // Flag as pending download
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
 
         val resolver = context.contentResolver
@@ -417,10 +416,9 @@ private fun generateReceiptPDF(context: Context, record: PaymentRecord) {
             ?: throw IOException("Failed to create MediaStore entry")
 
         resolver.openOutputStream(uri)?.use { outputStream ->
-            createPdfContent(outputStream, record)
+            createPdfContent(context, outputStream, record)
         }
 
-        // Mark download as complete so it becomes visible immediately
         contentValues.clear()
         contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
         resolver.update(uri, contentValues, null, null)
@@ -433,31 +431,194 @@ private fun generateReceiptPDF(context: Context, record: PaymentRecord) {
     }
 }
 
-private fun createPdfContent(outputStream: OutputStream, record: PaymentRecord) {
+// ================= CONVERT NUMBER TO WORDS =================
+
+// ================= CONVERT NUMBER TO WORDS (FIXED FOR PH PESOS) =================
+
+private fun numberToWords(amount: Double): String {
+    val ones = arrayOf("", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE",
+        "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN",
+        "SEVENTEEN", "EIGHTEEN", "NINETEEN")
+    val tens = arrayOf("", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY")
+
+    val wholeAmount = amount.toInt()
+    if (wholeAmount == 0) return "ZERO PESOS ONLY"
+
+    var result = ""
+
+    // Handle thousands
+    if (wholeAmount >= 1000) {
+        val thousands = wholeAmount / 1000
+        result += convertHundreds(thousands, ones, tens) + "THOUSAND "
+    }
+
+    // Handle remaining hundreds/tens/ones
+    val remainder = wholeAmount % 1000
+    if (remainder > 0) {
+        result += convertHundreds(remainder, ones, tens)
+    }
+
+    return result.trim() + " PESOS ONLY"
+}
+
+// Helper function to correctly convert 0-999
+private fun convertHundreds(num: Int, ones: Array<String>, tens: Array<String>): String {
+    var res = ""
+    val hundreds = num / 100
+    val remainder = num % 100
+
+    if (hundreds > 0) {
+        res += "${ones[hundreds]} HUNDRED "
+        if (remainder > 0) res += "AND "
+    }
+
+    if (remainder >= 20) {
+        res += "${tens[remainder / 10]} "
+        if (remainder % 10 > 0) res += "${ones[remainder % 10]} "
+    } else if (remainder > 0) {
+        res += "${ones[remainder]} "
+    }
+    return res
+}
+// ================= UPDATED PDF GENERATION WITH STAMP =================
+
+private fun createPdfContent(context: Context, outputStream: OutputStream, record: PaymentRecord) {
     val document = Document()
     val pdfWriter = PdfWriter.getInstance(document, outputStream)
     document.open()
 
+    // 1. Add Logo
+    try {
+        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.school_logo)
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        val image = Image.getInstance(stream.toByteArray())
+        image.scaleToFit(100f, 100f)
+        image.alignment = Element.ALIGN_CENTER
+        document.add(image)
+        document.add(Chunk.NEWLINE)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+    // 2. Title
     val titleFont = Font(Font.FontFamily.HELVETICA, 18f, Font.BOLD)
-    val title = Paragraph("Payment Receipt", titleFont)
+    titleFont.color = BaseColor(27, 77, 19)
+    val title = Paragraph("OFFICIAL SCHOOL RECEIPT", titleFont)
     title.alignment = Element.ALIGN_CENTER
     document.add(title)
-    document.add(Paragraph("\n"))
+    document.add(Chunk.NEWLINE)
 
-    val normalFont = Font(Font.FontFamily.HELVETICA, 12f, Font.NORMAL)
-    val boldFont = Font(Font.FontFamily.HELVETICA, 12f, Font.BOLD)
+// 3. Top Info
+    val normalFont = Font(Font.FontFamily.HELVETICA, 10f, Font.NORMAL)
+    val boldFont = Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD)
 
-    document.add(Paragraph("Invoice Number: ${record.invoiceNumber}", normalFont))
-    document.add(Paragraph("Purchased Item: ${record.purchasedItem}", normalFont))
-    document.add(Paragraph("Payment Option: ${record.paymentOption}", normalFont))
-    document.add(Paragraph("Paid Date: ${record.paidDate}", normalFont))
-    document.add(Paragraph("Total Amount: PHP ${"%.2f".format(record.totalAmount)}", boldFont))
+// Receipt Number & Date
+    document.add(Paragraph("Receipt Number: ${record.invoiceNumber}          Date: ${record.paidDate}", boldFont))
+    document.add(Chunk.NEWLINE) // ✅ Added extra spacing between date and student info
+
+// Student Info with default values
+    document.add(Paragraph("Student Name: Nathaniel B. McClure", normalFont))
+    document.add(Paragraph("Student ID: ____________________          Course/Level: BSIT-3", normalFont))
+    document.add(Chunk.NEWLINE)
+
+    // 4. Items Table
+    val table = PdfPTable(3)
+    table.widthPercentage = 100f
+    table.setWidths(floatArrayOf(50f, 20f, 30f))
+
+    val headerFont = Font(Font.FontFamily.HELVETICA, 10f, Font.BOLD)
+    headerFont.color = BaseColor(27, 77, 19)
+
+    val cell1 = PdfPCell(Phrase("Item Description", headerFont))
+    cell1.horizontalAlignment = Element.ALIGN_CENTER
+    table.addCell(cell1)
+
+    val cell2 = PdfPCell(Phrase("Quantity", headerFont))
+    cell2.horizontalAlignment = Element.ALIGN_CENTER
+    table.addCell(cell2)
+
+    val cell3 = PdfPCell(Phrase("Amount", headerFont))
+    cell3.horizontalAlignment = Element.ALIGN_CENTER
+    table.addCell(cell3)
+
+    if (record.pdfBreakdown.isNotEmpty()) {
+        val items = record.pdfBreakdown.split("\n")
+        items.forEach { itemLine ->
+            val parts = itemLine.split("|")
+            if (parts.size == 3) {
+                // Item Description (left-aligned)
+                table.addCell(Phrase(parts[0], normalFont))
+
+                // Quantity (centered)
+                val qtyCell = PdfPCell(Phrase(parts[1], normalFont))
+                qtyCell.horizontalAlignment = Element.ALIGN_CENTER
+                table.addCell(qtyCell)
+
+                // Amount (right-aligned for currency)
+                val amountCell = PdfPCell(Phrase("PHP ${parts[2]}", normalFont))
+                amountCell.horizontalAlignment = Element.ALIGN_RIGHT
+                table.addCell(amountCell)
+            }
+        }
+    }
+
+    repeat(5) {
+        table.addCell(Phrase("", normalFont))
+        table.addCell(Phrase("", normalFont))
+        table.addCell(Phrase("", normalFont))
+    }
+
+    val subTotalCell = PdfPCell(Phrase("Subtotal", boldFont))
+    subTotalCell.colspan = 2
+    subTotalCell.horizontalAlignment = Element.ALIGN_RIGHT
+    subTotalCell.border = Rectangle.NO_BORDER
+    table.addCell(subTotalCell)
+    table.addCell(Phrase("PHP ${"%.2f".format(record.totalAmount)}", boldFont))
+
+    val totalCell = PdfPCell(Phrase("Total Amount Paid", boldFont))
+    totalCell.colspan = 2
+    totalCell.horizontalAlignment = Element.ALIGN_RIGHT
+    totalCell.border = Rectangle.NO_BORDER
+    table.addCell(totalCell)
+    table.addCell(Phrase("PHP ${"%.2f".format(record.totalAmount)}", boldFont))
+
+    document.add(table)
+    document.add(Chunk.NEWLINE)
+
+    // 5. Amount in Words
+    val amountInWords = numberToWords(record.totalAmount)
+    document.add(Paragraph("Amount in Words: $amountInWords", boldFont))
+    document.add(Chunk.NEWLINE)
+
+    document.add(Paragraph("Payment Method: ${record.paymentOption}", normalFont))
+    document.add(Chunk.NEWLINE)
+    document.add(Chunk.NEWLINE)
+
+    // Signature Line
+    document.add(Paragraph("_________________________________", normalFont))
+    document.add(Paragraph("Cashier/Authorized Representative", normalFont))
+
 
     document.close()
 }
 
+// ================= ADD SEMI-TRANSPARENT STAMP FUNCTION =================
 
-// ================= FILTERING FUNCTION (CALENDAR-BASED) =================
+// ================= ADD SEMI-TRANSPARENT STAMP FUNCTION =================
+
+// ================= ADD STAMP FUNCTION (SIMPLIFIED) =================
+
+// ================= ADD SEMI-TRANSPARENT STAMP (CORRECTED) =================
+
+// ================= ADD STAMP FUNCTION (NO ERRORS) =================
+
+// ================= ADD SEMI-TRANSPARENT STAMP (FINAL FIX) =================
+
+// ================= ADD STAMP (WORKING - NO TRANSPARENCY) =================
+
+
+// ================= FILTERING FUNCTION =================
 
 private fun filterPaymentHistory(
     paymentHistory: List<PaymentRecord>,
@@ -512,7 +673,7 @@ private fun filterPaymentHistory(
     }
 }
 
-// ================= ORIGINAL FEECARD (WITH DOWNLOAD) =================
+// ================= FEECARD =================
 
 @Composable
 fun FeeCard(
@@ -598,7 +759,7 @@ private fun BodyPreview() {
     }
 }
 
-// ================= NEW FUNCTIONALITY ONLY (ADDED AT BOTTOM) =================
+// ================= PAYMENT SCREEN =================
 
 data class DueItem(val name: String, val price: Double)
 
@@ -624,7 +785,6 @@ fun ContributionDuesSelectionScreen(
             .background(Color.White)
             .padding(16.dp)
     ) {
-        // Top Bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -647,7 +807,6 @@ fun ContributionDuesSelectionScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Items List
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.weight(1f)
@@ -657,7 +816,6 @@ fun ContributionDuesSelectionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // LEFT SIDE: Orange Box + Info + View Button
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -692,7 +850,6 @@ fun ContributionDuesSelectionScreen(
                         }
                     }
 
-                    // RIGHT SIDE: Light Green Box + Quantity Controls
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -752,7 +909,6 @@ fun ContributionDuesSelectionScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Bottom Summary
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -784,24 +940,51 @@ fun ContributionDuesSelectionScreen(
                         val records = mutableListOf<PaymentRecord>()
                         val currentDate = SimpleDateFormat("MM-dd-yy | h:mm a", Locale.getDefault()).format(Date())
                         val currentMonthYear = SimpleDateFormat("MMyyyy", Locale.getDefault()).format(Date())
-                        var counter = currentInvoiceNumber
+
+                        val purchasedItems = mutableListOf<String>()
+                        val pdfBreakdown = StringBuilder()
+                        var combinedTotalAmount = 0.0
+
+                        var hasSchoolUniform = false
+                        var hasPEUniform = false
+
                         items.forEachIndexed { index, item ->
                             val qty = quantities[index]
                             if (qty > 0) {
-                                val invoiceNumber = "#${currentMonthYear}${String.format("%02d", counter)}"
-                                records.add(
-                                    PaymentRecord(
-                                        invoiceNumber = invoiceNumber,
-                                        purchasedItem = item.name,
-                                        paymentOption = "G-Cash",
-                                        paidDate = currentDate,
-                                        totalAmount = item.price * qty
-                                    )
-                                )
-                                counter++
+                                purchasedItems.add(item.name)
+
+                                if (item.name == "School uniform") hasSchoolUniform = true
+                                if (item.name == "P.E. uniform") hasPEUniform = true
+
+                                if (pdfBreakdown.isNotEmpty()) pdfBreakdown.append("\n")
+                                pdfBreakdown.append("${item.name}|$qty|${"%.2f".format(item.price * qty)}")
+
+                                combinedTotalAmount += item.price * qty
                             }
                         }
-                        if (records.isNotEmpty()) onPaymentSuccess(records)
+
+                        if (purchasedItems.isNotEmpty()) {
+                            val invoiceNumber = "#${currentMonthYear}${String.format("%02d", currentInvoiceNumber)}"
+
+                            val combinedDescription = if (hasSchoolUniform && hasPEUniform) {
+                                "School uniform"
+                            } else {
+                                purchasedItems.joinToString(", ")
+                            }
+
+                            records.add(
+                                PaymentRecord(
+                                    invoiceNumber = invoiceNumber,
+                                    purchasedItem = combinedDescription,
+                                    paymentOption = "G-Cash",
+                                    paidDate = currentDate,
+                                    totalAmount = combinedTotalAmount,
+                                    pdfBreakdown = pdfBreakdown.toString()
+                                )
+                            )
+
+                            onPaymentSuccess(records)
+                        }
                     },
                     enabled = totalItems > 0,
                     colors = ButtonDefaults.buttonColors(
