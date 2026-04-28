@@ -7,11 +7,12 @@ plugins {
 
 android {
     namespace = "com.mis.parentapp"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.mis.parentapp"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"

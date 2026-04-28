@@ -15,7 +15,6 @@
         android:theme="@style/Theme.ParentApp"
         android:usesCleartextTraffic="true">
 
-        android:theme="@style/Theme.ParentApp">
         <activity
             android:name=".MainActivity"
             android:exported="true"
