@@ -2,7 +2,22 @@
 
 [![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
 
-[![Carl Sagario](https://github.com/CarlXT.png?size=200)](https://github.com/CarlXT)
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/CarlXT">
+        <img src="https://github.com/CarlXT.png?size=200" width="100px;" style="border-radius:50%;" alt="CarlXT"/><br />
+        <sub><b>Carl Sagario</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Fallen032">
+        <img src="https://github.com/Fallen032.png?size=200" width="100px;" style="border-radius:50%;" alt="Fallen032"/><br />
+        <sub><b>Serge Keneth Lim</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 ![MIS Parent App Banner](https://github.com/user-attachments/assets/abdc165d-234e-4263-8b16-76bef772de4f)
 
