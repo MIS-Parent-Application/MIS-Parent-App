@@ -4,28 +4,35 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.GetStartedScreen
-import com.mis.parentapp.features.auth.SignInScreen
+import com.mis.parentapp.features.auth.UsernameSignInScreen
+import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
+import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         setContent {
             ParentAppTheme {
-                MainScreen()
+                AppNavigation()
             }
         }
     }
-}
 }
 
 @Composable
@@ -46,7 +53,19 @@ fun AppNavigation() {
 
         composable<SignIn> { backStackEntry ->
             val args = backStackEntry.toRoute<SignIn>()
-            SignInScreen(
+            UsernameSignInScreen(
+                backgroundResId = args.backgroundResId,
+                onBack = { navController.popBackStack() },
+                onNavigateToPassword = { email ->
+                    navController.navigate(PasswordSignIn(args.backgroundResId, email))
+                }
+            )
+        }
+
+        composable<PasswordSignIn> { backStackEntry ->
+            val args = backStackEntry.toRoute<PasswordSignIn>()
+            PasswordSignInScreen(
+                email = args.email,
                 backgroundResId = args.backgroundResId,
                 viewModel = authViewModel,
                 onBack = { navController.popBackStack() },
@@ -57,7 +76,6 @@ fun AppNavigation() {
                 }
             )
         }
-
 
         composable<MainContainer> {
             MainScreen()
