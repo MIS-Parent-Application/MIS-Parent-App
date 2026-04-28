@@ -1,5 +1,7 @@
 # MIS Parent App
 
+[![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
+
 ![MIS Parent App Banner](https://github.com/user-attachments/assets/abdc165d-234e-4263-8b16-76bef772de4f)
 
 ## 📌 Overview
