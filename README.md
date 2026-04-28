@@ -4,7 +4,7 @@
 
 <table border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: none;">
   <tr>
-    <td align="center style="border: none;">
+    <td align="center" style="border: none;">
       <a href="https://github.com/CarlXT">
         <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/CarlXT.png" width="100px;" alt="CarlXT"/>
         <br />
@@ -13,7 +13,7 @@
         <sub><i>Tech Lead</i></sub>
       </a>
     </td>
-    <td align="center style="border: none;">
+    <td align="center" style="border: none;">
       <a href="https://github.com/Fallen032">
         <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Fallen032.png" width="100px;" alt="Fallen032"/>
         <br />
