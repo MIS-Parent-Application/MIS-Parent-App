@@ -6,14 +6,16 @@
   <tr>
     <td align="center">
       <a href="https://github.com/CarlXT">
-        <img src="https://github.com/CarlXT.png?size=200" width="100px;" style="border-radius:50%;" alt="CarlXT"/><br />
+        <img src="https://avatars.githubusercontent.com/u/122094952?v=4" width="100" style="border-radius:50%; display:block;" alt="CarlXT"/><br />
         <sub><b>Carl Sagario</b></sub>
+        <sub><b>Tech lead</b></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/Fallen032">
-        <img src="https://github.com/Fallen032.png?size=200" width="100px;" style="border-radius:50%;" alt="Fallen032"/><br />
+        <img src="https://avatars.githubusercontent.com/u/94450839?v=4" width="100px;" style="border-radius:50%;" alt="Fallen032"/><br />
         <sub><b>Serge Keneth Lim</b></sub>
+        <sub><b>Developer</b></sub>
       </a>
     </td>
   </tr>
