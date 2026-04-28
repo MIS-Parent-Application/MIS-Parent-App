@@ -41,11 +41,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.itextpdf.text.*
+import com.itextpdf.text.Image as PdfImage
 import com.itextpdf.text.pdf.PdfPCell
 import com.itextpdf.text.pdf.PdfPTable
 import com.itextpdf.text.pdf.PdfWriter
@@ -75,7 +75,7 @@ data class PaymentRecord(
 fun ServicesScreen(modifier: Modifier = Modifier) {
     var showPaymentScreen by remember { mutableStateOf(false) }
     var paymentHistory by remember { mutableStateOf(listOf<PaymentRecord>()) }
-    var invoiceCounter by remember { mutableStateOf(1) }
+    var invoiceCounter by remember { mutableIntStateOf(1) }
 
     if (showPaymentScreen) {
         ContributionDuesSelectionScreen(
@@ -492,7 +492,7 @@ private fun createPdfContent(context: Context, outputStream: OutputStream, recor
         val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.school_logo)
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-        val image = Image.getInstance(stream.toByteArray())
+        val image = PdfImage.getInstance(stream.toByteArray())
         image.scaleToFit(100f, 100f)
         image.alignment = Element.ALIGN_CENTER
         document.add(image)
@@ -964,7 +964,7 @@ fun ContributionDuesSelectionScreen(
                         }
 
                         if (purchasedItems.isNotEmpty()) {
-                            val invoiceNumber = "#${currentMonthYear}${String.format("%02d", currentInvoiceNumber)}"
+                            val invoiceNumber = "#${currentMonthYear}${String.format(Locale.getDefault(), "%02d", currentInvoiceNumber)}"
 
                             val combinedDescription = if (hasSchoolUniform && hasPEUniform) {
                                 "School uniform"
