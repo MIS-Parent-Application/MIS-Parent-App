@@ -2,20 +2,24 @@
 
 [![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
 
-<table>
+<table border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: none;">
   <tr>
     <td align="center">
       <a href="https://github.com/CarlXT">
         <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/CarlXT.png" width="100px;" alt="CarlXT"/>
+        <br />
         <sub><b>Carl Sagario</b></sub>
-        <p><b>Tech lead</b></p>
+        <br />
+        <sub><i>Tech Lead</i></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/Fallen032">
-        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Falleb032.png" width="100px;" alt="Fallen032"/>
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Fallen032.png" width="100px;" alt="Fallen032"/>
+        <br />
         <sub><b>Serge Keneth Lim</b></sub>
-        <p><b>Developer</b></p>
+        <br />
+        <sub><i>Developer</i></sub>
       </a>
     </td>
   </tr>
