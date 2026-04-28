@@ -12,7 +12,8 @@ android {
     defaultConfig {
         applicationId = "com.mis.parentapp"
         minSdk = 24
-        targetSdk = 35
+        //noinspection OldTargetApi
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -29,14 +30,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
         compose = true
     }
 }
-
 
 dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -53,7 +53,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.compose.material.icons.extended)
-    
+    implementation(libs.androidx.material3)
     implementation(libs.androidx.room.common.jvm)
 
     // Team's additions
@@ -73,11 +73,10 @@ dependencies {
 
     // Room Database Setup
     implementation(libs.androidx.room.runtime)
+    // Room Compiler (The code generator - uses KSP)
     ksp(libs.androidx.room.compiler)
+    // Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
-
-    // Additional dependencies
-    implementation(libs.itextg) // PDF dependency to fix download crash
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.kotlinx.coroutines.android)

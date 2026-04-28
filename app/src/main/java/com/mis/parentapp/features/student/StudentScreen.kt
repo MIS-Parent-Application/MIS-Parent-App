@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
@@ -36,12 +35,10 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 @Composable
 fun StudentScreen(
     modifier: Modifier = Modifier,
-    onNavigateToAcademic: () -> Unit = {},
-    onNavigateToAttendance: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+
 
     Box(
         modifier = modifier

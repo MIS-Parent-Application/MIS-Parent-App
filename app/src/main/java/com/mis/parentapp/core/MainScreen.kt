@@ -8,26 +8,46 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.compose.*
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
-import com.mis.parentapp.features.student.StudentScreen
-import com.mis.parentapp.features.auth.SignInScreen
+import com.mis.parentapp.features.auth.UsernameSignInScreen
+import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
 import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
+import com.mis.parentapp.navigation.PasswordSignIn
+import com.mis.parentapp.navigation.SignUp
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import androidx.compose.ui.tooling.preview.Preview
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
@@ -36,75 +56,88 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    //init database
     val database = remember { com.mis.parentapp.data.AppDatabase.getDatabase(context) }
     val authViewModel = remember { AuthViewModel(database.userDao()) }
 
-    val tabs = listOf(
-        BottomTab("home", "Home", Icons.Filled.Home),
-        BottomTab("student", "Student", Icons.Filled.School),
-        BottomTab("services", "Services", Icons.Filled.Settings),
-        BottomTab("me", "Me", Icons.Filled.Person)
+    val bottomTabs = listOf(
+        BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
+        BottomTab("Student", Student, Icons.Filled.School, Icons.Outlined.School),
+        BottomTab("Services", Services, Icons.Filled.Settings, Icons.Outlined.Settings),
+        BottomTab("Me", Me, Icons.Filled.Person, Icons.Outlined.Person)
     )
+
+    val showBottomBar = bottomTabs.any { tab ->
+        currentDestination?.hasRoute(tab.route::class) == true
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                tabs.forEach { tab ->
-                    NavigationBarItem(
-                        selected = false,
-                        onClick = {
-                            navController.navigate(tab.route)
-                        },
-                        icon = {
-                            Icon(tab.icon, contentDescription = tab.label)
-                        },
-                        label = { Text(tab.label) }
-                    )
+            if (showBottomBar) {
+                NavigationBar {
+                    bottomTabs.forEach { tab ->
+                        val selected = currentDestination?.hierarchy?.any {
+                            it.hasRoute(tab.route::class)
+                        } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(tab.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                                    contentDescription = tab.label
+                                )
+                            },
+                            label = { Text(tab.label) }
+                        )
+                    }
                 }
             }
         }
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
-            startDestination = "home",
+            //replace this later when testing for actual app
+//            startDestination = DebugMenu,
+            startDestination = Home,
             modifier = Modifier.padding(innerPadding)
         ) {
-
-            composable("home") {
-                Text("HOME SCREEN WORKING")
-                HomeScreen()
-            }
-
-            composable("student") {
-                Text("STUDENT SCREEN WORKING")
-                StudentScreen()
-            }
-
-            composable("services") {
-                Text("SERVICES SCREEN WORKING")
-                ServicesScreen()
-            }
-
-            composable("me") {
-                Text("ME SCREEN WORKING")
-                MeScreen()
             composable<DebugMenu> {
                 DebugMenuScreen(
-                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
+                    onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
                 )
             }
 
             composable<SignIn> { backStackEntry ->
                 val args = backStackEntry.toRoute<SignIn>()
-                SignInScreen(
+                UsernameSignInScreen(
                     backgroundResId = args.backgroundResId,
                     onBack = { navController.popBackStack() },
+                    onNavigateToPassword = { email ->
+                        navController.navigate(PasswordSignIn(args.backgroundResId, email))
+                    }
+                )
+            }
+
+            composable<PasswordSignIn> { backStackEntry ->
+                val args = backStackEntry.toRoute<PasswordSignIn>()
+                PasswordSignInScreen(
+                    email = args.email,
+                    backgroundResId = args.backgroundResId,
                     viewModel = authViewModel,
+                    onBack = { navController.popBackStack() },
                     onSignInSuccess = {
                         navController.navigate(Home) {
                             popUpTo(0) { inclusive = true }
@@ -113,19 +146,24 @@ fun MainScreen() {
                     }
                 )
             }
+            composable<Services> { ServicesScreen() }
+            composable<Me> { MeScreen() }
+            composable<Home> { HomeScreen() }
+            composable<Student> { StudentScreen() }
         }
     }
 }
 
 data class BottomTab(
-    val route: String,
     val label: String,
-    val icon: ImageVector
+    val route: Any,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
 )
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewMainScreen() {
+fun MainScreenPreview() {
     ParentAppTheme {
         MainScreen()
     }
