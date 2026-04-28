@@ -1,6 +1,5 @@
 package com.mis.parentapp.features.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -12,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,80 +18,89 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mis.parentapp.R
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.data.EventItem
+import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
-data class EventItem(
-    val id: Int,
-    val title: String,
-    val category: String,
-    val date: String,
-    val description: String = "Lorem ipsum dolor sit amet consectetur. Sed varius dolor ipsum mauris in lacus sapien risus vestibulum. Urna dui vitae integer bibendum. Eget sed metus eget accumsan fusce morbi id. Id vulputate euismod sed vitae pretium diam. Est nunc diam morbi neque ipsum accumsan ac ipsum. Tincidunt sed nibh lacus sed. Adispscing congue gravida at magna. Sit lacus eget sed varius nec. Et tortor at et pellentesque."
-)
+//data class EventItem(
+//    val id: Int,
+//    val title: String,
+//    val category: String,
+//    val date: String,
+//    val description: String = "Lorem ipsum dolor sit amet consectetur. Sed varius dolor ipsum mauris in lacus sapien risus vestibulum. Urna dui vitae integer bibendum. Eget sed metus eget accumsan fusce morbi id. Id vulputate euismod sed vitae pretium diam. Est nunc diam morbi neque ipsum accumsan ac ipsum. Tincidunt sed nibh lacus sed. Adispscing congue gravida at magna. Sit lacus eget sed varius nec. Et tortor at et pellentesque."
+//)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpcomingEventsScreen(onBackClick: () -> Unit) {
+fun UpcomingEventsScreen(
+    onBackClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val repo = EventRepository(db.eventDao())
+    val viewModel: EventsViewModel = viewModel(
+        factory = EventsViewModel.provideFactory(repo)
+    )
+    val allUpcomingEvents by viewModel.upcomingEvents.collectAsState()
+    var selectedFilter by remember { mutableStateOf("All") }
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
+
+    // 1. Apply Status Filter
+    val filteredEvents = remember(allUpcomingEvents, selectedFilter) {
+        if (selectedFilter == "All") allUpcomingEvents
+        else allUpcomingEvents.filter { it.status == selectedFilter }
+    }
+
+    // 2. Group by Category
+    val groupedEvents = filteredEvents.groupBy { it.category }
 
     if (selectedEvent != null) {
         EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
     } else {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Upcoming events", style = AppTypes.type_H1, fontSize = 20.sp) },
+                TopAppBar(
+                    title = { Text("Upcoming Events") },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    actions = {
-                        IconButton(onClick = { /* Handle menu */ }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
                 )
             },
             containerColor = Color.White
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
-                EventFilterRow()
+
+                // Pass state to FilterRow
+                EventFilterRow(
+                    selectedFilter = selectedFilter,
+                    onFilterSelected = { selectedFilter = it }
+                )
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    item {
-                        EventSection(
-                            title = "School-wide",
-                            events = listOf(
-                                EventItem(1, "School event", "School-wide", "25.5.2026"),
-                                EventItem(2, "School event", "School-wide", "25.5.2026")
-                            ),
-                            onEventClick = { selectedEvent = it }
-                        )
-                    }
-
-                    item {
-                        EventSection(
-                            title = "College",
-                            events = listOf(
-                                EventItem(3, "College event", "College", "25.5.2026"),
-                                EventItem(4, "College event", "College", "25.5.2026")
-                            ),
-                            onEventClick = { selectedEvent = it }
-                        )
+                    groupedEvents.forEach { (category, events) ->
+                        item {
+                            EventSection(
+                                title = category,
+                                events = events,
+                                onEventClick = { selectedEvent = it }
+                            )
+                        }
                     }
                 }
             }
@@ -102,7 +109,7 @@ fun UpcomingEventsScreen(onBackClick: () -> Unit) {
 }
 
 @Composable
-fun EventFilterRow() {
+fun EventFilterRow(selectedFilter: String, onFilterSelected: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -112,9 +119,9 @@ fun EventFilterRow() {
     ) {
         val filters = listOf("All", "Postponed", "Cancelled")
         filters.forEach { filter ->
-            val isSelected = filter == "All"
+            val isSelected = filter == selectedFilter
             Surface(
-                modifier = Modifier.clickable { },
+                modifier = Modifier.clickable { onFilterSelected(filter) },
                 shape = RoundedCornerShape(8.dp),
                 color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
             ) {
@@ -130,7 +137,7 @@ fun EventFilterRow() {
 }
 
 @Composable
-fun EventSection(title: String, events: List<EventItem>, onEventClick: (EventItem) -> Unit) {
+fun EventSection(title: String, events: List<com.mis.parentapp.data.EventItem>, onEventClick: (EventItem) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(text = title, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.Black)
         
@@ -142,8 +149,9 @@ fun EventSection(title: String, events: List<EventItem>, onEventClick: (EventIte
     }
 }
 
+
 @Composable
-fun EventCard(event: EventItem, onClick: () -> Unit) {
+fun EventCard(event: com.mis.parentapp.data.EventItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(200.dp)

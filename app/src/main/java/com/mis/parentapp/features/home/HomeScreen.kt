@@ -1,6 +1,7 @@
 package com.mis.parentapp.features.home
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,6 +49,8 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.network.ParentDashboard
 
 
 
@@ -92,10 +95,36 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun Body(
+
     modifier: Modifier = Modifier,
     onNotificationClick: () -> Unit,
     onFilterClick: (String) -> Unit
-) {
+)
+{
+
+    var attendance by remember { mutableStateOf("98%") }
+    var gpa by remember { mutableStateOf("1.5") }
+    var pending by remember { mutableStateOf("0.00") }
+    var notifications by remember { mutableStateOf("2") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val data = RetrofitInstance.api.getDashboard()
+
+            Log.d("API_TEST", "SUCCESS: $data")
+
+            val child = data.children.firstOrNull()
+
+            attendance = child?.attendance ?: "98%"
+            gpa = child?.gpa?.toString() ?: "1.5"
+            pending = child?.pendingPayments?.toString() ?: "0.00"
+            notifications = data.unreadAnnouncements.toString()
+
+        } catch (e: Exception) {
+            Log.e("API_TEST", "ERROR: ${e.message}")
+        }
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
@@ -203,20 +232,20 @@ fun Body(
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     StatCard(
                         label = "Attendance",
-                        value = "98%",
+                        value = attendance,
                         iconRes = R.drawable.boxicons_calendar_check_filled,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         label = "GPA",
-                        value = "1.5",
+                        value = gpa,
                         iconRes = R.drawable.material_symbols_owl,
                         modifier = Modifier.weight(1f)
                     )
@@ -227,13 +256,13 @@ fun Body(
                 ) {
                     StatCard(
                         label = "Pending due",
-                        value = "0.00",
+                        value = pending,
                         iconRes = R.drawable.boxicons_wallet_filled,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         label = "Notifications",
-                        value = "2",
+                        value = notifications,
                         iconRes = R.drawable.fluent_color_megaphone_loud_32,
                         modifier = Modifier.weight(1f)
                     )
@@ -267,8 +296,8 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
             colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
         )
         Text(
-            text = label, 
-            style = AppTypes.type_Caption, 
+            text = label,
+            style = AppTypes.type_Caption,
             color = Color(0xFF1C1B1F),
             modifier = Modifier.align(Alignment.TopEnd)
         )
@@ -290,8 +319,8 @@ fun SectionPlaceholder(title: String, emptyText: String) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = title, 
-            color = Color(0xFF1B4D13), 
+            text = title,
+            color = Color(0xFF1B4D13),
             style = AppTypes.type_H1,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
@@ -311,8 +340,8 @@ fun SectionPlaceholder(title: String, emptyText: String) {
                 contentScale = ContentScale.Fit
             )
             Text(
-                text = emptyText, 
-                style = AppTypes.type_Body_Small, 
+                text = emptyText,
+                style = AppTypes.type_Body_Small,
                 color = ColorsDefaultTheme.color_Primary_on_green,
                 modifier = Modifier.padding(top = 8.dp)
             )

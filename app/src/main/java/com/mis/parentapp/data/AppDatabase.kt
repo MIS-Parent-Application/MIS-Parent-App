@@ -5,14 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-// CHANGE 1: Added CourseGrade and AttendanceRecord, changed version to 2
-@Database(entities = [UserEntity::class, CourseGrade::class, AttendanceRecord::class], version = 2)
+//added EventItem, incremented version to 3
+@Database(
+    entities = [
+        UserEntity::class,
+        CourseGrade::class,
+        AttendanceRecord::class,
+        EventItem::class
+    ],
+    version = 3
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDAO
-
     // CHANGE 2: Added the Student Monitoring DAO
     abstract fun studentMonitoringDao(): StudentMonitoringDao
+    abstract fun eventDao(): EventDao
 
     companion object {
         @Volatile
@@ -25,7 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "parent_app_db"
                 )
-                    .fallbackToDestructiveMigration(false)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

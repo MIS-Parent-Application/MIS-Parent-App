@@ -38,7 +38,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.compose.foundation)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -70,11 +71,12 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Room Database Setup
-    val room_version = "2.8.4"
-    implementation("androidx.room:room-runtime:$room_version")
+    implementation(libs.androidx.room.runtime)
     // Room Compiler (The code generator - uses KSP)
-    ksp("androidx.room:room-compiler:$room_version")
+    ksp(libs.androidx.room.compiler)
     // Kotlin Extensions and Coroutines support for Room
-    implementation("androidx.room:room-ktx:$room_version")
-    implementation("androidx.navigation:navigation-compose:2.8.0-beta05")
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.kotlinx.coroutines.android)
 }
