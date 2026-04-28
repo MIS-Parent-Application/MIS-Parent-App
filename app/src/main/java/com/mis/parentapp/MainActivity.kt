@@ -65,7 +65,7 @@ fun AppNavigation() {
         composable<PasswordSignIn> { backStackEntry ->
             val args = backStackEntry.toRoute<PasswordSignIn>()
             PasswordSignInScreen(
-                email = args.email,
+                username = args.email,
                 backgroundResId = args.backgroundResId,
                 viewModel = authViewModel,
                 onBack = { navController.popBackStack() },
