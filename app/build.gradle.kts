@@ -52,10 +52,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.compose.material.icons.extended)
-<<<<<<< HEAD
-    // ❌ REMOVED line 52: implementation(libs.androidx.material3) - DUPLICATE, doesn't exist
-=======
-    implementation(libs.androidx.material3)
+    
     implementation(libs.androidx.room.common.jvm)
 
     // Team's additions
@@ -64,7 +61,6 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.compose.foundation)
->>>>>>> master
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -74,15 +70,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-<<<<<<< HEAD
-    val room_version = "2.8.4"
-    implementation("androidx.room:room-runtime:$room_version")
-    ksp("androidx.room:room-compiler:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-
-    // ✅ ADDED: PDF dependency to fix download crash
-    implementation("com.itextpdf:itextg:5.5.10")
-=======
     // Room Database Setup
     val room_version = "2.8.4"
     implementation("androidx.room:room-runtime:$room_version")
@@ -90,9 +77,10 @@ dependencies {
     ksp("androidx.room:room-compiler:$room_version")
     // Kotlin Extensions and Coroutines support for Room
     implementation("androidx.room:room-ktx:$room_version")
-    implementation("androidx.navigation:navigation-compose:2.8.0-beta05")
+
+    // Additional dependencies
+    implementation("com.itextpdf:itextg:5.5.10") // PDF dependency to fix download crash
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
->>>>>>> master
 }
