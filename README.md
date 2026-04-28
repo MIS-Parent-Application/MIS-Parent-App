@@ -1,5 +1,30 @@
 # MIS Parent App
 
+[![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
+
+<table border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: none;">
+  <tr>
+    <td align="center" style="border: none;">
+      <a href="https://github.com/CarlXT">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/CarlXT.png" width="100px;" alt="CarlXT"/>
+        <br />
+        <sub><b>Carl Sagario</b></sub>
+        <br />
+        <sub><i>Tech Lead</i></sub>
+      </a>
+    </td>
+    <td align="center" style="border: none;">
+      <a href="https://github.com/Fallen032">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Fallen032.png" width="100px;" alt="Fallen032"/>
+        <br />
+        <sub><b>Serge Keneth Lim</b></sub>
+        <br />
+        <sub><i>Developer</i></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
 ![MIS Parent App Banner](https://github.com/user-attachments/assets/abdc165d-234e-4263-8b16-76bef772de4f)
 
 ## 📌 Overview
