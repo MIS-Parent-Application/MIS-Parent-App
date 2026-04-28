@@ -115,7 +115,8 @@ fun MainScreen() {
         ) {
             composable<DebugMenu> {
                 DebugMenuScreen(
-                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
+                    onNavigateToSignUp = { bgId -> navController.navigate(SignUp(bgId)) }
                 )
             }
 
