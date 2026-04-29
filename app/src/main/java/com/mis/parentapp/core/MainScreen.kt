@@ -12,22 +12,24 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
+import androidx.navigation.toRoute
+import com.mis.parentapp.DebugMenuScreen
+import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.student.StudentScreen
-import com.mis.parentapp.features.auth.SignInScreen
-import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
-import com.mis.parentapp.navigation.Me
-import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import androidx.compose.ui.tooling.preview.Preview
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
@@ -36,10 +38,8 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val navController = rememberNavController()
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    val database = remember { com.mis.parentapp.data.AppDatabase.getDatabase(context) }
+    val context = LocalContext.current
+    val database = remember { AppDatabase.getDatabase(context) }
     val authViewModel = remember { AuthViewModel(database.userDao()) }
 
     val tabs = listOf(
@@ -54,10 +54,17 @@ fun MainScreen() {
         bottomBar = {
             NavigationBar {
                 tabs.forEach { tab ->
+                    val isSelected = currentDestination?.hierarchy?.any { it.route == tab.route } == true
                     NavigationBarItem(
-                        selected = false,
+                        selected = isSelected,
                         onClick = {
-                            navController.navigate(tab.route)
+                            navController.navigate(tab.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         },
                         icon = {
                             Icon(tab.icon, contentDescription = tab.label)
@@ -68,31 +75,27 @@ fun MainScreen() {
             }
         }
     ) { innerPadding ->
-
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-
             composable("home") {
-                Text("HOME SCREEN WORKING")
                 HomeScreen()
             }
 
             composable("student") {
-                Text("STUDENT SCREEN WORKING")
                 StudentScreen()
             }
 
             composable("services") {
-                Text("SERVICES SCREEN WORKING")
                 ServicesScreen()
             }
 
             composable("me") {
-                Text("ME SCREEN WORKING")
                 MeScreen()
+            }
+
             composable<DebugMenu> {
                 DebugMenuScreen(
                     onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
