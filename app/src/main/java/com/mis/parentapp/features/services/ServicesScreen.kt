@@ -342,11 +342,12 @@ fun PaymentHistorySection(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
         } else {
-            LazyColumn(
+            // ✅ Use regular Column instead (outer LazyColumn already handles scrolling)
+            Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(filteredHistory) { record ->
+                filteredHistory.forEach { record ->
                     FeeCard(
                         invoice = record.invoiceNumber,
                         item = record.purchasedItem,

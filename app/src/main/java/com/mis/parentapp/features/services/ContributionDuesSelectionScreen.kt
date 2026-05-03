@@ -40,14 +40,18 @@ fun ContributionDuesSelectionScreen(
     val totalItems = quantities.sum()
     val totalAmount = quantities.mapIndexed { i, qty -> qty * items[i].price }.sum()
 
+    // ✅ FIX 1: Remove .padding(16.dp) from outer Column
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(16.dp)
+        // NO padding here!
     ) {
+        // ✅ FIX 2: Add padding to individual sections instead
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp), // ← Padding moved here
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
@@ -68,9 +72,13 @@ fun ContributionDuesSelectionScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // ✅ FIX 3: LazyColumn already has correct modifiers
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 16.dp) // ← Horizontal padding here
         ) {
             itemsIndexed(items) { index, item ->
                 Row(
@@ -170,8 +178,11 @@ fun ContributionDuesSelectionScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // ✅ FIX 4: Add padding to bottom section
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp), // ← Padding moved here
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
