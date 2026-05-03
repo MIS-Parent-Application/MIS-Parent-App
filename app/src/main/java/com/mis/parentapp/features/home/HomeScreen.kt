@@ -47,6 +47,7 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.network.RetrofitInstance
 
 
@@ -70,6 +71,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     when (label) {
                         "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
                         "Recent activities" -> homeNavController.navigate(RecentActivities)
+                        "Analytics" -> homeNavController.navigate(Analytics)
                     }
                 }
             )
@@ -86,6 +88,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         composable<RecentActivities> {
             RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
+        }
+
+        composable<Analytics> {
+            AnalyticsScreen(onBackClick = { homeNavController.popBackStack() })
         }
     }
 }
