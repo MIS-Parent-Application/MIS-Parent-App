@@ -36,13 +36,15 @@ import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
-import com.mis.parentapp.features.auth.SignInScreen
+import com.mis.parentapp.features.auth.UsernameSignInScreen
+import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
 import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
+import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
@@ -112,16 +114,28 @@ fun MainScreen() {
         ) {
             composable<DebugMenu> {
                 DebugMenuScreen(
-                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) }
+                    onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
                 )
             }
 
             composable<SignIn> { backStackEntry ->
                 val args = backStackEntry.toRoute<SignIn>()
-                SignInScreen(
+                UsernameSignInScreen(
                     backgroundResId = args.backgroundResId,
                     onBack = { navController.popBackStack() },
+                    onNavigateToPassword = { email ->
+                        navController.navigate(PasswordSignIn(args.backgroundResId, email))
+                    }
+                )
+            }
+
+            composable<PasswordSignIn> { backStackEntry ->
+                val args = backStackEntry.toRoute<PasswordSignIn>()
+                PasswordSignInScreen(
+                    username = args.email,
+                    backgroundResId = args.backgroundResId,
                     viewModel = authViewModel,
+                    onBack = { navController.popBackStack() },
                     onSignInSuccess = {
                         navController.navigate(Home) {
                             popUpTo(0) { inclusive = true }

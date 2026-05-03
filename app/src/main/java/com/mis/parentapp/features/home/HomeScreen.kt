@@ -1,31 +1,16 @@
 package com.mis.parentapp.features.home
 
-import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,39 +28,32 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
-import com.mis.parentapp.navigation.Home
+import com.mis.parentapp.navigation.*
+import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import com.mis.parentapp.navigation.Notification
-import com.mis.parentapp.navigation.RecentActivities
-import com.mis.parentapp.navigation.UpcomingEvents
 
-
-
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val homeNavController = rememberNavController()
-    // State for the bottom drawer
-    val sheetState = androidx.compose.material3.rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
 
-    // This handles the bottom drawer visibility and content
     if (showSheet) {
-        androidx.compose.material3.ModalBottomSheet(
+        ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
             containerColor = Color.White
         ) {
-            // Drawer Content
             HomeMenuDrawer(
                 onItemClick = { route ->
-                    showSheet = false // Close drawer
+                    showSheet = false
                     when (route) {
                         "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
                         "Recent activities" -> homeNavController.navigate(RecentActivities)
-                        // Add "Analytics" here if you create a route for it later
+                        "Analytics" -> homeNavController.navigate(Analytics)
                     }
                 }
             )
@@ -90,7 +68,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         composable<Home> {
             Body(
                 onNotificationClick = { homeNavController.navigate(Notification) },
-                onMenuClick = { showSheet = true } // Trigger drawer
+                onMenuClick = { showSheet = true }
             )
         }
 
@@ -105,6 +83,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         composable<RecentActivities> {
             RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
         }
+
+        composable<Analytics> {
+            AnalyticsScreen(onBackClick = { homeNavController.popBackStack() })
+        }
     }
 }
 
@@ -114,6 +96,27 @@ fun Body(
     onNotificationClick: () -> Unit,
     onMenuClick: () -> Unit
 ) {
+    // API Data State from master
+    var attendance by remember { mutableStateOf("98%") }
+    var gpa by remember { mutableStateOf("1.5") }
+    var pending by remember { mutableStateOf("0.00") }
+    var notifications by remember { mutableStateOf("2") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val data = RetrofitInstance.api.getDashboard()
+            Log.d("API_TEST", "SUCCESS: $data")
+            val child = data.children.firstOrNull()
+
+            attendance = child?.attendance ?: "98%"
+            gpa = child?.gpa?.toString() ?: "1.5"
+            pending = child?.pendingPayments?.toString() ?: "0.00"
+            notifications = data.unreadAnnouncements.toString()
+        } catch (e: Exception) {
+            Log.e("API_TEST", "ERROR: ${e.message}")
+        }
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
@@ -158,10 +161,9 @@ fun Body(
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
-                    // NEW BURGER MENU ICON
-                    androidx.compose.material3.IconButton(onClick = onMenuClick) {
+                    IconButton(onClick = onMenuClick) {
                         Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Menu,
+                            imageVector = Icons.Default.Menu,
                             contentDescription = "Menu",
                             tint = ColorsDefaultTheme.color_Primary_green
                         )
@@ -169,8 +171,6 @@ fun Body(
                 }
             }
         }
-
-        // Horizontal filter buttons have been REMOVED as requested
 
         item {
             Image(
@@ -185,7 +185,7 @@ fun Body(
         }
 
         item {
-            QuickStatsSection()
+            QuickStatsSection(attendance, gpa, pending, notifications)
         }
 
         item {
@@ -226,14 +226,13 @@ fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
                     color = ColorsDefaultTheme.color_Surface_on_surface
                 )
             }
-            androidx.compose.material3.HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
         }
     }
 }
 
-// Extracted for cleanliness
 @Composable
-fun QuickStatsSection() {
+fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifications: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -252,15 +251,15 @@ fun QuickStatsSection() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatCard("Attendance", "98%", R.drawable.boxicons_calendar_check_filled, Modifier.weight(1f))
-            StatCard("GPA", "1.5", R.drawable.material_symbols_owl, Modifier.weight(1f))
+            StatCard("Attendance", attendance, R.drawable.boxicons_calendar_check_filled, Modifier.weight(1f))
+            StatCard("GPA", gpa, R.drawable.material_symbols_owl, Modifier.weight(1f))
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatCard("Pending due", "0.00", R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
-            StatCard("Notifications", "2", R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
+            StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
+            StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
         }
     }
 }
@@ -291,7 +290,7 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
         Text(
             text = value,
             color = Color(0xFF1B4D13),
-            style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
+            style = TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold),
             modifier = Modifier.align(Alignment.BottomStart)
         )
     }

@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.mis.parentapp"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.mis.parentapp"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -29,8 +29,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -38,7 +38,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -52,7 +52,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.material3)
+    
     implementation(libs.androidx.room.common.jvm)
 
     // Team's additions
@@ -71,11 +71,13 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     // Room Database Setup
-    val room_version = "2.8.4"
-    implementation("androidx.room:room-runtime:$room_version")
-    // Room Compiler (The code generator - uses KSP)
-    ksp("androidx.room:room-compiler:$room_version")
-    // Kotlin Extensions and Coroutines support for Room
-    implementation("androidx.room:room-ktx:$room_version")
-    implementation("androidx.navigation:navigation-compose:2.8.0-beta05")
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+
+    // Additional dependencies
+    implementation(libs.itextg) // PDF dependency to fix download crash
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.kotlinx.coroutines.android)
 }
