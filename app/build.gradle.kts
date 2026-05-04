@@ -38,7 +38,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.foundation)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -54,7 +53,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.compose.material.icons.extended)
     
-    implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.room.common)
 
     // Team's additions
     implementation(libs.androidx.appcompat)
