@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -258,36 +259,16 @@ fun ContributionDuesSection(onPayClick: () -> Unit) {
 }
 
 @Composable
-fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .height(140.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(ColorsDefaultTheme.color_Surface)
-            .padding(16.dp)
-    ) {
-        Image(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            modifier = Modifier
-                .size(32.dp)
-                .align(Alignment.TopStart),
-            colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_green)
-        )
-        Text(
-            text = label,
-            style = AppTypes.type_Caption,
-            color = Color(0xFF1C1B1F),
-            modifier = Modifier.align(Alignment.TopEnd)
-        )
-        Text(
-            text = value,
-            color = Color(0xFF1B4D13),
-            style = TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold),
-            modifier = Modifier.align(Alignment.BottomStart)
-        )
+fun PaymentHistorySection(
+    modifier: Modifier = Modifier,
+    paymentHistory: List<PaymentRecord>
+) {
+    val context = LocalContext.current
+    var selectedFilter by remember { mutableStateOf("Recent") }
+
+    val filteredHistory = remember(paymentHistory, selectedFilter) {
+        filterPaymentHistory(paymentHistory, selectedFilter)
     }
-}
 
 // ================= PAYMENT HISTORY (WITH DOWNLOAD) =================
 
@@ -732,24 +713,80 @@ fun FeeCard(
 
         HorizontalDivider(color = Color(0xFFE0E0E0))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            InfoColumn("Purchased item", item)
-            InfoColumn("Payment option", option)
-            InfoColumn("Paid date", date, Alignment.End)
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            ?: throw IOException("Failed to create MediaStore entry")
+
+        resolver.openOutputStream(uri)?.use { outputStream ->
+            ReceiptPdfGenerator().createPdfContent(context, outputStream, record)
         }
+
+        contentValues.clear()
+        contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+        resolver.update(uri, contentValues, null, null)
+
+        Toast.makeText(context, "✅ Receipt Successfully Downloaded", Toast.LENGTH_LONG).show()
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+        Toast.makeText(context, "❌ Download Failed: ${e.message}", Toast.LENGTH_LONG).show()
     }
 }
 
-@Composable
-fun InfoColumn(label: String, value: String, alignment: Alignment.Horizontal = Alignment.Start) {
-    Column(horizontalAlignment = alignment) {
-        Text(text = label, style = AppTypes.type_Caption, color = Color.Gray)
-        Text(text = value, style = AppTypes.type_Body_Small, color = Color.Black)
+
+private fun filterPaymentHistory(
+    paymentHistory: List<PaymentRecord>,
+    filter: String
+): List<PaymentRecord> {
+    if (paymentHistory.isEmpty()) return emptyList()
+
+    val dateFormat = SimpleDateFormat("MM-dd-yy | h:mm a", Locale.getDefault())
+    val now = Calendar.getInstance()
+
+    return paymentHistory.filter { record ->
+        val recordDate = try {
+            dateFormat.parse(record.paidDate)?.let { date ->
+                Calendar.getInstance().apply { time = date }
+            }
+        } catch (e: Exception) {
+            null
+        }
+
+        if (recordDate == null) return@filter false
+
+        when (filter) {
+            "Recent" -> {
+                recordDate.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                        recordDate.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
+                        recordDate.get(Calendar.DAY_OF_MONTH) == now.get(Calendar.DAY_OF_MONTH)
+            }
+            "Last week" -> {
+                val diffInMillis = now.timeInMillis - recordDate.timeInMillis
+                val diffInDays = (diffInMillis / (1000 * 60 * 60 * 24)).toInt()
+                diffInDays in 1..7
+            }
+            "Last month" -> {
+                val lastMonth = Calendar.getInstance().apply {
+                    time = now.time
+                    add(Calendar.MONTH, -1)
+                }
+                recordDate.get(Calendar.YEAR) == lastMonth.get(Calendar.YEAR) &&
+                        recordDate.get(Calendar.MONTH) == lastMonth.get(Calendar.MONTH)
+            }
+            "Last year" -> {
+                val lastYear = Calendar.getInstance().apply {
+                    time = now.time
+                    add(Calendar.YEAR, -1)
+                }
+                recordDate.get(Calendar.YEAR) == lastYear.get(Calendar.YEAR)
+            }
+            else -> true
+        }
+    }.sortedByDescending {
+        try { dateFormat.parse(it.paidDate)?.time ?: 0L } catch (e: Exception) { 0L }
     }
 }
+
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable
