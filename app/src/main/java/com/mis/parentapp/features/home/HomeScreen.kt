@@ -75,6 +75,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
+    var selectedEventForDetail by remember { mutableStateOf<com.mis.parentapp.data.EventItem?>(null) }
 
     if (showSheet) {
         ModalBottomSheet(
@@ -95,34 +96,42 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    NavHost(
-        navController = homeNavController,
-        startDestination = Home,
-        modifier = modifier.fillMaxSize()
-    ) {
-        composable<Home> {
-            Body(
-                onNotificationClick = { homeNavController.navigate(Notification) },
-                onMenuClick = { showSheet = true },
-                onUpcomingSeeAll = { homeNavController.navigate(UpcomingEvents) },
-                onRecentSeeAll = { homeNavController.navigate(RecentActivities) }
-            )
-        }
+    if (selectedEventForDetail != null) {
+        EventDetailScreen(
+            event = selectedEventForDetail!!,
+            onBackClick = { selectedEventForDetail = null }
+        )
+    } else {
+        NavHost(
+            navController = homeNavController,
+            startDestination = Home,
+            modifier = modifier.fillMaxSize()
+        ) {
+            composable<Home> {
+                Body(
+                    onNotificationClick = { homeNavController.navigate(Notification) },
+                    onMenuClick = { showSheet = true },
+                    onUpcomingSeeAll = { homeNavController.navigate(UpcomingEvents) },
+                    onRecentSeeAll = { homeNavController.navigate(RecentActivities) },
+                    onEventClick = { event -> selectedEventForDetail = event }
+                )
+            }
 
-        composable<Notification> {
-            NotificationScreen(onBackClick = { homeNavController.popBackStack() })
-        }
+            composable<Notification> {
+                NotificationScreen(onBackClick = { homeNavController.popBackStack() })
+            }
 
-        composable<UpcomingEvents> {
-            UpcomingEventsScreen(onBackClick = { homeNavController.popBackStack() })
-        }
+            composable<UpcomingEvents> {
+                UpcomingEventsScreen(onBackClick = { homeNavController.popBackStack() })
+            }
 
-        composable<RecentActivities> {
-            RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
-        }
+            composable<RecentActivities> {
+                RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
+            }
 
-        composable<Analytics> {
-            AnalyticsScreen(onBackClick = { homeNavController.popBackStack() })
+            composable<Analytics> {
+                AnalyticsScreen(onBackClick = { homeNavController.popBackStack() })
+            }
         }
     }
 }
@@ -133,7 +142,8 @@ fun Body(
     onNotificationClick: () -> Unit,
     onMenuClick: () -> Unit,
     onUpcomingSeeAll: () -> Unit,
-    onRecentSeeAll: () -> Unit
+    onRecentSeeAll: () -> Unit,
+    onEventClick: (com.mis.parentapp.data.EventItem) -> Unit
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
@@ -241,7 +251,7 @@ fun Body(
                 title = "Upcoming Events",
                 events = upcomingEvents,
                 onSeeAllClick = onUpcomingSeeAll,
-                onEventClick = { /* Handle click if needed, or navigate to detail */ }
+                onEventClick = onEventClick
             )
         }
 
@@ -250,7 +260,7 @@ fun Body(
                 title = "Recent Activities",
                 events = recentEvents,
                 onSeeAllClick = onRecentSeeAll,
-                onEventClick = { /* Handle click if needed */ }
+                onEventClick = onEventClick // Pass to cards
             )
         }
 
