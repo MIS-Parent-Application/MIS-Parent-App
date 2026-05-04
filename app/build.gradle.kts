@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.mis.parentapp"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.mis.parentapp"
