@@ -59,6 +59,9 @@ import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
+import com.mis.parentapp.data.StudentEntity
+import com.mis.parentapp.data.StudentWithSchedules
+import com.mis.parentapp.data.StudentsRepo
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Notification
@@ -148,45 +151,32 @@ fun Body(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val repo = EventRepository(db.eventDao())
+    val studentsRepo = StudentsRepo(db.studentMonitoringDao())
     val viewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(repo))
 
     val upcomingEvents by viewModel.upcomingEvents.collectAsState()
     val recentEvents by viewModel.recentEvents.collectAsState()
 
-    // API Data State from master
-    var attendance by remember { mutableStateOf("98%") }
-    var gpa by remember { mutableStateOf("1.5") }
-    var pending by remember { mutableStateOf("0.00") }
-    var notifications by remember { mutableStateOf("2") }
+    //mock data - replace username with what you've used to sign in
+    val username: String = "email"
 
+    val students by studentsRepo.getChildrenForParent(username).collectAsState(initial = emptyList())
+    var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
 
-    LaunchedEffect(Unit) {
-        try {
-            val data = RetrofitInstance.api.getDashboard()
-            Log.d("API_TEST", "SUCCESS: $data")
-            val child = data.children.firstOrNull()
-
-            attendance = child?.attendance ?: "98%"
-            gpa = child?.gpa?.toString() ?: "1.5"
-            pending = child?.pendingPayments?.toString() ?: "0.00"
-            notifications = data.unreadAnnouncements.toString()
-        } catch (e: Exception) {
-            Log.e("API_TEST", "ERROR: ${e.message}")
+    LaunchedEffect(students) {
+        if (selectedStudent == null && students.isNotEmpty()) {
+            selectedStudent = students.first()
         }
     }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.Start,
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.White)
+        modifier = modifier.fillMaxSize().background(Color.White)
     ) {
+        // TOP BAR
         item {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -211,14 +201,6 @@ fun Body(
                             .requiredSize(28.dp)
                             .clickable { onNotificationClick() }
                     )
-                    Image(
-                        painter = painterResource(id = R.drawable.studentswitcher),
-                        contentDescription = "Student Switcher",
-                        modifier = Modifier
-                            .requiredSize(32.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
                     IconButton(onClick = onMenuClick) {
                         Icon(
                             imageVector = Icons.Default.Menu,
@@ -230,20 +212,40 @@ fun Body(
             }
         }
 
+        // NEW: HORIZONTAL STUDENT SELECTOR
         item {
-            Image(
-                painter = painterResource(id = R.drawable.card),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.FillWidth
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "My Children",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = AppTypes.type_Body_Small,
+                    color = Color.Gray
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(students) { studentWithSchedules ->
+                        StudentSelectorItem(
+                            student = studentWithSchedules.student,
+                            isSelected = selectedStudent?.student?.studentId == studentWithSchedules.student.studentId,
+                            onClick = { selectedStudent = studentWithSchedules }
+                        )
+                    }
+                }
+            }
         }
 
         item {
-            QuickStatsSection(attendance, gpa, pending, notifications)
+            selectedStudent?.student?.let { child ->
+                QuickStatsSection(
+                    attendance = "${(child.attendanceScore * 100).toInt()}%",
+                    gpa = child.gpa.toString(),
+                    pending = "₱${child.pendingPayment}",
+                    notifications = child.notificationCount.toString()
+                )
+            }
         }
 
         item {
@@ -260,11 +262,61 @@ fun Body(
                 title = "Recent Activities",
                 events = recentEvents,
                 onSeeAllClick = onRecentSeeAll,
-                onEventClick = onEventClick // Pass to cards
+                onEventClick = onEventClick
             )
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
+    }
+}
+
+
+@Composable
+fun StudentSelectorItem(
+    student: StudentEntity,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val borderColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color.Transparent
+    val scale = if (isSelected) 1.1f else 1.0f
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }
+    ) {
+        Box(
+            modifier = Modifier
+                .requiredSize(70.dp)
+                .clip(CircleShape)
+                .background(if (isSelected) Color(0xFFE8F5E9) else Color.Transparent)
+                .padding(4.dp) // Space for the "border" effect
+        ) {
+            Image(
+                painter = painterResource(id = student.profileImageRes),
+                contentDescription = student.name,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+                    .background(Color.LightGray),
+                contentScale = ContentScale.Crop
+            )
+            // Optional Selection Ring
+            if (isSelected) {
+                androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                    drawCircle(
+                        color = ColorsDefaultTheme.color_Primary_green,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 8f)
+                    )
+                }
+            }
+        }
+        Text(
+            text = student.name.split(" ").first(), // Show only first name
+            style = AppTypes.type_Caption,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color.Black,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 
