@@ -1,6 +1,5 @@
 package com.mis.parentapp.features.home
 
-import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -14,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,7 +21,6 @@ import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
-import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,19 +39,33 @@ fun RecentActivitiesScreen(
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
 
     val filteredEvents = remember(events, selectedFilter) {
-        val now = java.time.LocalDate.now()
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        val now = java.util.Calendar.getInstance()
+        val currentMonth = now.get(java.util.Calendar.MONTH)
+        val currentYear = now.get(java.util.Calendar.YEAR)
+        val todayStr = sdf.format(now.time)
+
         events.filter { event ->
-            val eventDate = java.time.LocalDate.parse(event.date)
-            when (selectedFilter) {
-                "Today" -> eventDate.isEqual(now)
-                "This month" -> eventDate.month == now.month && eventDate.year == now.year
-                "This year" -> eventDate.year == now.year
-                else -> true // "All"
+            try {
+                val eventCal = java.util.Calendar.getInstance()
+                val parsedDate = sdf.parse(event.date)
+                if (parsedDate != null) {
+                    eventCal.time = parsedDate
+                    when (selectedFilter) {
+                        "Today" -> event.date == todayStr
+                        "This month" -> eventCal.get(java.util.Calendar.MONTH) == currentMonth &&
+                                eventCal.get(java.util.Calendar.YEAR) == currentYear
+                        "This year" -> eventCal.get(java.util.Calendar.YEAR) == currentYear
+                        else -> true // "All"
+                    }
+                } else true
+            } catch (_: Exception) {
+                true
             }
         }
     }
 
-    val groupedEvents = events.groupBy { it.category }
+    val groupedEvents = filteredEvents.groupBy { it.category }
     if (selectedEvent != null) {
         EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
     } else {
@@ -67,7 +78,7 @@ fun RecentActivitiesScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
                 )
             }
         ) { paddingValues ->
