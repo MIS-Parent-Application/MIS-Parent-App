@@ -10,8 +10,8 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.3.21"
-# KSP must align with the Kotlin version (Major.Minor.Patch-Minirelease)
-
+# KSP now uses a versioning scheme matching the Kotlin language version
+ksp = "2.3.7"
 composeBom = "2026.04.01"
 navigationCompose = "2.9.8"
 kotlinxSerializationJson = "1.11.0"
@@ -61,3 +61,4 @@ itextg = { module = "com.itextpdf:itextg", version.ref = "itextg" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
