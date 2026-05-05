@@ -33,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.SignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
@@ -41,8 +42,6 @@ import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
-import com.mis.parentapp.navigation.Me
-import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.navigation.Student
