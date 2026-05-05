@@ -1,5 +1,7 @@
 package com.mis.parentapp.features.home
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -24,6 +26,7 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentActivitiesScreen(
@@ -35,13 +38,25 @@ fun RecentActivitiesScreen(
             EventRepository(AppDatabase.getDatabase(context).eventDao())
         )
     )
-    
-    // Fix: Remove redundant 'initial' to help type inference
-    val events by viewModel.recentEvents.collectAsState()
-    
-    var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
-    val groupedEvents = events.groupBy { it.category }
 
+    val events by viewModel.recentEvents.collectAsState(initial = emptyList())
+    var selectedFilter by remember { mutableStateOf("All") } // Track state here
+    var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
+
+    val filteredEvents = remember(events, selectedFilter) {
+        val now = java.time.LocalDate.now()
+        events.filter { event ->
+            val eventDate = java.time.LocalDate.parse(event.date)
+            when (selectedFilter) {
+                "Today" -> eventDate.isEqual(now)
+                "This month" -> eventDate.month == now.month && eventDate.year == now.year
+                "This year" -> eventDate.year == now.year
+                else -> true // "All"
+            }
+        }
+    }
+
+    val groupedEvents = events.groupBy { it.category }
     if (selectedEvent != null) {
         EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
     } else {
@@ -59,7 +74,11 @@ fun RecentActivitiesScreen(
             }
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
-                RecentFilterRow()
+                // Pass the state and the setter to the row
+                RecentFilterRow(
+                    selectedFilter = selectedFilter,
+                    onFilterSelected = { selectedFilter = it }
+                )
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -82,7 +101,10 @@ fun RecentActivitiesScreen(
 }
 
 @Composable
-fun RecentFilterRow() {
+fun RecentFilterRow(
+    selectedFilter: String,
+    onFilterSelected: (String) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,9 +114,9 @@ fun RecentFilterRow() {
     ) {
         val filters = listOf("All", "Today", "This month", "This year")
         filters.forEach { filter ->
-            val isSelected = filter == "All"
+            val isSelected = filter == selectedFilter
             Surface(
-                modifier = Modifier.clickable { },
+                modifier = Modifier.clickable { onFilterSelected(filter) },
                 shape = RoundedCornerShape(8.dp),
                 color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
             ) {
@@ -109,10 +131,10 @@ fun RecentFilterRow() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun RecentActivitiesScreenPreview() {
-    ParentAppTheme {
-        RecentActivitiesScreen(onBackClick = {})
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun RecentActivitiesScreenPreview() {
+//    ParentAppTheme {
+//        RecentActivitiesScreen(onBackClick = {})
+//    }
+//}

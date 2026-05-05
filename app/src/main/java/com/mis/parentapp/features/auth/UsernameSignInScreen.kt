@@ -130,7 +130,7 @@ fun UsernameSignInScreen(
                         unfocusedTextColor = ColorsDefaultTheme.color_On_surface
                     ),
                     singleLine = true,
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+//                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
                 )
 
                 Spacer(modifier = Modifier.height(22.dp))
