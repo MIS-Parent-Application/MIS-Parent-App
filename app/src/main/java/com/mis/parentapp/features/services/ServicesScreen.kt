@@ -47,11 +47,10 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
 
     if (showPaymentScreen) {
         ContributionDuesSelectionScreen(
-            onBack = { showPaymentScreen = false },
+            onBack = { },
             onPaymentSuccess = { records ->
                 paymentHistory = paymentHistory + records
                 invoiceCounter += records.size
-                showPaymentScreen = false
             },
             currentInvoiceNumber = invoiceCounter
         )

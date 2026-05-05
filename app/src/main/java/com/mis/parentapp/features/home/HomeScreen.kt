@@ -1,8 +1,6 @@
 package com.mis.parentapp.features.home
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -74,7 +72,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
-    var selectedEventForDetail by remember { mutableStateOf<com.mis.parentapp.data.EventItem?>(null) }
+    var selectedEventForDetail by remember { mutableStateOf<EventItem?>(null) }
 
     if (showSheet) {
         ModalBottomSheet(
@@ -142,7 +140,7 @@ fun Body(
     onMenuClick: () -> Unit,
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
-    onEventClick: (com.mis.parentapp.data.EventItem) -> Unit
+    onEventClick: (EventItem) -> Unit
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
@@ -432,45 +430,6 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
             style = TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold),
             modifier = Modifier.align(Alignment.BottomStart)
         )
-    }
-}
-
-@Composable
-fun SectionPlaceholder(title: String, emptyText: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = title,
-            color = Color(0xFF1B4D13),
-            style = AppTypes.type_H1,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.video_conference_streamline_bangalore),
-                contentDescription = null,
-                modifier = Modifier.requiredSize(120.dp),
-                contentScale = ContentScale.Fit
-            )
-            Text(
-                text = emptyText,
-                style = AppTypes.type_Body_Small,
-                color = ColorsDefaultTheme.color_Primary_on_green,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
     }
 }
 
