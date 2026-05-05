@@ -41,24 +41,24 @@ import java.util.*
 
 @Composable
 fun ServicesScreen(modifier: Modifier = Modifier) {
-    var showPaymentScreen by remember { mutableStateOf(false) }
-    var paymentHistory by remember { mutableStateOf(listOf<PaymentRecord>()) }
-    var invoiceCounter by remember { mutableIntStateOf(1) }
+    val showPaymentScreen = remember { mutableStateOf(false) }
+    val paymentHistory = remember { mutableStateOf(listOf<PaymentRecord>()) }
+    val invoiceCounter = remember { mutableIntStateOf(1) }
 
-    if (showPaymentScreen) {
+    if (showPaymentScreen.value) {
         ContributionDuesSelectionScreen(
             onBack = { },
             onPaymentSuccess = { records ->
-                paymentHistory = paymentHistory + records
-                invoiceCounter += records.size
+                paymentHistory.value += records
+                invoiceCounter.intValue += records.size
             },
-            currentInvoiceNumber = invoiceCounter
+            currentInvoiceNumber = invoiceCounter.intValue
         )
     } else {
         Body(
             modifier = modifier,
-            onPayClick = { showPaymentScreen = true },
-            paymentHistory = paymentHistory
+            onPayClick = { showPaymentScreen.value = true },
+            paymentHistory = paymentHistory.value
         )
     }
 }
@@ -198,10 +198,10 @@ fun PaymentHistorySection(
     paymentHistory: List<PaymentRecord>
 ) {
     val context = LocalContext.current
-    var selectedFilter by remember { mutableStateOf("Recent") }
+    val selectedFilter = remember { mutableStateOf("Recent") }
 
-    val filteredHistory = remember(paymentHistory, selectedFilter) {
-        filterPaymentHistory(paymentHistory, selectedFilter)
+    val filteredHistory = remember(paymentHistory, selectedFilter.value) {
+        filterPaymentHistory(paymentHistory, selectedFilter.value)
     }
 
     Column(
@@ -221,9 +221,9 @@ fun PaymentHistorySection(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
         ) {
             listOf("Recent", "Last year", "Last month", "Last week").forEach { label ->
-                val isSelected = label == selectedFilter
+                val isSelected = label == selectedFilter.value
                 Button(
-                    onClick = { selectedFilter = label },
+                    onClick = { selectedFilter.value = label },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
@@ -348,7 +348,7 @@ private fun filterPaymentHistory(
             dateFormat.parse(record.paidDate)?.let { date ->
                 Calendar.getInstance().apply { time = date }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         } ?: return@filter false
 
@@ -381,7 +381,7 @@ private fun filterPaymentHistory(
             else -> true
         }
     }.sortedByDescending {
-        try { dateFormat.parse(it.paidDate)?.time ?: 0L } catch (e: Exception) { 0L }
+        try { dateFormat.parse(it.paidDate)?.time ?: 0L } catch (_: Exception) { 0L }
     }
 }
 

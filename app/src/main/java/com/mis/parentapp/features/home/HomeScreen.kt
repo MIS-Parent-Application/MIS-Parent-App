@@ -71,18 +71,18 @@ import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 fun HomeScreen(modifier: Modifier = Modifier) {
     val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
-    var showSheet by remember { mutableStateOf(false) }
-    var selectedEventForDetail by remember { mutableStateOf<EventItem?>(null) }
+    val showSheet = remember { mutableStateOf(false) }
+    val selectedEventForDetail = remember { mutableStateOf<EventItem?>(null) }
 
-    if (showSheet) {
+    if (showSheet.value) {
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = { showSheet.value = false },
             sheetState = sheetState,
             containerColor = Color.White
         ) {
             HomeMenuDrawer(
                 onItemClick = { route ->
-                    showSheet = false
+                    showSheet.value = false
                     when (route) {
                         "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
                         "Recent activities" -> homeNavController.navigate(RecentActivities)
@@ -93,10 +93,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    if (selectedEventForDetail != null) {
+    if (selectedEventForDetail.value != null) {
         EventDetailScreen(
-            event = selectedEventForDetail!!,
-            onBackClick = { selectedEventForDetail = null }
+            event = selectedEventForDetail.value!!,
+            onBackClick = { selectedEventForDetail.value = null }
         )
     } else {
         NavHost(
@@ -107,10 +107,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             composable<Home> {
                 Body(
                     onNotificationClick = { homeNavController.navigate(Notification) },
-                    onMenuClick = { showSheet = true },
+                    onMenuClick = { showSheet.value = true },
                     onUpcomingSeeAll = { homeNavController.navigate(UpcomingEvents) },
                     onRecentSeeAll = { homeNavController.navigate(RecentActivities) },
-                    onEventClick = { event -> selectedEventForDetail = event }
+                    onEventClick = { event -> selectedEventForDetail.value = event }
                 )
             }
 
