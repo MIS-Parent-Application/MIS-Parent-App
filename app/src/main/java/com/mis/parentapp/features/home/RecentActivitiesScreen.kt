@@ -35,10 +35,10 @@ fun RecentActivitiesScreen(
     )
 
     val events by viewModel.recentEvents.collectAsState(initial = emptyList())
-    var selectedFilter by remember { mutableStateOf("All") } // Track state here
-    var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
+    val selectedFilter = remember { mutableStateOf("All") } // Track state here
+    val selectedEvent = remember { mutableStateOf<EventItem?>(null) }
 
-    val filteredEvents = remember(events, selectedFilter) {
+    val filteredEvents = remember(events, selectedFilter.value) {
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         val now = java.util.Calendar.getInstance()
         val currentMonth = now.get(java.util.Calendar.MONTH)
@@ -51,7 +51,7 @@ fun RecentActivitiesScreen(
                 val parsedDate = sdf.parse(event.date)
                 if (parsedDate != null) {
                     eventCal.time = parsedDate
-                    when (selectedFilter) {
+                    when (selectedFilter.value) {
                         "Today" -> event.date == todayStr
                         "This month" -> eventCal.get(java.util.Calendar.MONTH) == currentMonth &&
                                 eventCal.get(java.util.Calendar.YEAR) == currentYear
@@ -66,8 +66,8 @@ fun RecentActivitiesScreen(
     }
 
     val groupedEvents = filteredEvents.groupBy { it.category }
-    if (selectedEvent != null) {
-        EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
+    if (selectedEvent.value != null) {
+        EventDetailScreen(event = selectedEvent.value!!, onBackClick = { selectedEvent.value = null })
     } else {
         Scaffold(
             topBar = {
@@ -85,8 +85,8 @@ fun RecentActivitiesScreen(
             Column(modifier = Modifier.padding(paddingValues)) {
                 // Pass the state and the setter to the row
                 RecentFilterRow(
-                    selectedFilter = selectedFilter,
-                    onFilterSelected = { selectedFilter = it }
+                    selectedFilter = selectedFilter.value,
+                    onFilterSelected = { selectedFilter.value = it }
                 )
 
                 LazyColumn(
@@ -99,7 +99,7 @@ fun RecentActivitiesScreen(
                             EventSection(
                                 title = category,
                                 events = eventList,
-                                onEventClick = { selectedEvent = it }
+                                onEventClick = { selectedEvent.value = it }
                             )
                         }
                     }
