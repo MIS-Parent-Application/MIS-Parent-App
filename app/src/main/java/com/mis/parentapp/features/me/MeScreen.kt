@@ -8,13 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,9 +43,28 @@ fun MeScreen(modifier: Modifier = Modifier) {
                 .padding(innerPadding),
             contentPadding = PaddingValues(vertical = 32.dp)
         ) {
-
             item {
-                ProfileHeader()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(380.dp) // 🔥 longer image
+                ) {
+
+                    // 🔥 BACKGROUND IMAGE WITH ROUNDED BOTTOM
+                    Image(
+                        painter = painterResource(id = R.drawable.bgpic),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(
+                                RoundedCornerShape(
+                                    bottomStart = 32.dp,
+                                    bottomEnd = 32.dp
+                                )
+                            )
+                    )
+                }
             }
             item {
                 YourEssentialsSection()
