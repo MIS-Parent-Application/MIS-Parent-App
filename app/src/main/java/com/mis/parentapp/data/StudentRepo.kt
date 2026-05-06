@@ -18,7 +18,8 @@ class StudentsRepo(private val studentDao: StudentMonitoringDao) {
             gpa = 1.25,
             pendingPayment = 0.00,
             notificationCount = 2,
-            profileImageRes = com.mis.parentapp.R.drawable.student_image
+            profileImageRes = com.mis.parentapp.R.drawable.student_image,
+            isPresent = true
         )
         val schedule1 = listOf(
             SubjectScheduleEntity(studentId = "STU_001", subject = "Mobile Computing", room = "Lab 3", day = "Mon/Wed", time = "08:00 AM"),
@@ -35,7 +36,8 @@ class StudentsRepo(private val studentDao: StudentMonitoringDao) {
             gpa = 1.75,
             pendingPayment = 2500.50,
             notificationCount = 5,
-            profileImageRes = com.mis.parentapp.R.drawable.student_image
+            profileImageRes = com.mis.parentapp.R.drawable.student_image,
+            isPresent = false,
         )
         val schedule2 = listOf(
             SubjectScheduleEntity(studentId = "STU_002", subject = "Intro to IT", room = "Lab 1", day = "Tue/Thu", time = "01:00 PM")
@@ -51,7 +53,8 @@ class StudentsRepo(private val studentDao: StudentMonitoringDao) {
             gpa = 2.25,
             pendingPayment = 120.00,
             notificationCount = 1,
-            profileImageRes = com.mis.parentapp.R.drawable.student_image
+            profileImageRes = com.mis.parentapp.R.drawable.student_image,
+            isPresent = true,
         )
         val schedule3 = listOf(
             SubjectScheduleEntity(studentId = "STU_003", subject = "Anatomy", room = "Gym 2", day = "Mon/Wed/Fri", time = "03:00 PM")

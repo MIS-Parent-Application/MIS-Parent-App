@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
@@ -211,7 +212,7 @@ fun Body(
             }
         }
 
-        // NEW: HORIZONTAL STUDENT SELECTOR
+        //HORIZONTAL STUDENT SELECTOR
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
                 LazyRow(
@@ -230,6 +231,14 @@ fun Body(
             }
         }
 
+        //PRESENCE HEADER
+        item {
+            selectedStudent?.student?.let { child ->
+                StudentPresenceHeader(student = child)
+            }
+        }
+
+        //QUICK STATS
         item {
             selectedStudent?.student?.let { child ->
                 QuickStatsSection(
@@ -241,6 +250,7 @@ fun Body(
             }
         }
 
+        //UPCOMING EVENTS
         item {
             EventHorizontalSection(
                 title = "Upcoming Events",
@@ -250,6 +260,7 @@ fun Body(
             )
         }
 
+        //RECENT ACTIVITIES
         item {
             EventHorizontalSection(
                 title = "Recent Activities",
@@ -310,6 +321,89 @@ fun StudentSelectorItem(
             color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color.Black,
             modifier = Modifier.padding(top = 4.dp)
         )
+    }
+}
+
+
+@Composable
+fun StudentPresenceHeader(student: StudentEntity) {
+    val (brightColor, deepColor) = if (student.isPresent) {
+        Color(0xFFDEF731) to Color(0xFF267D1E) //green
+    } else {
+        Color(0xFFE57373) to Color(0xFFC62828) //red
+    }
+
+    val statusText = if (student.isPresent) "At class" else "Not in class"
+    val statusColor = if (student.isPresent) Color(0xFF4CAF50) else Color(0xFFF44336)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.height(180.dp).fillMaxWidth()
+        ) {
+            //left aura
+            Box(
+                modifier = Modifier
+                    .offset(x = (-40).dp)
+                    .requiredSize(300.dp)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                            colors = listOf(brightColor.copy(alpha = 1f), Color.Transparent)
+                        ),
+                        shape = CircleShape
+                    )
+            )
+
+            //right aura
+            Box(
+                modifier = Modifier
+                    .offset(x = 40.dp)
+                    .requiredSize(300.dp)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                            colors = listOf(deepColor.copy(alpha = 1f), Color.Transparent)
+                        ),
+                        shape = CircleShape
+                    )
+            )
+
+            Image(
+                painter = painterResource(id = student.profileImageRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .requiredSize(110.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .padding(4.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        //presence status badge
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(statusColor)
+                .padding(horizontal = 14.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = statusText,
+                color = Color.White,
+                style = AppTypes.type_Caption.copy(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.sp
+                )
+            )
+        }
     }
 }
 

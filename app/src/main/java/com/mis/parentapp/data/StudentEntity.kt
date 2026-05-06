@@ -25,5 +25,6 @@ data class StudentEntity(
     val gpa: Double,             //1.5
     val pendingPayment: Double,  //250.00
     val notificationCount: Int,
-    val profileImageRes: Int
+    val profileImageRes: Int,
+    val isPresent: Boolean = false
 )
