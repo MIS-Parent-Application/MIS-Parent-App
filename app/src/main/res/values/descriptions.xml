@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--Me module content description strings -->
+    <string name="content_disc_notif">Notifications</string>
+    <string name="content_disc_acad_cal">Academic Calendar</string>
+    <string name="content_disc_about">About app</string>
+</resources>

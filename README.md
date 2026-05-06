@@ -2,24 +2,69 @@
 
 [![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
 
-<table border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: none;">
+<table style="border-collapse: collapse; border: none;">
   <tr>
-    <td align="center" style="border: none;">
+    <td style="text-align:center; border: none;">
       <a href="https://github.com/CarlXT">
         <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/CarlXT.png" width="100px;" alt="CarlXT"/>
         <br />
         <sub><b>Carl Sagario</b></sub>
         <br />
-        <sub><i>Tech Lead</i></sub>
+        <sub><i>🧑🏻‍💻🎨📄</i></sub>
       </a>
     </td>
-    <td align="center" style="border: none;">
+    <td style="text-align:center; border: none;">
       <a href="https://github.com/Fallen032">
         <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Fallen032.png" width="100px;" alt="Fallen032"/>
         <br />
         <sub><b>Serge Keneth Lim</b></sub>
         <br />
-        <sub><i>Developer</i></sub>
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/semi-naan">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/semi-naan.png" width="100px;" alt="semi-naan"/>
+        <br />
+        <sub><b>Keenan Semine</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/Namkee">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Namkee.png" width="100px;" alt="Namkee"/>
+        <br />
+        <sub><b>Jethro Nathaniel Cabahug</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻📄</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/Axiala01">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Axiala01.png" width="100px;" alt="Axiala01"/>
+        <br />
+        <sub><b>Juliana Mae Lloveras</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/vicben2">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/vicben2.png" width="100px;" alt="vicben2"/>
+        <br />
+        <sub><b>Zeth Brandinno</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/b1nsz">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/b1nsz.png" width="100px;" alt="b1nsz"/>
+        <br />
+        <sub><b>Vince Cherry Betache</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
       </a>
     </td>
   </tr>

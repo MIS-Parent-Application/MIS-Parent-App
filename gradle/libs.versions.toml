@@ -1,5 +1,7 @@
 [versions]
 # student-monitoring
+# Cleaned up duplicates, kept the highest versions
+
 agp = "9.2.0"
 coreKtx = "1.18.0"
 junit = "4.13.2"
@@ -8,11 +10,12 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.3.21"
-ksp = "2.3.21-1.0.30"
+# KSP now uses a versioning scheme matching the Kotlin language version
+ksp = "2.3.7"
 composeBom = "2026.04.01"
 navigationCompose = "2.9.8"
 kotlinxSerializationJson = "1.11.0"
-material3 = "1.4.0"
+
 room = "2.8.4"
 appcompat = "1.7.1"
 material = "1.13.0"
@@ -40,7 +43,6 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
