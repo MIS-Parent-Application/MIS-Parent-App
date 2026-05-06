@@ -1,6 +1,5 @@
 package com.mis.parentapp.features.home
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -65,7 +64,6 @@ import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
-import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 
@@ -155,7 +153,7 @@ fun Body(
     val recentEvents by viewModel.recentEvents.collectAsState()
 
     //mock data - replace username with what you've used to sign in
-    val username: String = "user"
+    val username = "user"
 
     LaunchedEffect(Unit) {
         studentsRepo.seedDummyStudents(username)
