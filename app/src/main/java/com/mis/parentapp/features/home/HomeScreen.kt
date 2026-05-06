@@ -155,7 +155,11 @@ fun Body(
     val recentEvents by viewModel.recentEvents.collectAsState()
 
     //mock data - replace username with what you've used to sign in
-    val username: String = "email"
+    val username: String = "user"
+
+    LaunchedEffect(Unit) {
+        studentsRepo.seedDummyStudents(username)
+    }
 
     val students by studentsRepo.getChildrenForParent(username).collectAsState(initial = emptyList())
     var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
@@ -212,12 +216,6 @@ fun Body(
         // NEW: HORIZONTAL STUDENT SELECTOR
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "My Children",
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    style = AppTypes.type_Body_Small,
-                    color = Color.Gray
-                )
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
