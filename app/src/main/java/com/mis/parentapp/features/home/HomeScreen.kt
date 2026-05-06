@@ -60,6 +60,7 @@ import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
 import com.mis.parentapp.data.StudentWithSchedules
 import com.mis.parentapp.data.StudentsRepo
+import com.mis.parentapp.data.SubjectScheduleEntity
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Notification
@@ -67,6 +68,7 @@ import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
+import androidx.compose.foundation.lazy.itemsIndexed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,6 +240,13 @@ fun Body(
             }
         }
 
+        //SCHEDULE LISTS
+        item {
+            selectedStudent?.let { studentWithSchedules ->
+                ScheduleSection(schedules = studentWithSchedules.schedules)
+            }
+        }
+
         //QUICK STATS
         item {
             selectedStudent?.student?.let { child ->
@@ -402,6 +411,78 @@ fun StudentPresenceHeader(student: StudentEntity) {
                     fontWeight = FontWeight.Black,
                     letterSpacing = 1.sp
                 )
+            )
+        }
+    }
+}
+
+
+@Composable
+fun ScheduleSection(schedules: List<SubjectScheduleEntity>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            itemsIndexed(schedules) { index, item ->
+                val isNow = index == 0
+                ScheduleCard(schedule = item, status = if (isNow) "Now" else "Up Next", isNow = isNow)
+            }
+        }
+    }
+}
+
+@Composable
+fun ScheduleCard(schedule: SubjectScheduleEntity, status: String, isNow: Boolean) {
+    // Theme logic
+    val backgroundColor = if (isNow) Color(0xFF1B4D13) else ColorsDefaultTheme.color_Surface
+    val primaryText = if (isNow) Color(0xFFFFF59D) else Color(0xFF1B4D13) // Light Yellow vs Dark Green
+    val secondaryText = if (isNow) Color.White.copy(alpha = 0.8f) else Color.Gray
+
+    Box(
+        modifier = Modifier
+            .requiredSize(width = 220.dp, height = 150.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
+            .padding(16.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.formkit_date), // or a specific schedule icon
+            contentDescription = null,
+            modifier = Modifier.requiredSize(24.dp).align(Alignment.TopStart),
+            tint = primaryText
+        )
+
+        Text(
+            text = status,
+            style = AppTypes.type_Caption,
+            fontWeight = FontWeight.Bold,
+            color = primaryText,
+            modifier = Modifier.align(Alignment.TopEnd)
+        )
+
+        Column(
+            modifier = Modifier.align(Alignment.BottomStart),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = schedule.subject,
+                style = AppTypes.type_H1,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = primaryText,
+                maxLines = 1
+            )
+            Text(
+                text = schedule.room,
+                style = AppTypes.type_Body_Small,
+                color = secondaryText
+            )
+            Text(
+                text = schedule.time,
+                style = AppTypes.type_Body_Small,
+                fontWeight = FontWeight.Bold,
+                color = secondaryText
             )
         }
     }

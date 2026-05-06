@@ -21,10 +21,6 @@ class StudentsRepo(private val studentDao: StudentMonitoringDao) {
             profileImageRes = com.mis.parentapp.R.drawable.student_image,
             isPresent = true
         )
-        val schedule1 = listOf(
-            SubjectScheduleEntity(studentId = "STU_001", subject = "Mobile Computing", room = "Lab 3", day = "Mon/Wed", time = "08:00 AM"),
-            SubjectScheduleEntity(studentId = "STU_001", subject = "Ethics", room = "Room 102", day = "Fri", time = "10:00 AM")
-        )
 
         val child2 = StudentEntity(
             studentId = "STU_002",
@@ -38,9 +34,6 @@ class StudentsRepo(private val studentDao: StudentMonitoringDao) {
             notificationCount = 5,
             profileImageRes = com.mis.parentapp.R.drawable.student_image,
             isPresent = false,
-        )
-        val schedule2 = listOf(
-            SubjectScheduleEntity(studentId = "STU_002", subject = "Intro to IT", room = "Lab 1", day = "Tue/Thu", time = "01:00 PM")
         )
 
         val child3 = StudentEntity(
@@ -56,8 +49,23 @@ class StudentsRepo(private val studentDao: StudentMonitoringDao) {
             profileImageRes = com.mis.parentapp.R.drawable.student_image,
             isPresent = true,
         )
+
+        val schedule1 = listOf(
+            SubjectScheduleEntity(studentId = "STU_001", subject = "Mobile Computing", room = "Lab 3", day = "Mon/Wed", time = "08:00 AM"),
+            SubjectScheduleEntity(studentId = "STU_001", subject = "Vacant Time", room = "Student Lounge", day = "Mon/Wed", time = "10:00 AM"),
+            SubjectScheduleEntity(studentId = "STU_001", subject = "Ethics", room = "Room 102", day = "Fri", time = "11:30 AM")
+        )
+
+        val schedule2 = listOf(
+            SubjectScheduleEntity(studentId = "STU_002", subject = "Intro to IT", room = "Lab 1", day = "Tue/Thu", time = "01:00 PM"),
+            SubjectScheduleEntity(studentId = "STU_002", subject = "College Algebra", room = "Room 304", day = "Tue/Thu", time = "02:30 PM"),
+            SubjectScheduleEntity(studentId = "STU_002", subject = "Vacant Time", room = "Library", day = "Fri", time = "All Day")
+        )
+
         val schedule3 = listOf(
-            SubjectScheduleEntity(studentId = "STU_003", subject = "Anatomy", room = "Gym 2", day = "Mon/Wed/Fri", time = "03:00 PM")
+            SubjectScheduleEntity(studentId = "STU_003", subject = "Anatomy", room = "Gym 2", day = "Mon/Wed/Fri", time = "03:00 PM"),
+            SubjectScheduleEntity(studentId = "STU_003", subject = "Vacant Time", room = "N/A", day = "Tue/Thu", time = "08:00 AM"),
+            SubjectScheduleEntity(studentId = "STU_003", subject = "Sports Psych", room = "Room 201", day = "Mon/Wed", time = "01:00 PM")
         )
 
         studentDao.insertStudent(child1)
