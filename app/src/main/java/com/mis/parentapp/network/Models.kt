@@ -7,6 +7,17 @@ data class ParentDashboard(
     val upcomingEvents: List<String>
 )
 
+data class LoginRequest(
+    val username: String,
+    val password: String
+)
+
+data class LoginResponse(
+    val token: String,
+    val parent: Parent,
+    val dashboard: ParentDashboard
+)
+
 data class Parent(
     val id: Int,
     val name: String,

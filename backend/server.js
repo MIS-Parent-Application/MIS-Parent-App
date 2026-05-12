@@ -15,6 +15,19 @@ const mockParent = {
     children: [101, 102]
 };
 
+const parentAccounts = [
+    {
+        username: "jordan.mcclure@email.com",
+        password: "parent123",
+        parentId: 1
+    },
+    {
+        username: "jordan",
+        password: "parent123",
+        parentId: 1
+    }
+];
+
 const schedules = {
     101: [
         { subject: "IT 312 - Mobile Development", room: "Lab 402", instructor: "Prof. Santos", day: "Monday", startTime: "08:00", endTime: "09:30" },
@@ -98,17 +111,39 @@ const calendarEvents = [
     { id: 5, studentId: null, title: "Parent-Teacher Consultation Day", category: "School-wide", date: "2026-05-30", time: "01:00 PM", description: "Parents may meet instructors by appointment.", status: "Reminder" }
 ];
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: "OK", timestamp: new Date().toISOString() });
-});
-
-app.get('/api/parent/dashboard', (req, res) => {
-    res.json({
+function buildDashboard() {
+    return {
         parent: mockParent,
         children: mockParent.children.map(id => mockStudents[id]),
         unreadAnnouncements: notifications.filter(item => item.isNew).length,
         upcomingEvents: calendarEvents.slice(0, 3).map(event => `${event.title} - ${event.date}`)
+    };
+}
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
+app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body || {};
+    const account = parentAccounts.find(item =>
+        item.username.toLowerCase() === String(username || "").trim().toLowerCase() &&
+        item.password === password
+    );
+
+    if (!account) {
+        return res.status(401).json({ error: "Invalid username or password" });
+    }
+
+    res.json({
+        token: `mock-parent-token-${account.parentId}`,
+        parent: mockParent,
+        dashboard: buildDashboard()
     });
+});
+
+app.get('/api/parent/dashboard', (req, res) => {
+    res.json(buildDashboard());
 });
 
 app.get('/api/student/:id/profile', (req, res) => {
@@ -153,6 +188,7 @@ app.listen(PORT, () => {
     console.log(`MIS Backend running on http://localhost:${PORT}`);
     console.log('Available endpoints:');
     console.log('  GET /api/health');
+    console.log('  POST /api/auth/login');
     console.log('  GET /api/parent/dashboard');
     console.log('  GET /api/notifications?studentId=101');
     console.log('  GET /api/calendar?studentId=101');
