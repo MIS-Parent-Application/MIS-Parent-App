@@ -36,12 +36,24 @@ import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @Composable
-fun ServicesScreen(modifier: Modifier = Modifier) {
-    Body(modifier)
+fun ServicesScreen(
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
+) {
+    Body(
+        modifier = modifier,
+        onNotificationClick = onNotificationClick,
+        onCalendarClick = onCalendarClick
+    )
 }
 
 @Composable
-fun Body(modifier: Modifier = Modifier) {
+fun Body(
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
@@ -50,7 +62,10 @@ fun Body(modifier: Modifier = Modifier) {
             .background(Color.White)
     ) {
         item {
-            HeaderSection()
+            HeaderSection(
+                onNotificationClick = onNotificationClick,
+                onCalendarClick = onCalendarClick
+            )
         }
         item {
             FilterButtonsSection()
@@ -76,7 +91,10 @@ fun Body(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(
+    onNotificationClick: () -> Unit,
+    onCalendarClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,14 +118,14 @@ fun HeaderSection() {
                 contentDescription = "Date",
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { }
+                    .clickable { onCalendarClick() }
             )
             Image(
                 painter = painterResource(id = R.drawable.ph_bell),
                 contentDescription = "Notifications",
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { }
+                    .clickable { onNotificationClick() }
             )
             Image(
                 painter = painterResource(id = R.drawable.studentswitcher),

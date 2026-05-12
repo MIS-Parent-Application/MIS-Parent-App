@@ -51,11 +51,17 @@ import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.network.ParentDashboard
+import com.mis.parentapp.shared.StudentSharedViewModel
 
 
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    studentVM: StudentSharedViewModel? = null,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
+) {
     // This controller only handles navigation INSIDE the Home tab
     val homeNavController = rememberNavController()
 
@@ -66,9 +72,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     ) {
         composable<Home> {
             Body(
-                onNotificationClick = {
-                    homeNavController.navigate(Notification)
-                },
+                studentVM = studentVM,
+                onNotificationClick = onNotificationClick,
+                onCalendarClick = onCalendarClick,
                 onFilterClick = { label ->
                     when (label) {
                         "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
@@ -80,7 +86,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         composable<Notification> {
             // Pass a lambda to handle the back button within the sub-screen
-            NotificationScreen(onBackClick = { homeNavController.popBackStack() })
+            NotificationScreen(studentVM = studentVM, onBackClick = { homeNavController.popBackStack() })
         }
 
         composable<UpcomingEvents> {
@@ -97,7 +103,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 fun Body(
 
     modifier: Modifier = Modifier,
+    studentVM: StudentSharedViewModel? = null,
     onNotificationClick: () -> Unit,
+    onCalendarClick: () -> Unit,
     onFilterClick: (String) -> Unit
 )
 {
@@ -114,10 +122,12 @@ fun Body(
             Log.d("API_TEST", "SUCCESS: $data")
 
             val child = data.children.firstOrNull()
+            studentVM?.updateStudents(data.children)
 
-            attendance = child?.attendance ?: "98%"
-            gpa = child?.gpa?.toString() ?: "1.5"
-            pending = child?.pendingPayments?.toString() ?: "0.00"
+            val selectedChild = studentVM?.selectedStudent ?: child
+            attendance = selectedChild?.attendance ?: "98%"
+            gpa = selectedChild?.gpa?.toString() ?: "1.5"
+            pending = selectedChild?.pendingPayments?.toString() ?: "0.00"
             notifications = data.unreadAnnouncements.toString()
 
         } catch (e: Exception) {
@@ -156,7 +166,7 @@ fun Body(
                         contentDescription = "Date",
                         modifier = Modifier
                             .requiredSize(32.dp)
-                            .clickable { /* Handle date click */ }
+                            .clickable { onCalendarClick() }
                     )
                     Image(
                         painter = painterResource(id = R.drawable.ph_bell),
