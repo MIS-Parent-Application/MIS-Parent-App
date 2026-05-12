@@ -58,21 +58,28 @@ import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
-import com.mis.parentapp.data.StudentWithSchedules
-import com.mis.parentapp.data.StudentsRepo
 import com.mis.parentapp.data.SubjectScheduleEntity
+import com.mis.parentapp.network.Child
+import com.mis.parentapp.network.ClassSchedule
+import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    studentVM: StudentSharedViewModel? = null,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
+) {
     val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
     val showSheet = remember { mutableStateOf(false) }
@@ -110,7 +117,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         ) {
             composable<Home> {
                 Body(
-                    onNotificationClick = { homeNavController.navigate(Notification) },
+                    studentVM = studentVM,
+                    onNotificationClick = onNotificationClick,
+                    onCalendarClick = onCalendarClick,
                     onMenuClick = { showSheet.value = true },
                     onUpcomingSeeAll = { homeNavController.navigate(UpcomingEvents) },
                     onRecentSeeAll = { homeNavController.navigate(RecentActivities) },
@@ -119,7 +128,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
             composable<Notification> {
-                NotificationScreen(onBackClick = { homeNavController.popBackStack() })
+                NotificationScreen(studentVM = studentVM, onBackClick = { homeNavController.popBackStack() })
             }
 
             composable<UpcomingEvents> {
@@ -140,7 +149,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 @Composable
 fun Body(
     modifier: Modifier = Modifier,
+    studentVM: StudentSharedViewModel? = null,
     onNotificationClick: () -> Unit,
+    onCalendarClick: () -> Unit,
     onMenuClick: () -> Unit,
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
@@ -149,24 +160,32 @@ fun Body(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val repo = EventRepository(db.eventDao())
-    val studentsRepo = StudentsRepo(db.studentMonitoringDao(), db.userDao())
     val viewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(repo))
 
     val upcomingEvents by viewModel.upcomingEvents.collectAsState()
     val recentEvents by viewModel.recentEvents.collectAsState()
 
-    //mock data - replace username with what you've used to sign in
-    val username = "user"
+    var dashboardError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        studentsRepo.seedDummyStudents(username)
+        try {
+            val dashboard = RetrofitInstance.api.getDashboard()
+            studentVM?.updateStudents(dashboard.children)
+            dashboardError = null
+        } catch (e: Exception) {
+            dashboardError = "Unable to load student dashboard."
+        }
     }
 
-    val students by studentsRepo.getChildrenForParent(username).collectAsState(initial = emptyList())
-    var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
+    val students = remember(studentVM?.students) {
+        studentVM?.students?.map { it.toHomeStudent() } ?: emptyList()
+    }
+    var selectedStudent by remember { mutableStateOf<HomeStudent?>(null) }
 
     LaunchedEffect(students) {
-        if (selectedStudent == null && students.isNotEmpty()) {
+        if (students.isEmpty()) {
+            selectedStudent = null
+        } else if (selectedStudent == null || students.none { it.student.studentId == selectedStudent?.student?.studentId }) {
             selectedStudent = students.first()
         }
     }
@@ -194,7 +213,9 @@ fun Body(
                     Image(
                         painter = painterResource(id = R.drawable.formkit_date),
                         contentDescription = "Date",
-                        modifier = Modifier.requiredSize(28.dp)
+                        modifier = Modifier
+                            .requiredSize(28.dp)
+                            .clickable { onCalendarClick() }
                     )
                     Image(
                         painter = painterResource(id = R.drawable.ph_bell),
@@ -217,6 +238,14 @@ fun Body(
         //HORIZONTAL STUDENT SELECTOR
         item {
             Column(modifier = Modifier.fillMaxWidth()) {
+                dashboardError?.let { message ->
+                    Text(
+                        text = message,
+                        color = Color.Red,
+                        style = AppTypes.type_Body_Small,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -281,6 +310,42 @@ fun Body(
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
+}
+
+private data class HomeStudent(
+    val student: StudentEntity,
+    val schedules: List<SubjectScheduleEntity>
+)
+
+private fun Child.toHomeStudent(): HomeStudent {
+    val attendanceValue = attendance.removeSuffix("%").toDoubleOrNull() ?: 0.0
+    val studentId = id.toString()
+    return HomeStudent(
+        student = StudentEntity(
+            studentId = studentId,
+            parentId = "server",
+            name = name,
+            course = course,
+            year = year,
+            attendanceScore = attendanceValue / 100.0,
+            gpa = gpa,
+            pendingPayment = pendingPayments.toDouble(),
+            notificationCount = 0,
+            profileImageRes = R.drawable.student_image,
+            isPresent = attendanceValue > 0.0
+        ),
+        schedules = schedules.map { it.toScheduleEntity(studentId) }
+    )
+}
+
+private fun ClassSchedule.toScheduleEntity(studentId: String): SubjectScheduleEntity {
+    return SubjectScheduleEntity(
+        studentId = studentId,
+        subject = subject,
+        room = room,
+        day = day,
+        time = "$startTime - $endTime"
+    )
 }
 
 

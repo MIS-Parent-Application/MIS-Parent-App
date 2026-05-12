@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -33,31 +34,37 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.PasswordSignInScreen
+import com.mis.parentapp.features.auth.UsernameSignInScreen
+import com.mis.parentapp.features.home.CalendarScreen
 import com.mis.parentapp.features.home.HomeScreen
+import com.mis.parentapp.features.home.NotificationScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
-import com.mis.parentapp.features.auth.UsernameSignInScreen
-import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.features.student.StudyLoadScreen
+import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Home
-import com.mis.parentapp.navigation.SignIn
-import com.mis.parentapp.navigation.PasswordSignIn
-import com.mis.parentapp.navigation.Student
-import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.Me
+import com.mis.parentapp.navigation.Notification
+import com.mis.parentapp.navigation.PasswordSignIn
+import com.mis.parentapp.navigation.Services
+import com.mis.parentapp.navigation.SignIn
+import com.mis.parentapp.navigation.Student
+import com.mis.parentapp.navigation.StudyLoad
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val studentSharedViewModel: StudentSharedViewModel = viewModel()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
     val context = androidx.compose.ui.platform.LocalContext.current
-
-    //init database
     val database = remember { com.mis.parentapp.data.AppDatabase.getDatabase(context) }
     val authViewModel = remember { AuthViewModel(database.userDao()) }
 
@@ -107,8 +114,6 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            //replace this later when testing for actual app
-//            startDestination = DebugMenu,
             startDestination = Home,
             modifier = Modifier.padding(innerPadding)
         ) {
@@ -144,10 +149,47 @@ fun MainScreen() {
                     }
                 )
             }
-            composable<Services> { ServicesScreen() }
+
+            composable<Services> {
+                ServicesScreen(
+                    onNotificationClick = { navController.navigate(Notification) },
+                    onCalendarClick = { navController.navigate(Calendar) }
+                )
+            }
             composable<Me> { MeScreen() }
-            composable<Home> { HomeScreen() }
-            composable<Student> { StudentScreen() }
+            composable<Home> {
+                HomeScreen(
+                    studentVM = studentSharedViewModel,
+                    onNotificationClick = { navController.navigate(Notification) },
+                    onCalendarClick = { navController.navigate(Calendar) }
+                )
+            }
+            composable<Student> {
+                StudentScreen(
+                    studentVM = studentSharedViewModel,
+                    onNotificationClick = { navController.navigate(Notification) },
+                    onCalendarClick = { navController.navigate(Calendar) },
+                    onStudyLoadClick = { navController.navigate(StudyLoad) }
+                )
+            }
+            composable<Notification> {
+                NotificationScreen(
+                    studentVM = studentSharedViewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable<Calendar> {
+                CalendarScreen(
+                    studentVM = studentSharedViewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable<StudyLoad> {
+                StudyLoadScreen(
+                    studentVM = studentSharedViewModel,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

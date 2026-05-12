@@ -40,7 +40,11 @@ import java.util.*
 // ================= SERVICES SCREEN =================
 
 @Composable
-fun ServicesScreen(modifier: Modifier = Modifier) {
+fun ServicesScreen(
+    modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
+) {
     val showPaymentScreen = remember { mutableStateOf(false) }
     val paymentHistory = remember { mutableStateOf(listOf<PaymentRecord>()) }
     val invoiceCounter = remember { mutableIntStateOf(1) }
@@ -58,7 +62,9 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
         Body(
             modifier = modifier,
             onPayClick = { showPaymentScreen.value = true },
-            paymentHistory = paymentHistory.value
+            paymentHistory = paymentHistory.value,
+            onNotificationClick = onNotificationClick,
+            onCalendarClick = onCalendarClick
         )
     }
 }
@@ -69,7 +75,9 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
 fun Body(
     modifier: Modifier = Modifier,
     onPayClick: () -> Unit,
-    paymentHistory: List<PaymentRecord>
+    paymentHistory: List<PaymentRecord>,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -78,7 +86,12 @@ fun Body(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        item { HeaderSection() }
+        item {
+            HeaderSection(
+                onNotificationClick = onNotificationClick,
+                onCalendarClick = onCalendarClick
+            )
+        }
         item { FilterButtonsSection() }
         item {
             Image(
@@ -104,7 +117,10 @@ fun Body(
 // ================= UI COMPONENTS =================
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(
+    onNotificationClick: () -> Unit,
+    onCalendarClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -128,14 +144,14 @@ fun HeaderSection() {
                 contentDescription = "Date",
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { }
+                    .clickable { onCalendarClick() }
             )
             Image(
                 painter = painterResource(id = R.drawable.ph_bell),
                 contentDescription = "Notifications",
                 modifier = Modifier
                     .size(32.dp)
-                    .clickable { }
+                    .clickable { onNotificationClick() }
             )
             Image(
                 painter = painterResource(id = R.drawable.studentswitcher),
