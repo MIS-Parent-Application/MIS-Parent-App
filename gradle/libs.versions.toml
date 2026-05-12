@@ -12,7 +12,7 @@ activityCompose = "1.13.0"
 kotlin = "2.3.21"
 # KSP now uses a versioning scheme matching the Kotlin language version
 ksp = "2.3.7"
-composeBom = "2026.04.01"
+composeBom = "2026.05.00"
 navigationCompose = "2.9.8"
 kotlinxSerializationJson = "1.11.0"
 
@@ -22,7 +22,7 @@ material = "1.13.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
 itextg = "5.5.10"
-foundation = "1.11.0"
+foundation = "1.11.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
