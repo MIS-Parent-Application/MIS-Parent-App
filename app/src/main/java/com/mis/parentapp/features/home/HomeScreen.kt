@@ -66,13 +66,19 @@ import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    studentVM: StudentSharedViewModel? = null,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {}
+) {
     val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
     val showSheet = remember { mutableStateOf(false) }
@@ -110,7 +116,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         ) {
             composable<Home> {
                 Body(
-                    onNotificationClick = { homeNavController.navigate(Notification) },
+                    onNotificationClick = onNotificationClick,
+                    onCalendarClick = onCalendarClick,
                     onMenuClick = { showSheet.value = true },
                     onUpcomingSeeAll = { homeNavController.navigate(UpcomingEvents) },
                     onRecentSeeAll = { homeNavController.navigate(RecentActivities) },
@@ -119,7 +126,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
             composable<Notification> {
-                NotificationScreen(onBackClick = { homeNavController.popBackStack() })
+                NotificationScreen(studentVM = studentVM, onBackClick = { homeNavController.popBackStack() })
             }
 
             composable<UpcomingEvents> {
@@ -141,6 +148,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 fun Body(
     modifier: Modifier = Modifier,
     onNotificationClick: () -> Unit,
+    onCalendarClick: () -> Unit,
     onMenuClick: () -> Unit,
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
@@ -194,7 +202,9 @@ fun Body(
                     Image(
                         painter = painterResource(id = R.drawable.formkit_date),
                         contentDescription = "Date",
-                        modifier = Modifier.requiredSize(28.dp)
+                        modifier = Modifier
+                            .requiredSize(28.dp)
+                            .clickable { onCalendarClick() }
                     )
                     Image(
                         painter = painterResource(id = R.drawable.ph_bell),
