@@ -46,17 +46,17 @@ const schedules = {
 
 const studyLoads = {
     101: [
-        { code: "IT 312", title: "Mobile Development", units: 3, instructor: "Prof. Santos", schedule: "Mon 08:00 - 09:30", room: "Lab 402" },
-        { code: "IT 326", title: "Database Systems", units: 3, instructor: "Engr. Reyes", schedule: "Mon 10:00 - 11:30", room: "Room 301" },
-        { code: "GE 108", title: "Ethics", units: 3, instructor: "Ms. Dela Cruz", schedule: "Tue 13:00 - 14:30", room: "Room 204" },
-        { code: "IT 318", title: "Web Systems", units: 3, instructor: "Prof. Garcia", schedule: "Wed 09:00 - 10:30", room: "Lab 407" },
-        { code: "IT 330", title: "Capstone 1", units: 3, instructor: "Dr. Lim", schedule: "Fri 15:00 - 17:00", room: "Room 305" }
+        { scheduleNumber: "02543", courseNumber: "IT 312", code: "IT 312", title: "Mobile Development", units: 3, instructor: "Prof. Santos", schedule: "Mon 08:00 - 09:30", time: "08:00 - 09:30 AM", days: "MON", room: "Lab 402", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "33506", courseNumber: "IT 326", code: "IT 326", title: "Database Systems", units: 3, instructor: "Engr. Reyes", schedule: "Mon 10:00 - 11:30", time: "10:00 - 11:30 AM", days: "MON", room: "Room 301", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "33514", courseNumber: "GE 108", code: "GE 108", title: "Ethics", units: 3, instructor: "Ms. Dela Cruz", schedule: "Tue 13:00 - 14:30", time: "01:00 - 02:30 PM", days: "TUE", room: "Room 204", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "33522", courseNumber: "IT 318", code: "IT 318", title: "Web Systems", units: 3, instructor: "Prof. Garcia", schedule: "Wed 09:00 - 10:30", time: "09:00 - 10:30 AM", days: "WED", room: "Lab 407", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "33530", courseNumber: "IT 330", code: "IT 330", title: "Capstone 1", units: 3, instructor: "Dr. Lim", schedule: "Fri 15:00 - 17:00", time: "03:00 - 05:00 PM", days: "FRI", room: "Room 305", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" }
     ],
     102: [
-        { code: "CS 210", title: "Data Structures", units: 3, instructor: "Prof. Molina", schedule: "Mon 09:00 - 10:30", room: "Lab 201" },
-        { code: "MATH 214", title: "Discrete Mathematics", units: 3, instructor: "Ms. Aquino", schedule: "Tue 10:00 - 11:30", room: "Room 112" },
-        { code: "CS 218", title: "Object-Oriented Programming", units: 3, instructor: "Engr. Villanueva", schedule: "Thu 13:30 - 15:00", room: "Lab 203" },
-        { code: "PE 204", title: "Team Sports", units: 2, instructor: "Coach Ramos", schedule: "Fri 08:00 - 10:00", room: "Gym" }
+        { scheduleNumber: "34501", courseNumber: "CS 210", code: "CS 210", title: "Data Structures", units: 3, instructor: "Prof. Molina", schedule: "Mon 09:00 - 10:30", time: "09:00 - 10:30 AM", days: "MON", room: "Lab 201", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "34509", courseNumber: "MATH 214", code: "MATH 214", title: "Discrete Mathematics", units: 3, instructor: "Ms. Aquino", schedule: "Tue 10:00 - 11:30", time: "10:00 - 11:30 AM", days: "TUE", room: "Room 112", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "34518", courseNumber: "CS 218", code: "CS 218", title: "Object-Oriented Programming", units: 3, instructor: "Engr. Villanueva", schedule: "Thu 13:30 - 15:00", time: "01:30 - 03:00 PM", days: "THU", room: "Lab 203", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" },
+        { scheduleNumber: "34525", courseNumber: "PE 204", code: "PE 204", title: "Team Sports", units: 2, instructor: "Coach Ramos", schedule: "Fri 08:00 - 10:00", time: "08:00 - 10:00 AM", days: "FRI", room: "Gym", remarks: "", semester: "2nd Sem.", schoolYear: "S.Y. 2025-2026", dateEnrolled: "01/29/26" }
     ]
 };
 
