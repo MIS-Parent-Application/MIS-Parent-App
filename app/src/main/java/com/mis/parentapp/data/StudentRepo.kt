@@ -2,12 +2,18 @@ package com.mis.parentapp.data
 
 import kotlinx.coroutines.flow.Flow
 
-class StudentsRepo(private val studentDao: StudentMonitoringDao) {
+class StudentsRepo(
+    private val studentDao: StudentMonitoringDao,
+    private val userDao: UserDAO
+) {
     fun getChildrenForParent(parentId: String): Flow<List<StudentWithSchedules>> {
         return studentDao.getStudentsForParent(parentId)
     }
 
     suspend fun seedDummyStudents(parentId: String) {
+        // Ensure parent exists to satisfy foreign key constraint
+        userDao.registerUser(UserEntity(username = parentId, password = "password"))
+
         val child1 = StudentEntity(
             studentId = "STU_001",
             parentId = parentId,

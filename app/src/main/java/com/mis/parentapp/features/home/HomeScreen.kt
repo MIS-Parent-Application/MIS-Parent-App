@@ -149,7 +149,7 @@ fun Body(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val repo = EventRepository(db.eventDao())
-    val studentsRepo = StudentsRepo(db.studentMonitoringDao())
+    val studentsRepo = StudentsRepo(db.studentMonitoringDao(), db.userDao())
     val viewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(repo))
 
     val upcomingEvents by viewModel.upcomingEvents.collectAsState()

@@ -7,7 +7,7 @@ import androidx.room.Query
 
 @Dao
 interface UserDAO {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun registerUser(user: UserEntity)
 
     // Updated query to check username instead of email
