@@ -7,6 +7,7 @@ import com.mis.parentapp.network.LoginRequest
 import com.mis.parentapp.network.LoginResponse
 import com.mis.parentapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class AuthViewModel(private val userDao: UserDAO) : ViewModel() {
     var currentSession: LoginResponse? = null
@@ -27,13 +28,14 @@ class AuthViewModel(private val userDao: UserDAO) : ViewModel() {
                     )
                 )
                 onSuccess()
-            } catch (apiError: Exception) {
-                val localUser = userDao.loginUser(username.trim(), pass)
-                if (localUser != null) {
-                    onSuccess()
+            } catch (apiError: HttpException) {
+                if (apiError.code() == 401) {
+                    onError("Invalid username or password")
                 } else {
-                    onError("Invalid login or server unavailable")
+                    onError("Login failed. Server returned ${apiError.code()}")
                 }
+            } catch (apiError: Exception) {
+                onError("Cannot reach login server. Start the backend, then try again.")
             }
         }
     }
