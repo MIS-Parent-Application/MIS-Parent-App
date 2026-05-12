@@ -11,9 +11,11 @@ import androidx.room.RoomDatabase
         UserEntity::class,
         CourseGrade::class,
         AttendanceRecord::class,
-        EventItem::class
+        EventItem::class,
+        StudentEntity::class,          // Added
+        SubjectScheduleEntity::class   // Added
     ],
-    version = 3,
+    version = 4, // Incremented
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
