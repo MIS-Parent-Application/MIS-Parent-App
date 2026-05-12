@@ -184,8 +184,9 @@ app.get('/api/announcements', (req, res) => {
     })));
 });
 
-app.listen(PORT, () => {
-    console.log(`MIS Backend running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`MIS Backend running on http://0.0.0.0:${PORT}`);
+    console.log(`Phone URL example: http://192.168.1.248:${PORT}`);
     console.log('Available endpoints:');
     console.log('  GET /api/health');
     console.log('  POST /api/auth/login');

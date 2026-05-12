@@ -35,12 +35,7 @@ class AuthViewModel(private val userDao: UserDAO) : ViewModel() {
                     onError("Login failed. Server returned ${apiError.code()}")
                 }
             } catch (apiError: Exception) {
-                val localUser = userDao.loginUser(username.trim(), pass)
-                if (localUser != null) {
-                    onSuccess()
-                } else {
-                    onError("Cannot reach login server. Start the backend, then try again.")
-                }
+                onError("Cannot reach login server. Start the backend, then try again.")
             }
         }
     }
