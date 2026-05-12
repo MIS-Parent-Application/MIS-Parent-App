@@ -9,7 +9,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.*
@@ -27,68 +31,80 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
+import com.mis.parentapp.network.Child
+import com.mis.parentapp.network.ClassSchedule
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentScreen(
+    studentVM: StudentSharedViewModel,
     modifier: Modifier = Modifier,
+    onNotificationClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {},
+    onStudyLoadClick: () -> Unit = {},
+    onNavigateToAcademic: () -> Unit = {},
+    onNavigateToAttendance: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(Unit) {
+        try {
+            val dashboard = RetrofitInstance.api.getDashboard()
+            studentVM.updateStudents(dashboard.children)
+        } catch (e: Exception) {
+            errorMessage = "Unable to load student data."
+        }
+    }
+
+    val students = studentVM.students
+    val selectedStudent = studentVM.selectedStudent
+    val schedulePair = remember(selectedStudent) {
+        selectedStudent?.schedules?.let { resolveSchedulePair(it) }
+    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-
         LazyColumn {
-
-            // 🔥 IMAGE + HEADER
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp) // 🔥 longer image
+                        .height(380.dp)
                 ) {
-
-                    // 🔥 BACKGROUND IMAGE WITH ROUNDED BOTTOM
                     Image(
                         painter = painterResource(id = R.drawable.bgpic),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(
-                                RoundedCornerShape(
-                                    bottomStart = 32.dp,
-                                    bottomEnd = 32.dp
-                                )
-                            )
+                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                     )
-
-
-                    // 🔥 DARK OVERLAY (optional but makes text readable)
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(
-                                RoundedCornerShape(
-                                    bottomStart = 32.dp,
-                                    bottomEnd = 32.dp
-                                )
-                            )
+                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                             .background(Color.Black.copy(alpha = 0.25f))
                     )
 
-                    // 🔥 HEADER ICONS (KEEP THIS EXACT)
-                    HeaderIcons { showBottomSheet = true }
+                    HeaderIcons(
+                        onCalendarClick = onCalendarClick,
+                        onNotificationClick = onNotificationClick,
+                        onMenuClick = { showBottomSheet = true }
+                    )
 
-                    // 🔥 NAME + DETAILS + SWITCHER (INSIDE IMAGE)
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -97,66 +113,56 @@ fun StudentScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-
-                        // TEXT
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Nathaniel B. McClure",
+                                selectedStudent?.name ?: "Loading student",
                                 color = Color.White,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text("BSIT - 3rd year", color = Color.White)
-                            Text("ID number: 123456789", color = Color.White)
+                            Text(selectedStudent?.course ?: "--", color = Color.White)
+                            Text("ID number: ${selectedStudent?.rollNumber ?: "--"}", color = Color.White)
                         }
 
-                        // 🔥 TWO CIRCLES (RIGHT SIDE, SAME LINE)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                            Image(
-                                painter = painterResource(id = R.drawable.student_image),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, Color.White, CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            Image(
-                                painter = painterResource(id = R.drawable.profile_2398783_1280),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, Color.White, CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
+                            students.forEach { student ->
+                                Image(
+                                    painter = painterResource(id = R.drawable.student_image),
+                                    contentDescription = student.name,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            width = 2.dp,
+                                            color = if (student.id == selectedStudent?.id) Color(0xFF8BE28B) else Color.White,
+                                            shape = CircleShape
+                                        )
+                                        .clickable { studentVM.selectStudent(student) },
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // 🔥 WHITE CARD
             item {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                         .background(Color.White)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp)
-                    ) {
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        AcademicProgramSection()
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        ClassScheduleSection()
+                    if (errorMessage != null) {
+                        Text(errorMessage ?: "", color = Color.Red, fontSize = 14.sp)
                     }
+                    AcademicProgramSection(selectedStudent)
+                    ClassScheduleSection(
+                        now = schedulePair?.first,
+                        next = schedulePair?.second,
+                        onStudyLoadClick = onStudyLoadClick
+                    )
                 }
             }
         }
@@ -167,17 +173,20 @@ fun StudentScreen(
                 sheetState = sheetState
             ) {
                 StudentMenuContent(
-                    onAcademicClick = {},
-                    onAttendanceClick = {}
+                    onAcademicClick = onNavigateToAcademic,
+                    onAttendanceClick = onNavigateToAttendance
                 )
             }
         }
     }
 }
 
-// ... HeaderIcons remains exactly the same ...
 @Composable
-fun HeaderIcons(onMenuClick: () -> Unit) {
+fun HeaderIcons(
+    onCalendarClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onMenuClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -193,14 +202,18 @@ fun HeaderIcons(onMenuClick: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Image(
                 painter = painterResource(id = R.drawable.formkit_date),
-                contentDescription = "Date",
-                modifier = Modifier.size(32.dp),
+                contentDescription = "Calendar",
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickable { onCalendarClick() },
                 colorFilter = ColorFilter.tint(Color.White)
             )
             Image(
                 painter = painterResource(id = R.drawable.ph_bell),
                 contentDescription = "Notifications",
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickable { onNotificationClick() },
                 colorFilter = ColorFilter.tint(Color.White)
             )
             Icon(
@@ -215,7 +228,6 @@ fun HeaderIcons(onMenuClick: () -> Unit) {
     }
 }
 
-// CHANGED: Added click handlers
 @Composable
 fun StudentMenuContent(
     onAcademicClick: () -> Unit,
@@ -230,31 +242,30 @@ fun StudentMenuContent(
         StudentMenuItem(
             icon = Icons.Outlined.PersonOutline,
             title = "About Student",
-            description = "Know the information that you student has.",
-            onClick = { /* Handle About Student */ }
+            description = "Know the information that your student has.",
+            onClick = {}
         )
         StudentMenuItem(
             icon = Icons.Default.School,
             title = "Monitor Academic",
-            description = "Check the progress and milestone of your student.",
-            onClick = onAcademicClick // Linked
+            description = "Check the progress and milestones of your student.",
+            onClick = onAcademicClick
         )
         StudentMenuItem(
             icon = Icons.Outlined.EventAvailable,
             title = "Track Attendance",
-            description = "Be updated to your student attendance.",
-            onClick = onAttendanceClick // Linked
+            description = "Be updated on your student's attendance.",
+            onClick = onAttendanceClick
         )
     }
 }
 
-// CHANGED: Added the onClick parameter
 @Composable
 fun StudentMenuItem(icon: ImageVector, title: String, description: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }, // Linked the click event here
+            .clickable { onClick() },
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -271,99 +282,22 @@ fun StudentMenuItem(icon: ImageVector, title: String, description: String, onCli
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
-            Text(
-                text = description,
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-// ... All other composables (SwitcherSection, StudentProfileInfo, AcademicProgramSection, ProgramItem, ClassScheduleSection, ScheduleCardSmall, ContactsSection, ContactItem) remain exactly the same ...
-@Composable
-fun SwitcherSection() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.studentswitcher),
-            contentDescription = "Student Switcher",
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .border(2.dp, Color.White, CircleShape)
-                .clickable { },
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.9f))
-                .clickable { },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add",
-                tint = Color.Black,
-                modifier = Modifier.size(24.dp)
-            )
+            Text(text = description, color = Color.Gray, fontSize = 14.sp)
         }
     }
 }
 
 @Composable
-fun StudentProfileInfo() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.student_image),
-            contentDescription = "Student Photo",
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .border(4.dp, Color.White, CircleShape),
-            contentScale = ContentScale.Crop
-        )
-        Column {
-            Text(
-                text = "Nathaniel B. McClure",
-                style = AppTypes.type_H2,
-                color = ColorsDefaultTheme.color_On_surface
-            )
-            Text(
-                text = "Student’s grade level",
-                style = AppTypes.type_Body_Small,
-                color = ColorsDefaultTheme.color_Outline
-            )
-            Text(
-                text = "ID no.: XXXXXX",
-                style = AppTypes.type_Caption,
-                color = ColorsDefaultTheme.color_Outline
-            )
-        }
-    }
-}
-
-@Composable
-fun AcademicProgramSection() {
+fun AcademicProgramSection(student: Child?) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "Academic Program",
             style = AppTypes.type_H1,
             color = ColorsDefaultTheme.color_Primary_green_container
         )
-        ProgramItem(icon = Icons.Default.School, text = "Bachelor of Science in Information Technology")
-        ProgramItem(icon = Icons.Default.Star, text = "BSIT - 3rd year")
-        ProgramItem(icon = Icons.Default.Verified, text = "Officially enrolled for A.Y. 2025-2026")
+        ProgramItem(icon = Icons.Default.School, text = student?.program ?: "Loading program")
+        ProgramItem(icon = Icons.Default.Star, text = student?.course ?: "--")
+        ProgramItem(icon = Icons.Default.Verified, text = "Officially enrolled for ${student?.year ?: "current A.Y."}")
     }
 }
 
@@ -388,7 +322,11 @@ fun ProgramItem(icon: ImageVector, text: String) {
 }
 
 @Composable
-fun ClassScheduleSection() {
+fun ClassScheduleSection(
+    now: ClassSchedule?,
+    next: ClassSchedule?,
+    onStudyLoadClick: () -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -402,26 +340,30 @@ fun ClassScheduleSection() {
             )
             Icon(
                 imageVector = Icons.Default.GridView,
-                contentDescription = "Schedule View",
+                contentDescription = "Study Load",
                 tint = ColorsDefaultTheme.color_Outline,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier
+                    .size(28.dp)
+                    .clickable { onStudyLoadClick() }
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScheduleCardSmall(
                 status = "Now",
-                subject = "MATH 101",
-                room = "Room 402",
-                time = "10:00 - 11:30 AM",
+                schedule = now,
+                fallbackSubject = "No class",
+                fallbackRoom = "-",
+                fallbackTime = "Current time",
                 iconRes = R.drawable.basil_current_location_outline,
                 isHighlight = true,
                 modifier = Modifier.weight(1f)
             )
             ScheduleCardSmall(
                 status = "Up next",
-                subject = "VACANT",
-                room = "-",
-                time = "11:30 - 1:30 PM",
+                schedule = next,
+                fallbackSubject = "VACANT",
+                fallbackRoom = "-",
+                fallbackTime = "No next class",
                 iconRes = R.drawable.ic_outline_watch_later,
                 isHighlight = false,
                 modifier = Modifier.weight(1f)
@@ -433,16 +375,17 @@ fun ClassScheduleSection() {
 @Composable
 fun ScheduleCardSmall(
     status: String,
-    subject: String,
-    room: String,
-    time: String,
+    schedule: ClassSchedule?,
+    fallbackSubject: String,
+    fallbackRoom: String,
+    fallbackTime: String,
     iconRes: Int,
     isHighlight: Boolean,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .requiredHeight(140.dp)
+            .requiredHeight(148.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (isHighlight) ColorsDefaultTheme.color_Primary_green_container else ColorsDefaultTheme.color_Surface)
             .padding(16.dp)
@@ -462,20 +405,20 @@ fun ScheduleCardSmall(
             modifier = Modifier.align(Alignment.TopEnd)
         )
         Text(
-            text = subject,
-            fontSize = 18.sp,
+            text = schedule?.subject ?: fallbackSubject,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
             color = if (isHighlight) Color.White else ColorsDefaultTheme.color_On_surface,
             modifier = Modifier.align(Alignment.CenterStart)
         )
         Column(modifier = Modifier.align(Alignment.BottomStart)) {
             Text(
-                text = room,
+                text = schedule?.room ?: fallbackRoom,
                 fontSize = 14.sp,
                 color = if (isHighlight) Color.White else ColorsDefaultTheme.color_On_surface
             )
             Text(
-                text = time,
+                text = schedule?.let { "${it.startTime} - ${it.endTime}" } ?: fallbackTime,
                 fontSize = 12.sp,
                 color = if (isHighlight) Color.White.copy(alpha = 0.9f) else ColorsDefaultTheme.color_On_surface
             )
@@ -483,14 +426,40 @@ fun ScheduleCardSmall(
     }
 }
 
+private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<ClassSchedule?, ClassSchedule?> {
+    val calendar = Calendar.getInstance()
+    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    val todaySchedules = schedules
+        .filter { it.day.equals(today, ignoreCase = true) }
+        .sortedBy { minutesFromTime(it.startTime) }
 
+    val current = todaySchedules.firstOrNull {
+        nowMinutes in minutesFromTime(it.startTime) until minutesFromTime(it.endTime)
+    }
+    val next = todaySchedules.firstOrNull { minutesFromTime(it.startTime) > nowMinutes }
+        ?: schedules.sortedWith(compareBy<ClassSchedule> { dayOrder(it.day) }.thenBy { minutesFromTime(it.startTime) }).firstOrNull()
 
+    return current to next
+}
 
+private fun minutesFromTime(value: String): Int {
+    val parts = value.split(":")
+    val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    return hour * 60 + minute
+}
+
+private fun dayOrder(day: String): Int {
+    return listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+        .indexOfFirst { it.equals(day, ignoreCase = true) }
+        .let { if (it == -1) 99 else it }
+}
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable
 private fun StudentScreenPreview() {
     ParentAppTheme {
-        StudentScreen()
+        StudentScreen(studentVM = StudentSharedViewModel())
     }
 }

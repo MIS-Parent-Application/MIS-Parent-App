@@ -26,6 +26,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
+import com.mis.parentapp.network.NotificationDto
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
@@ -41,13 +44,35 @@ data class NotificationItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationScreen(onBackClick: () -> Unit) {
-    val notifications = listOf(
-        NotificationItem(1, "Lorem ipsum dolor sit amet consectetur. Auctor platea viverra dui amet odio id.", "Student", "4hrs ago", R.drawable.studentswitcher, true),
-        NotificationItem(2, "Lorem ipsum dolor sit amet consectetur. Auctor platea viverra dui amet odio id.", "Instructor", "4hrs ago", null, true),
-        NotificationItem(3, "Lorem ipsum dolor sit amet consectetur. Auctor platea viverra dui amet odio id.", "Student", "4hrs ago", R.drawable.studentswitcher, false),
-        NotificationItem(4, "Lorem ipsum dolor sit amet consectetur. Auctor platea viverra dui amet odio id.", "Instructor", "4hrs ago", null, false)
-    )
+fun NotificationScreen(
+    studentVM: StudentSharedViewModel? = null,
+    onBackClick: () -> Unit
+) {
+    var selectedFilter by remember { mutableStateOf("All") }
+    var notifications by remember { mutableStateOf<List<NotificationItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val selectedStudent = studentVM?.selectedStudent
+
+    LaunchedEffect(selectedStudent?.id) {
+        isLoading = true
+        errorMessage = null
+        try {
+            notifications = RetrofitInstance.api
+                .getNotifications(selectedStudent?.id)
+                .map { it.toNotificationItem() }
+        } catch (e: Exception) {
+            errorMessage = "Unable to load notifications."
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val filteredNotifications = notifications.filter {
+        selectedFilter == "All" ||
+            (selectedFilter == "Unread" && it.isNew) ||
+            it.type.equals(selectedFilter, ignoreCase = true)
+    }
 
     Scaffold(
         topBar = {
@@ -69,23 +94,34 @@ fun NotificationScreen(onBackClick: () -> Unit) {
         containerColor = Color.White
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
-            NotificationFilterRow()
+            NotificationFilterRow(
+                selectedFilter = selectedFilter,
+                onFilterClick = { selectedFilter = it }
+            )
             
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black) }
-                items(notifications.filter { it.isNew }) { notification ->
-                    NotificationCard(notification)
+            when {
+                isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-                
-                item { Spacer(modifier = Modifier.height(8.dp)) }
-                
-                item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black) }
-                items(notifications.filter { !it.isNew }) { notification ->
-                    NotificationCard(notification)
+                errorMessage != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(errorMessage ?: "", color = Color.Red)
+                }
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black) }
+                    items(filteredNotifications.filter { it.isNew }) { notification ->
+                        NotificationCard(notification)
+                    }
+
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                    item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black) }
+                    items(filteredNotifications.filter { !it.isNew }) { notification ->
+                        NotificationCard(notification)
+                    }
                 }
             }
         }
@@ -93,7 +129,7 @@ fun NotificationScreen(onBackClick: () -> Unit) {
 }
 
 @Composable
-fun NotificationFilterRow() {
+fun NotificationFilterRow(selectedFilter: String, onFilterClick: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -103,9 +139,9 @@ fun NotificationFilterRow() {
     ) {
         val filters = listOf("All", "Unread", "Events", "Reminders", "Messages", "School-wide", "Emergency", "College")
         filters.forEach { filter ->
-            val isSelected = filter == "All"
+            val isSelected = filter == selectedFilter
             Surface(
-                modifier = Modifier.clickable { },
+                modifier = Modifier.clickable { onFilterClick(filter) },
                 shape = RoundedCornerShape(8.dp),
                 color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
             ) {
@@ -118,6 +154,17 @@ fun NotificationFilterRow() {
             }
         }
     }
+}
+
+private fun NotificationDto.toNotificationItem(): NotificationItem {
+    return NotificationItem(
+        id = id,
+        text = text,
+        type = type,
+        time = time,
+        imageRes = if (studentId != null) R.drawable.studentswitcher else null,
+        isNew = isNew
+    )
 }
 
 @Composable
