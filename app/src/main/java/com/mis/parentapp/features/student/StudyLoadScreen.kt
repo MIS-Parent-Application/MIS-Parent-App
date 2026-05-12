@@ -140,8 +140,8 @@ private fun OfficialStudyLoadDocument(
     ) {
         Column(
             modifier = Modifier
-                .width(760.dp)
-                .fillMaxHeight()
+                .width(720.dp)
+                .wrapContentHeight()
                 .background(Color.White, RoundedCornerShape(8.dp))
                 .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(8.dp))
                 .padding(22.dp)
@@ -236,7 +236,7 @@ private fun StudentInfoBlock(student: Child) {
 
 @Composable
 private fun StudyLoadInfo(label: String, value: String) {
-    Column(modifier = Modifier.widthIn(min = 110.dp, max = 230.dp)) {
+    Column(modifier = Modifier.widthIn(min = 100.dp, max = 220.dp)) {
         Text(text = label, color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         Text(
             text = value,
@@ -274,7 +274,7 @@ private fun StudyLoadTable(subjects: List<StudyLoadSubject>) {
 
 @Composable
 private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
-    val widths = listOf(82.dp, 112.dp, 140.dp, 64.dp, 76.dp, 58.dp, 150.dp)
+    val widths = listOf(76.dp, 104.dp, 132.dp, 58.dp, 68.dp, 52.dp, 128.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -287,8 +287,10 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
                 color = if (isHeader) Color.White else Color.Black,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
-                fontSize = if (isHeader) 10.sp else 11.sp,
+                fontSize = if (isHeader) 9.sp else 10.sp,
                 textAlign = if (index in listOf(3, 4, 5)) TextAlign.Center else TextAlign.Start,
+                maxLines = if (isHeader) 1 else 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .width(widths[index])
                     .heightIn(min = 30.dp)

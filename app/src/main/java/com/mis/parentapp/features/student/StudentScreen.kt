@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -383,43 +384,54 @@ fun ScheduleCardSmall(
     isHighlight: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
-            .requiredHeight(148.dp)
+            .heightIn(min = 164.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (isHighlight) ColorsDefaultTheme.color_Primary_green_container else ColorsDefaultTheme.color_Surface)
-            .padding(16.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Image(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            modifier = Modifier
-                .size(32.dp)
-                .align(Alignment.TopStart),
-            colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
-        )
-        Text(
-            text = status,
-            fontSize = 12.sp,
-            color = if (isHighlight) Color.White.copy(alpha = 0.7f) else ColorsDefaultTheme.color_Outline,
-            modifier = Modifier.align(Alignment.TopEnd)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Image(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
+            )
+            Text(
+                text = status,
+                fontSize = 12.sp,
+                color = if (isHighlight) Color.White.copy(alpha = 0.7f) else ColorsDefaultTheme.color_Outline
+            )
+        }
         Text(
             text = schedule?.subject ?: fallbackSubject,
-            fontSize = 17.sp,
+            fontSize = 15.sp,
+            lineHeight = 18.sp,
             fontWeight = FontWeight.Bold,
             color = if (isHighlight) Color.White else ColorsDefaultTheme.color_On_surface,
-            modifier = Modifier.align(Alignment.CenterStart)
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(vertical = 8.dp)
         )
-        Column(modifier = Modifier.align(Alignment.BottomStart)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = schedule?.room ?: fallbackRoom,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = if (isHighlight) Color.White else ColorsDefaultTheme.color_On_surface
             )
             Text(
                 text = schedule?.let { "${it.startTime} - ${it.endTime}" } ?: fallbackTime,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = if (isHighlight) Color.White.copy(alpha = 0.9f) else ColorsDefaultTheme.color_On_surface
             )
         }
