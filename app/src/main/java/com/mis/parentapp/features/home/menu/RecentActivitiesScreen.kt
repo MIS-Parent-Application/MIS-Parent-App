@@ -31,7 +31,7 @@ fun RecentActivitiesScreen(
 ) {
     val context = LocalContext.current
     val viewModel: EventsViewModel = viewModel(
-        factory = EventsViewModel.Companion.provideFactory(
+        factory = EventsViewModel.provideFactory(
             EventRepository(AppDatabase.getDatabase(context).eventDao())
         )
     )

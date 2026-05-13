@@ -19,8 +19,8 @@ class StudentViewModel(private val dao: StudentMonitoringDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // 2. Automatically fetch and hold attendance records
-    val attendance: StateFlow<List<AttendanceRecord>> = dao.getAllAttendance()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    //val attendance: StateFlow<List<AttendanceRecord>> = dao.getAllAttendance()
+    //    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // 3. Dynamically calculate the GPA (Total Points / Total Units)
     val gpa: StateFlow<Double> = dao.getAllGrades().map { gradesList ->
@@ -34,17 +34,17 @@ class StudentViewModel(private val dao: StudentMonitoringDao) : ViewModel() {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     // 4. Functions for the UI to add new data
-    fun addGrade(subject: String, units: Int, grade: Double) {
-        viewModelScope.launch {
-            dao.insertGrade(CourseGrade(subjectName = subject, units = units, grade = grade))
-        }
-    }
+    //fun addGrade(subject: String, units: Int, grade: Double) {
+    //    viewModelScope.launch {
+    //        dao.insertGrade(CourseGrade(subjectName = subject, units = units, grade = grade))
+    //    }
+    //}
 
-    fun addAttendance(date: String, status: String, reason: String? = null) {
-        viewModelScope.launch {
-            dao.insertAttendance(AttendanceRecord(date = date, status = status, reason = reason))
-        }
-    }
+   // fun addAttendance(date: String, status: String, reason: String? = null) {
+   //    viewModelScope.launch {
+   //         dao.insertAttendance(AttendanceRecord(date = date, status = status, reason = reason))
+   //     }
+   // }
 }
 
 // 5. A Factory to help Compose build this ViewModel with the Room Database

@@ -57,16 +57,16 @@ object ColorsDefaultTheme {
     
     val color_Primary_green = Color(0xFF267D1E)
     val color_Primary_green_container = Color(0xFF215C18)
-    val color_Primary_on_green = Color(0xFFFFFFFF)
+    //val color_Primary_on_green = Color(0xFFFFFFFF)
     
-    val color_Yellow = Color(0xFFDEF731)
+    //val color_Yellow = Color(0xFFDEF731)
     val color_On_yellow = Color(0xFF1C1B1F)
 
-    val color_Error = Color(0xFFB3261E)
+    //val color_Error = Color(0xFFB3261E)
 
     val color_Surface = Color(0xFFF6FDE7)
     val color_On_surface = Color(0xFF1C1B1F)
-    val color_Outline = Color(0xFF79747E)
+    //val color_Outline = Color(0xFF79747E)
 
     val text_color = Color(0xFFFFFFFF)
 

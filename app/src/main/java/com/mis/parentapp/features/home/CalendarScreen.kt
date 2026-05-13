@@ -25,7 +25,6 @@ import com.mis.parentapp.network.CalendarEventDto
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)

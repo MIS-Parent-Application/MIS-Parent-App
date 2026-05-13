@@ -3,7 +3,6 @@ package com.mis.parentapp.core
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -24,12 +23,10 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -37,7 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -111,7 +107,7 @@ fun MainScreen() {
     var showBottomSheet by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
-    val database = remember { com.mis.parentapp.data.AppDatabase.getDatabase(context) }
+    val database = remember { AppDatabase.getDatabase(context) }
     val authViewModel = remember { AuthViewModel(database.userDao()) }
 
     val bottomTabs = listOf(
@@ -178,24 +174,6 @@ fun MainScreen() {
             MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { showBottomSheet = false }
         )
         else -> emptyList()
-    }
-
-    val menuTitle = when {
-        currentDestination?.hasRoute(Home::class) == true -> "Home Menu"
-        currentDestination?.hasRoute(Student::class) == true -> "Student Menu"
-        currentDestination?.hasRoute(Services::class) == true -> "Services Menu"
-        currentDestination?.hasRoute(Me::class) == true -> "Account"
-        else -> "Menu"
-    }
-
-    val darkTheme = androidx.compose.foundation.isSystemInDarkTheme()
-    val view = androidx.compose.ui.platform.LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as android.app.Activity).window
-            val windowInsetsController = androidx.core.view.WindowCompat.getInsetsController(window, view)
-            windowInsetsController.isAppearanceLightStatusBars = if (useWhiteIcons) false else !darkTheme
-        }
     }
 
     Scaffold(

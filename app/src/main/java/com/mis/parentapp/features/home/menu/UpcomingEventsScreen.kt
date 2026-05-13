@@ -47,7 +47,7 @@ fun UpcomingEventsScreen(
     val db = AppDatabase.getDatabase(context)
     val repo = EventRepository(db.eventDao())
     val viewModel: EventsViewModel = viewModel(
-        factory = EventsViewModel.Companion.provideFactory(repo)
+        factory = EventsViewModel.provideFactory(repo)
     )
     val allUpcomingEvents by viewModel.upcomingEvents.collectAsState()
     var selectedFilter by remember { mutableStateOf("All") }
