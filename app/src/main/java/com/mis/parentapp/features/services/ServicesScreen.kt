@@ -41,9 +41,7 @@ import java.util.*
 
 @Composable
 fun ServicesScreen(
-    modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {},
-    onCalendarClick: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     val showPaymentScreen = remember { mutableStateOf(false) }
     val paymentHistory = remember { mutableStateOf(listOf<PaymentRecord>()) }
@@ -62,9 +60,7 @@ fun ServicesScreen(
         Body(
             modifier = modifier,
             onPayClick = { showPaymentScreen.value = true },
-            paymentHistory = paymentHistory.value,
-            onNotificationClick = onNotificationClick,
-            onCalendarClick = onCalendarClick
+            paymentHistory = paymentHistory.value
         )
     }
 }
@@ -75,23 +71,16 @@ fun ServicesScreen(
 fun Body(
     modifier: Modifier = Modifier,
     onPayClick: () -> Unit,
-    paymentHistory: List<PaymentRecord>,
-    onNotificationClick: () -> Unit = {},
-    onCalendarClick: () -> Unit = {}
+    paymentHistory: List<PaymentRecord>
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.Start,
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        item {
-            HeaderSection(
-                onNotificationClick = onNotificationClick,
-                onCalendarClick = onCalendarClick
-            )
-        }
+        item { Spacer(modifier = Modifier.height(40.dp)) } // Space for the floating top bar
         item { FilterButtonsSection() }
         item {
             Image(
@@ -114,58 +103,6 @@ fun Body(
     }
 }
 
-// ================= UI COMPONENTS =================
-
-@Composable
-fun HeaderSection(
-    onNotificationClick: () -> Unit,
-    onCalendarClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.school_logo),
-            contentDescription = "School Logo",
-            modifier = Modifier
-                .size(56.dp)
-                .clickable { }
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.formkit_date),
-                contentDescription = "Date",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable { onCalendarClick() }
-            )
-            Image(
-                painter = painterResource(id = R.drawable.ph_bell),
-                contentDescription = "Notifications",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable { onNotificationClick() }
-            )
-            Image(
-                painter = painterResource(id = R.drawable.studentswitcher),
-                contentDescription = "Student Switcher",
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .clickable { },
-                contentScale = ContentScale.Crop
-            )
-        }
-    }
-}
-
 @Composable
 fun FilterButtonsSection() {
     Row(
@@ -182,8 +119,8 @@ fun FilterButtonsSection() {
                 onClick = { },
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
-                    contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
+                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                 modifier = Modifier.height(36.dp)
@@ -197,11 +134,11 @@ fun FilterButtonsSection() {
 @Composable
 fun ContributionDuesSection(onPayClick: () -> Unit) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(text = "Contribution dues", style = AppTypes.type_H2, color = Color(0xFF1B4D13))
+        Text(text = "Contribution dues", style = AppTypes.type_H2, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onPayClick,
-            colors = ButtonDefaults.buttonColors(containerColor = ColorsDefaultTheme.color_Primary_green)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text("Pay Now")
         }
@@ -226,7 +163,7 @@ fun PaymentHistorySection(
     ) {
         Text(
             text = "Payment history",
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             style = AppTypes.type_H1,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
@@ -242,8 +179,8 @@ fun PaymentHistorySection(
                     onClick = { selectedFilter.value = label },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF5F5F5),
-                        contentColor = if (isSelected) Color.White else ColorsDefaultTheme.color_Surface_on_surface
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
                     modifier = Modifier.height(36.dp)
@@ -262,24 +199,24 @@ fun PaymentHistorySection(
         ) {
             Text(
                 text = totalPaid.toInt().toString(),
-                color = Color(0xFF1B4D13),
+                color = MaterialTheme.colorScheme.primary,
                 style = TextStyle(fontSize = 64.sp, fontWeight = FontWeight.Black)
             )
             Text(
                 text = "PHP",
-                color = Color(0xFF1B4D13),
+                color = MaterialTheme.colorScheme.primary,
                 style = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.Light)
             )
             Text(
                 text = "Overall total dues paid",
-                color = Color(0xFF1B4D13),
+                color = MaterialTheme.colorScheme.onBackground,
                 style = AppTypes.type_Caption
             )
         }
 
         Text(
             text = "Break down of fees",
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.onBackground,
             style = AppTypes.type_Caption,
             fontWeight = FontWeight.Bold
         )

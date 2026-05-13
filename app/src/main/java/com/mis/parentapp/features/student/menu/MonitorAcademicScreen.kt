@@ -1,4 +1,4 @@
-package com.mis.parentapp.features.student
+package com.mis.parentapp.features.student.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +27,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.data.CourseGrade
+import com.mis.parentapp.features.student.StudentViewModel
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import java.util.Locale
 
 // --- 1. THE WRAPPER ---
 @Composable
@@ -296,7 +298,7 @@ fun GradientGradeCard(grade: CourseGrade) {
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = String.format(java.util.Locale.US, "%.1f", grade.grade),
+                        text = String.format(Locale.US, "%.1f", grade.grade),
                         fontSize = 56.sp,
                         fontWeight = FontWeight.Light,
                         color = Color.Black

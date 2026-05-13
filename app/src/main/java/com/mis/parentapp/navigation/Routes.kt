@@ -33,3 +33,21 @@ object Calendar
 
 @Serializable
 object StudyLoad
+
+@Serializable
+object MonitorAcademic
+
+@Serializable
+object TrackAttendance
+
+@Serializable
+object Documents
+
+@Serializable
+object FormsAndRequest
+
+@Serializable
+object FAQs
+
+@Serializable
+object PaymentOptions

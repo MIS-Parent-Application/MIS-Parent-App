@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,7 +24,6 @@ import com.mis.parentapp.R
 import com.mis.parentapp.features.me.sections.SettingsSection
 import com.mis.parentapp.features.me.sections.YourEssentialsSection
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import com.mis.parentapp.utilities.bars.MeTopBar
 
 @Composable
 fun MeScreen(modifier: Modifier = Modifier) {
@@ -116,8 +114,6 @@ fun MeScreen(modifier: Modifier = Modifier) {
         }
     }
 }
-
-
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable

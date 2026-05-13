@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -86,7 +87,7 @@ fun SettingsSectionTitle(){
         Text(
             text = stringResource(id = R.string.section_title_settings),
             style = AppTypes.type_H1,
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )

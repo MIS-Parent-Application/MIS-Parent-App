@@ -155,10 +155,4 @@ private fun StudyLoadSubjectCard(subject: StudyLoadSubject) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun StudyLoadScreenPreview() {
-    ParentAppTheme {
-        StudyLoadScreen(studentVM = StudentSharedViewModel(), onBackClick = {})
-    }
-}
+

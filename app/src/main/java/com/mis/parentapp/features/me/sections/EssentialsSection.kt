@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -82,7 +83,7 @@ fun EssentialSectionTitle(){
         Text(
             text = stringResource(id = R.string.section_title_essentials),
             style = AppTypes.type_H1,
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )

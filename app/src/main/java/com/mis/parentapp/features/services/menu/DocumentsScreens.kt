@@ -1,4 +1,4 @@
-package com.mis.parentapp.features.widgets
+package com.mis.parentapp.features.services.menu
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,8 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun AcademicCalendarScreen() {
+fun DocumentsScreens() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Academic Calendar Widget")
+        Text("Documents Screen")
     }
 }

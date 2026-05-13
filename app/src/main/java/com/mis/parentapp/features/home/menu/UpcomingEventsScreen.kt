@@ -1,4 +1,4 @@
-package com.mis.parentapp.features.home
+package com.mis.parentapp.features.home.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,8 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
+import com.mis.parentapp.features.home.EventsViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 //data class EventItem(
@@ -47,7 +47,7 @@ fun UpcomingEventsScreen(
     val db = AppDatabase.getDatabase(context)
     val repo = EventRepository(db.eventDao())
     val viewModel: EventsViewModel = viewModel(
-        factory = EventsViewModel.provideFactory(repo)
+        factory = EventsViewModel.Companion.provideFactory(repo)
     )
     val allUpcomingEvents by viewModel.upcomingEvents.collectAsState()
     var selectedFilter by remember { mutableStateOf("All") }
@@ -140,7 +140,7 @@ fun EventFilterRow(selectedFilter: String, onFilterSelected: (String) -> Unit) {
 }
 
 @Composable
-fun EventSection(title: String, events: List<com.mis.parentapp.data.EventItem>, onEventClick: (EventItem) -> Unit) {
+fun EventSection(title: String, events: List<EventItem>, onEventClick: (EventItem) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(text = title, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
         
@@ -154,7 +154,7 @@ fun EventSection(title: String, events: List<com.mis.parentapp.data.EventItem>, 
 
 
 @Composable
-fun EventCard(event: com.mis.parentapp.data.EventItem, onClick: () -> Unit) {
+fun EventCard(event: EventItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(200.dp)
