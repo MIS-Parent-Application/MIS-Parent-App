@@ -4,18 +4,24 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
-import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,17 +33,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.R
+import com.mis.parentapp.data.StudentMonitoringDao
 import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
-import com.mis.parentapp.ui.theme.ParentAppTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -46,22 +51,17 @@ import java.util.Locale
 @Composable
 fun StudentScreen(
     studentVM: StudentSharedViewModel,
+    dao: StudentMonitoringDao,
     modifier: Modifier = Modifier,
-    onNotificationClick: () -> Unit = {},
-    onCalendarClick: () -> Unit = {},
-    onStudyLoadClick: () -> Unit = {},
-    onNavigateToAcademic: () -> Unit = {},
-    onNavigateToAttendance: () -> Unit = {}
+    onStudyLoadClick: () -> Unit = {}
 ) {
-    val sheetState = rememberModalBottomSheetState()
-    var showBottomSheet by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
             studentVM.updateStudents(dashboard.children)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             errorMessage = "Unable to load student data."
         }
     }
@@ -71,11 +71,14 @@ fun StudentScreen(
     val schedulePair = remember(selectedStudent) {
         selectedStudent?.schedules?.let { resolveSchedulePair(it) }
     }
-
+    val studentRoomVM: StudentViewModel = viewModel(
+        factory = StudentViewModel.provideFactory(dao)
+    )
+    val currentGpa by studentRoomVM.gpa.collectAsState()
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         LazyColumn {
             item {
@@ -97,12 +100,6 @@ fun StudentScreen(
                             .fillMaxSize()
                             .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                             .background(Color.Black.copy(alpha = 0.25f))
-                    )
-
-                    HeaderIcons(
-                        onCalendarClick = onCalendarClick,
-                        onNotificationClick = onNotificationClick,
-                        onMenuClick = { showBottomSheet = true }
                     )
 
                     Row(
@@ -150,14 +147,14 @@ fun StudentScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.background)
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     if (errorMessage != null) {
                         Text(errorMessage ?: "", color = Color.Red, fontSize = 14.sp)
                     }
-                    AcademicProgramSection(selectedStudent)
+                    AcademicProgramSection(selectedStudent, currentGpa)
                     ClassScheduleSection(
                         now = schedulePair?.first,
                         next = schedulePair?.second,
@@ -166,141 +163,22 @@ fun StudentScreen(
                 }
             }
         }
-
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState
-            ) {
-                StudentMenuContent(
-                    onAcademicClick = onNavigateToAcademic,
-                    onAttendanceClick = onNavigateToAttendance
-                )
-            }
-        }
     }
 }
 
 @Composable
-fun HeaderIcons(
-    onCalendarClick: () -> Unit,
-    onNotificationClick: () -> Unit,
-    onMenuClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.school_logo),
-            contentDescription = "School Logo",
-            modifier = Modifier.size(56.dp)
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Image(
-                painter = painterResource(id = R.drawable.formkit_date),
-                contentDescription = "Calendar",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable { onCalendarClick() },
-                colorFilter = ColorFilter.tint(Color.White)
-            )
-            Image(
-                painter = painterResource(id = R.drawable.ph_bell),
-                contentDescription = "Notifications",
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable { onNotificationClick() },
-                colorFilter = ColorFilter.tint(Color.White)
-            )
-            Icon(
-                imageVector = Icons.Default.Menu,
-                contentDescription = "Menu",
-                tint = Color.White,
-                modifier = Modifier
-                    .size(32.dp)
-                    .clickable { onMenuClick() }
-            )
-        }
-    }
-}
-
-@Composable
-fun StudentMenuContent(
-    onAcademicClick: () -> Unit,
-    onAttendanceClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, bottom = 48.dp, top = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        StudentMenuItem(
-            icon = Icons.Outlined.PersonOutline,
-            title = "About Student",
-            description = "Know the information that your student has.",
-            onClick = {}
-        )
-        StudentMenuItem(
-            icon = Icons.Default.School,
-            title = "Monitor Academic",
-            description = "Check the progress and milestones of your student.",
-            onClick = onAcademicClick
-        )
-        StudentMenuItem(
-            icon = Icons.Outlined.EventAvailable,
-            title = "Track Attendance",
-            description = "Be updated on your student's attendance.",
-            onClick = onAttendanceClick
-        )
-    }
-}
-
-@Composable
-fun StudentMenuItem(icon: ImageVector, title: String, description: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(32.dp),
-            tint = ColorsDefaultTheme.color_On_surface
-        )
-        Column {
-            Text(
-                text = title,
-                color = Color(0xFF1B4D13),
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
-            Text(text = description, color = Color.Gray, fontSize = 14.sp)
-        }
-    }
-}
-
-@Composable
-fun AcademicProgramSection(student: Child?) {
+fun AcademicProgramSection(student: Child?, gpa: Double, ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "Academic Program",
             style = AppTypes.type_H1,
-            color = ColorsDefaultTheme.color_Primary_green_container
+            color = MaterialTheme.colorScheme.primary
         )
         ProgramItem(icon = Icons.Default.School, text = student?.program ?: "Loading program")
-        ProgramItem(icon = Icons.Default.Star, text = student?.course ?: "--")
+        ProgramItem(icon = Icons.Default.Star, text = "Current GPA: $gpa") // Now dynamic!
         ProgramItem(icon = Icons.Default.Verified, text = "Officially enrolled for ${student?.year ?: "current A.Y."}")
     }
 }
-
 @Composable
 fun ProgramItem(icon: ImageVector, text: String) {
     Row(
@@ -310,13 +188,13 @@ fun ProgramItem(icon: ImageVector, text: String) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = ColorsDefaultTheme.color_On_surface,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(24.dp)
         )
         Text(
             text = text,
             style = AppTypes.type_Body_Small,
-            color = ColorsDefaultTheme.color_On_surface.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
         )
     }
 }
@@ -336,12 +214,12 @@ fun ClassScheduleSection(
             Text(
                 text = "Class Schedule",
                 style = AppTypes.type_H1,
-                color = ColorsDefaultTheme.color_Primary_green_container
+                color = MaterialTheme.colorScheme.primary
             )
             Icon(
                 imageVector = Icons.Default.GridView,
                 contentDescription = "Study Load",
-                tint = ColorsDefaultTheme.color_Outline,
+                tint = MaterialTheme.colorScheme.outline,
                 modifier = Modifier
                     .size(28.dp)
                     .clickable { onStudyLoadClick() }
@@ -387,7 +265,7 @@ fun ScheduleCardSmall(
         modifier = modifier
             .requiredHeight(148.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isHighlight) ColorsDefaultTheme.color_Primary_green_container else ColorsDefaultTheme.color_Surface)
+            .background(if (isHighlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
             .padding(16.dp)
     ) {
         Image(
@@ -396,31 +274,31 @@ fun ScheduleCardSmall(
             modifier = Modifier
                 .size(32.dp)
                 .align(Alignment.TopStart),
-            colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
+            colorFilter = ColorFilter.tint(if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary)
         )
         Text(
             text = status,
             fontSize = 12.sp,
-            color = if (isHighlight) Color.White.copy(alpha = 0.7f) else ColorsDefaultTheme.color_Outline,
+            color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline,
             modifier = Modifier.align(Alignment.TopEnd)
         )
         Text(
             text = schedule?.subject ?: fallbackSubject,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
-            color = if (isHighlight) Color.White else ColorsDefaultTheme.color_On_surface,
+            color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.CenterStart)
         )
         Column(modifier = Modifier.align(Alignment.BottomStart)) {
             Text(
                 text = schedule?.room ?: fallbackRoom,
                 fontSize = 14.sp,
-                color = if (isHighlight) Color.White else ColorsDefaultTheme.color_On_surface
+                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = schedule?.let { "${it.startTime} - ${it.endTime}" } ?: fallbackTime,
                 fontSize = 12.sp,
-                color = if (isHighlight) Color.White.copy(alpha = 0.9f) else ColorsDefaultTheme.color_On_surface
+                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -456,10 +334,4 @@ private fun dayOrder(day: String): Int {
         .let { if (it == -1) 99 else it }
 }
 
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-private fun StudentScreenPreview() {
-    ParentAppTheme {
-        StudentScreen(studentVM = StudentSharedViewModel())
-    }
-}
+

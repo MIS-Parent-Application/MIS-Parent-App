@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.network.RetrofitInstance
@@ -22,7 +21,6 @@ import com.mis.parentapp.network.StudyLoadSubject
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
-import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,10 +153,4 @@ private fun StudyLoadSubjectCard(subject: StudyLoadSubject) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun StudyLoadScreenPreview() {
-    ParentAppTheme {
-        StudyLoadScreen(studentVM = StudentSharedViewModel(), onBackClick = {})
-    }
-}
+

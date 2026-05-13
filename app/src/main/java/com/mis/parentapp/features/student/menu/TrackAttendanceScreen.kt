@@ -1,4 +1,4 @@
-package com.mis.parentapp.features.student
+package com.mis.parentapp.features.student.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

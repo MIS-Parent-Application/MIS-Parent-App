@@ -25,7 +25,6 @@ import com.mis.parentapp.network.CalendarEventDto
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,10 +69,15 @@ fun CalendarScreen(
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
             CalendarFilterRow(selectedFilter = selectedFilter, onFilterClick = { selectedFilter = it })
@@ -116,12 +120,12 @@ private fun CalendarFilterRow(selectedFilter: String, onFilterClick: (String) ->
             Surface(
                 modifier = Modifier.clickable { onFilterClick(filter) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
                     text = filter,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                    color = if (isSelected) Color.White else ColorsDefaultTheme.color_Primary_green,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     style = AppTypes.type_M3_label_small
                 )
             }
@@ -134,7 +138,7 @@ private fun CalendarEventCard(event: CalendarEventDto) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9).copy(alpha = 0.55f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -144,17 +148,17 @@ private fun CalendarEventCard(event: CalendarEventDto) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(Color(0xFF1B4D13), CircleShapeFallback),
+                    .background(MaterialTheme.colorScheme.primary, CircleShapeFallback),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Event, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Event, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(event.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
-                Text(event.description, fontSize = 13.sp, lineHeight = 18.sp, color = Color.DarkGray)
-                Text("${event.date} | ${event.time}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1B4D13))
+                Text(event.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(event.description, fontSize = 13.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                Text("${event.date} | ${event.time}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
-            Text(event.category, fontSize = 11.sp, color = Color.Gray)
+            Text(event.category, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
         }
     }
 }

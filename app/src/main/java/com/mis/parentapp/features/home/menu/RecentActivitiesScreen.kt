@@ -1,4 +1,4 @@
-package com.mis.parentapp.features.home
+package com.mis.parentapp.features.home.menu
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,8 +18,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
+import com.mis.parentapp.features.home.EventsViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,23 +41,23 @@ fun RecentActivitiesScreen(
     val selectedEvent = remember { mutableStateOf<EventItem?>(null) }
 
     val filteredEvents = remember(events, selectedFilter.value) {
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-        val now = java.util.Calendar.getInstance()
-        val currentMonth = now.get(java.util.Calendar.MONTH)
-        val currentYear = now.get(java.util.Calendar.YEAR)
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val now = Calendar.getInstance()
+        val currentMonth = now.get(Calendar.MONTH)
+        val currentYear = now.get(Calendar.YEAR)
         val todayStr = sdf.format(now.time)
 
         events.filter { event ->
             try {
-                val eventCal = java.util.Calendar.getInstance()
+                val eventCal = Calendar.getInstance()
                 val parsedDate = sdf.parse(event.date)
                 if (parsedDate != null) {
                     eventCal.time = parsedDate
                     when (selectedFilter.value) {
                         "Today" -> event.date == todayStr
-                        "This month" -> eventCal.get(java.util.Calendar.MONTH) == currentMonth &&
-                                eventCal.get(java.util.Calendar.YEAR) == currentYear
-                        "This year" -> eventCal.get(java.util.Calendar.YEAR) == currentYear
+                        "This month" -> eventCal.get(Calendar.MONTH) == currentMonth &&
+                                eventCal.get(Calendar.YEAR) == currentYear
+                        "This year" -> eventCal.get(Calendar.YEAR) == currentYear
                         else -> true // "All"
                     }
                 } else true
@@ -67,7 +69,9 @@ fun RecentActivitiesScreen(
 
     val groupedEvents = filteredEvents.groupBy { it.category }
     if (selectedEvent.value != null) {
-        EventDetailScreen(event = selectedEvent.value!!, onBackClick = { selectedEvent.value = null })
+        EventDetailScreen(
+            event = selectedEvent.value!!,
+            onBackClick = { selectedEvent.value = null })
     } else {
         Scaffold(
             topBar = {
@@ -78,9 +82,14 @@ fun RecentActivitiesScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
                 // Pass the state and the setter to the row
@@ -127,12 +136,12 @@ fun RecentFilterRow(
             Surface(
                 modifier = Modifier.clickable { onFilterSelected(filter) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
                     text = filter,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = if (isSelected) Color.White else ColorsDefaultTheme.color_Primary_green,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     style = AppTypes.type_M3_label_small
                 )
             }

@@ -12,21 +12,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -50,9 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
@@ -63,24 +59,22 @@ import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.navigation.Analytics
-import com.mis.parentapp.navigation.Home
-import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
+import com.mis.parentapp.features.home.menu.EventCard
+import com.mis.parentapp.features.home.menu.EventDetailScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     studentVM: StudentSharedViewModel? = null,
-    onNotificationClick: () -> Unit = {},
-    onCalendarClick: () -> Unit = {}
+    mainNavController: NavHostController? = null
 ) {
-    val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
     val showSheet = remember { mutableStateOf(false) }
     val selectedEventForDetail = remember { mutableStateOf<EventItem?>(null) }
@@ -95,9 +89,9 @@ fun HomeScreen(
                 onItemClick = { route ->
                     showSheet.value = false
                     when (route) {
-                        "Upcoming events" -> homeNavController.navigate(UpcomingEvents)
-                        "Recent activities" -> homeNavController.navigate(RecentActivities)
-                        "Analytics" -> homeNavController.navigate(Analytics)
+                        "Upcoming events" -> mainNavController?.navigate(UpcomingEvents)
+                        "Recent activities" -> mainNavController?.navigate(RecentActivities)
+                        "Analytics" -> mainNavController?.navigate(Analytics)
                     }
                 }
             )
@@ -110,39 +104,13 @@ fun HomeScreen(
             onBackClick = { selectedEventForDetail.value = null }
         )
     } else {
-        NavHost(
-            navController = homeNavController,
-            startDestination = Home,
-            modifier = modifier.fillMaxSize()
-        ) {
-            composable<Home> {
-                Body(
-                    studentVM = studentVM,
-                    onNotificationClick = onNotificationClick,
-                    onCalendarClick = onCalendarClick,
-                    onMenuClick = { showSheet.value = true },
-                    onUpcomingSeeAll = { homeNavController.navigate(UpcomingEvents) },
-                    onRecentSeeAll = { homeNavController.navigate(RecentActivities) },
-                    onEventClick = { event -> selectedEventForDetail.value = event }
-                )
-            }
-
-            composable<Notification> {
-                NotificationScreen(studentVM = studentVM, onBackClick = { homeNavController.popBackStack() })
-            }
-
-            composable<UpcomingEvents> {
-                UpcomingEventsScreen(onBackClick = { homeNavController.popBackStack() })
-            }
-
-            composable<RecentActivities> {
-                RecentActivitiesScreen(onBackClick = { homeNavController.popBackStack() })
-            }
-
-            composable<Analytics> {
-                AnalyticsScreen(onBackClick = { homeNavController.popBackStack() })
-            }
-        }
+        Body(
+            modifier = modifier,
+            studentVM = studentVM,
+            onUpcomingSeeAll = { mainNavController?.navigate(UpcomingEvents) },
+            onRecentSeeAll = { mainNavController?.navigate(RecentActivities) },
+            onEventClick = { event -> selectedEventForDetail.value = event }
+        )
     }
 }
 
@@ -150,9 +118,6 @@ fun HomeScreen(
 fun Body(
     modifier: Modifier = Modifier,
     studentVM: StudentSharedViewModel? = null,
-    onNotificationClick: () -> Unit,
-    onCalendarClick: () -> Unit,
-    onMenuClick: () -> Unit,
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
     onEventClick: (EventItem) -> Unit
@@ -172,7 +137,7 @@ fun Body(
             val dashboard = RetrofitInstance.api.getDashboard()
             studentVM?.updateStudents(dashboard.children)
             dashboardError = null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             dashboardError = "Unable to load student dashboard."
         }
     }
@@ -192,52 +157,12 @@ fun Body(
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = modifier.fillMaxSize().background(Color.White)
+        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
-        // TOP BAR
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.school_logo),
-                    contentDescription = "School Logo",
-                    modifier = Modifier.requiredSize(56.dp)
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.formkit_date),
-                        contentDescription = "Date",
-                        modifier = Modifier
-                            .requiredSize(28.dp)
-                            .clickable { onCalendarClick() }
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.ph_bell),
-                        contentDescription = "Notifications",
-                        modifier = Modifier
-                            .requiredSize(28.dp)
-                            .clickable { onNotificationClick() }
-                    )
-                    IconButton(onClick = onMenuClick) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = ColorsDefaultTheme.color_Primary_green
-                        )
-                    }
-                }
-            }
-        }
-
+        item { Spacer(modifier = Modifier.height(36.dp)) } // Space for the floating top bar
         //HORIZONTAL STUDENT SELECTOR
         item {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
                 dashboardError?.let { message ->
                     Text(
                         text = message,
@@ -355,9 +280,6 @@ fun StudentSelectorItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color.Transparent
-    val scale = if (isSelected) 1.1f else 1.0f
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
@@ -366,7 +288,7 @@ fun StudentSelectorItem(
             modifier = Modifier
                 .requiredSize(70.dp)
                 .clip(CircleShape)
-                .background(if (isSelected) Color(0xFFE8F5E9) else Color.Transparent)
+                .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent)
                 .padding(4.dp) // Space for the "border" effect
         ) {
             Image(
@@ -375,7 +297,7 @@ fun StudentSelectorItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
-                    .background(Color.LightGray),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop
             )
             // Optional Selection Ring
@@ -392,7 +314,7 @@ fun StudentSelectorItem(
             text = student.name.split(" ").first(), // Show only first name
             style = AppTypes.type_Caption,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color.Black,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
@@ -402,13 +324,13 @@ fun StudentSelectorItem(
 @Composable
 fun StudentPresenceHeader(student: StudentEntity) {
     val (brightColor, deepColor) = if (student.isPresent) {
-        Color(0xFFDEF731) to Color(0xFF267D1E) //green
+        MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.primary
     } else {
-        Color(0xFFE57373) to Color(0xFFC62828) //red
+        MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
     }
 
     val statusText = if (student.isPresent) "At class" else "Not in class"
-    val statusColor = if (student.isPresent) Color(0xFF4CAF50) else Color(0xFFF44336)
+    val statusColor = if (student.isPresent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Column(
         modifier = Modifier
@@ -500,9 +422,9 @@ fun ScheduleSection(schedules: List<SubjectScheduleEntity>) {
 @Composable
 fun ScheduleCard(schedule: SubjectScheduleEntity, status: String, isNow: Boolean) {
     // Theme logic
-    val backgroundColor = if (isNow) Color(0xFF1B4D13) else ColorsDefaultTheme.color_Surface
-    val primaryText = if (isNow) Color(0xFFFFF59D) else Color(0xFF1B4D13) // Light Yellow vs Dark Green
-    val secondaryText = if (isNow) Color.White.copy(alpha = 0.8f) else Color.Gray
+    val backgroundColor = if (isNow) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+    val primaryText = if (isNow) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val secondaryText = if (isNow) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
     Box(
         modifier = Modifier
@@ -569,14 +491,14 @@ fun EventHorizontalSection(
         ) {
             Text(
                 text = title,
-                color = Color(0xFF1B4D13),
+                color = MaterialTheme.colorScheme.primary,
                 style = AppTypes.type_H1,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = "See All",
-                color = ColorsDefaultTheme.color_Primary_green,
+                color = MaterialTheme.colorScheme.primary,
                 style = AppTypes.type_Body_Small,
                 modifier = Modifier.clickable { onSeeAllClick() }
             )
@@ -608,7 +530,7 @@ fun SectionPlaceholderContent(emptyText: String) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFF1F8E9))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -617,7 +539,7 @@ fun SectionPlaceholderContent(emptyText: String) {
             contentDescription = null,
             modifier = Modifier.requiredSize(80.dp)
         )
-        Text(text = emptyText, color = ColorsDefaultTheme.color_Primary_on_green)
+        Text(text = emptyText, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -666,7 +588,7 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
     ) {
         Text(
             text = "Quick Stats",
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             style = AppTypes.type_H1,
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold
@@ -693,9 +615,9 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
 fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .requiredHeight(140.dp)
+            .heightIn(min = 140.dp) // Use heightIn to avoid cut-off if text grows
             .clip(RoundedCornerShape(16.dp))
-            .background(ColorsDefaultTheme.color_Surface)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
         Image(
@@ -704,17 +626,17 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
             modifier = Modifier
                 .requiredSize(32.dp)
                 .align(Alignment.TopStart),
-            colorFilter = ColorFilter.tint(ColorsDefaultTheme.color_Primary_on_green)
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
         )
         Text(
             text = label,
             style = AppTypes.type_Caption,
-            color = Color(0xFF1C1B1F),
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.align(Alignment.TopEnd)
         )
         Text(
             text = value,
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             style = TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold),
             modifier = Modifier.align(Alignment.BottomStart)
         )

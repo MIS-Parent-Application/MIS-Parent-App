@@ -30,7 +30,6 @@ import com.mis.parentapp.network.NotificationDto
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 data class NotificationItem(
@@ -88,10 +87,15 @@ fun NotificationScreen(
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
             NotificationFilterRow(
@@ -111,14 +115,14 @@ fun NotificationScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black) }
+                    item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground) }
                     items(filteredNotifications.filter { it.isNew }) { notification ->
                         NotificationCard(notification)
                     }
 
                     item { Spacer(modifier = Modifier.height(8.dp)) }
 
-                    item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black) }
+                    item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground) }
                     items(filteredNotifications.filter { !it.isNew }) { notification ->
                         NotificationCard(notification)
                     }
@@ -143,12 +147,12 @@ fun NotificationFilterRow(selectedFilter: String, onFilterClick: (String) -> Uni
             Surface(
                 modifier = Modifier.clickable { onFilterClick(filter) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
                     text = filter,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = if (isSelected) Color.White else ColorsDefaultTheme.color_Primary_green,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     style = AppTypes.type_M3_label_small
                 )
             }
@@ -172,7 +176,7 @@ fun NotificationCard(notification: NotificationItem) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9).copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -192,7 +196,7 @@ fun NotificationCard(notification: NotificationItem) {
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFF5722))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
                 )
             }
             
@@ -204,15 +208,20 @@ fun NotificationCard(notification: NotificationItem) {
                     style = AppTypes.type_Body_Small,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
             Spacer(modifier = Modifier.width(8.dp))
             
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = notification.type, fontSize = 10.sp, color = Color.Gray)
-                Text(text = notification.time, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text(text = notification.type, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                Text(
+                    text = notification.time, 
+                    fontSize = 10.sp, 
+                    fontWeight = FontWeight.Bold, 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

@@ -12,10 +12,10 @@ import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,7 +26,7 @@ import com.mis.parentapp.utilities.cards.dataclass.Category
 import com.mis.parentapp.R
 
 @Composable
-fun YourEssentialsSection(){
+fun YourEssentialsSection(onCategoryClick: (String) -> Unit){
     val categories = listOf(
         Category(title = stringResource(id = R.string.messages_btn_txt), icon = Icons.Filled.ChatBubble),
         Category(title = stringResource(id = R.string.announcements_btn_txt), icon = Icons.Filled.Campaign),
@@ -38,12 +38,12 @@ fun YourEssentialsSection(){
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ){
         EssentialSectionTitle()
-        EssentialCategoryGrid(categories = categories)
+        EssentialCategoryGrid(categories = categories, onCategoryClick = onCategoryClick)
     }
 }
 
 @Composable
-fun EssentialCategoryGrid(categories: List<Category>) {
+fun EssentialCategoryGrid(categories: List<Category>, onCategoryClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -60,7 +60,7 @@ fun EssentialCategoryGrid(categories: List<Category>) {
                         CategoryCard(
                             category = category,
                             onClick = {
-                                // Handle navigation or filtering here
+                                onCategoryClick(category.title)
                             }
                         )
                     }
@@ -82,7 +82,7 @@ fun EssentialSectionTitle(){
         Text(
             text = stringResource(id = R.string.section_title_essentials),
             style = AppTypes.type_H1,
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
