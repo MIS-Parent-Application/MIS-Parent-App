@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -89,6 +90,13 @@ import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.navigation.StudyLoad
 import com.mis.parentapp.navigation.TrackAttendance
 import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.navigation.Announcements
+import com.mis.parentapp.navigation.Feedbacks
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
+import com.mis.parentapp.navigation.DataSafety
+import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import com.mis.parentapp.utilities.modals.GenericMenuModal
@@ -130,7 +138,14 @@ fun MainScreen() {
             currentDestination?.hasRoute(Documents::class) == true ||
             currentDestination?.hasRoute(FormsAndRequest::class) == true ||
             currentDestination?.hasRoute(FAQs::class) == true ||
-            currentDestination?.hasRoute(PaymentOptions::class) == true
+            currentDestination?.hasRoute(PaymentOptions::class) == true ||
+            currentDestination?.hasRoute(Announcements::class) == true ||
+            currentDestination?.hasRoute(Feedbacks::class) == true ||
+            currentDestination?.hasRoute(Meeting::class) == true ||
+            currentDestination?.hasRoute(Messages::class) == true ||
+            currentDestination?.hasRoute(DataSafety::class) == true ||
+            currentDestination?.hasRoute(EditProfile::class) == true ||
+            currentDestination?.hasRoute(Preference::class) == true
 
     // Only show the shared top bar on the main tab screens
     val showSharedTopBar = bottomTabs.any { tab ->
@@ -180,11 +195,34 @@ fun MainScreen() {
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
                     bottomTabs.forEach { tab ->
                         val selected = currentDestination?.hierarchy?.any {
                             it.hasRoute(tab.route::class)
-                        } == true
+                        } == true || when (tab.route) {
+                            Home -> currentDestination?.hasRoute(Notification::class) == true ||
+                                    currentDestination?.hasRoute(Calendar::class) == true ||
+                                    currentDestination?.hasRoute(Analytics::class) == true ||
+                                    currentDestination?.hasRoute(UpcomingEvents::class) == true ||
+                                    currentDestination?.hasRoute(RecentActivities::class) == true
+                            Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
+                                    currentDestination?.hasRoute(TrackAttendance::class) == true ||
+                                    currentDestination?.hasRoute(StudyLoad::class) == true
+                            Services -> currentDestination?.hasRoute(FormsAndRequest::class) == true ||
+                                    currentDestination?.hasRoute(PaymentOptions::class) == true ||
+                                    currentDestination?.hasRoute(Documents::class) == true ||
+                                    currentDestination?.hasRoute(FAQs::class) == true
+                            Me -> currentDestination?.hasRoute(Announcements::class) == true ||
+                                    currentDestination?.hasRoute(Feedbacks::class) == true ||
+                                    currentDestination?.hasRoute(Meeting::class) == true ||
+                                    currentDestination?.hasRoute(Messages::class) == true ||
+                                    currentDestination?.hasRoute(DataSafety::class) == true ||
+                                    currentDestination?.hasRoute(EditProfile::class) == true ||
+                                    currentDestination?.hasRoute(Preference::class) == true
+                            else -> false
+                        }
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
@@ -202,7 +240,14 @@ fun MainScreen() {
                                     contentDescription = tab.label
                                 )
                             },
-                            label = { Text(tab.label) }
+                            label = { Text(tab.label) },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = MaterialTheme.colorScheme.primary,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         )
                     }
                 }
@@ -276,9 +321,9 @@ fun MainScreen() {
                 }
 
                 composable<Services> {
-                    ServicesScreen()
+                    ServicesScreen(studentVM = studentSharedViewModel)
                 }
-                composable<Me> { MeScreen() }
+                composable<Me> { MeScreen(navController = navController) }
                 composable<Home> {
                     HomeScreen(
                         studentVM = studentSharedViewModel,
@@ -376,6 +421,55 @@ fun MainScreen() {
                         onBack = { navController.popBackStack() }
                     )
                 }
+                composable<Announcements> {
+                    SubScreen(
+                        startDestination = Announcements,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Feedbacks> {
+                    SubScreen(
+                        startDestination = Feedbacks,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Meeting> {
+                    SubScreen(
+                        startDestination = Meeting,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Messages> {
+                    SubScreen(
+                        startDestination = Messages,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<DataSafety> {
+                    SubScreen(
+                        startDestination = DataSafety,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<EditProfile> {
+                    SubScreen(
+                        startDestination = EditProfile,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Preference> {
+                    SubScreen(
+                        startDestination = Preference,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
             // SHARED TOP BAR
@@ -385,7 +479,7 @@ fun MainScreen() {
                     onNotificationClick = { navController.navigate(Notification) },
                     onCalendarClick = { navController.navigate(Calendar) },
                     iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                    menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.primary,
+                    menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                     backgroundColor = topBarBackgroundColor,
                     isMeScreen = currentDestination?.hasRoute(Me::class) == true
                 )
@@ -396,7 +490,7 @@ fun MainScreen() {
             ModalBottomSheet(
                 onDismissRequest = { showBottomSheet = false },
                 sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.background
             ) {
                 GenericMenuModal(
                     items = menuItems
@@ -429,9 +523,9 @@ fun MainTopBar(
         Image(
             painter = painterResource(id = R.drawable.school_logo),
             contentDescription = "School Logo",
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(60.dp)
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(30.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onCalendarClick) {
                 Image(
                     painter = painterResource(id = R.drawable.formkit_date),

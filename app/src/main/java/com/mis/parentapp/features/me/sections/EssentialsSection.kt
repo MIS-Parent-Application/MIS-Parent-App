@@ -26,7 +26,7 @@ import com.mis.parentapp.utilities.cards.dataclass.Category
 import com.mis.parentapp.R
 
 @Composable
-fun YourEssentialsSection(){
+fun YourEssentialsSection(onCategoryClick: (String) -> Unit){
     val categories = listOf(
         Category(title = stringResource(id = R.string.messages_btn_txt), icon = Icons.Filled.ChatBubble),
         Category(title = stringResource(id = R.string.announcements_btn_txt), icon = Icons.Filled.Campaign),
@@ -38,12 +38,12 @@ fun YourEssentialsSection(){
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ){
         EssentialSectionTitle()
-        EssentialCategoryGrid(categories = categories)
+        EssentialCategoryGrid(categories = categories, onCategoryClick = onCategoryClick)
     }
 }
 
 @Composable
-fun EssentialCategoryGrid(categories: List<Category>) {
+fun EssentialCategoryGrid(categories: List<Category>, onCategoryClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -60,7 +60,7 @@ fun EssentialCategoryGrid(categories: List<Category>) {
                         CategoryCard(
                             category = category,
                             onClick = {
-                                // Handle navigation or filtering here
+                                onCategoryClick(category.title)
                             }
                         )
                     }

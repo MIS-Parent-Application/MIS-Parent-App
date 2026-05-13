@@ -50,3 +50,14 @@ object FAQs
 
 @Serializable
 object PaymentOptions
+
+// Me Essentials
+@Serializable object Announcements
+@Serializable object Feedbacks
+@Serializable object Meeting
+@Serializable object Messages
+
+// Me Settings
+@Serializable object DataSafety
+@Serializable object EditProfile
+@Serializable object Preference

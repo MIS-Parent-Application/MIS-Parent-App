@@ -159,7 +159,7 @@ fun Body(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
-        item { Spacer(modifier = Modifier.height(30.dp)) } // Space for the floating top bar
+        item { Spacer(modifier = Modifier.height(36.dp)) } // Space for the floating top bar
         //HORIZONTAL STUDENT SELECTOR
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {

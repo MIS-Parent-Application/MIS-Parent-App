@@ -20,13 +20,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.mis.parentapp.R
 import com.mis.parentapp.features.me.sections.SettingsSection
 import com.mis.parentapp.features.me.sections.YourEssentialsSection
+import com.mis.parentapp.navigation.Announcements
+import com.mis.parentapp.navigation.DataSafety
+import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.Feedbacks
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
+import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @Composable
-fun MeScreen(modifier: Modifier = Modifier) {
+fun MeScreen(modifier: Modifier = Modifier, navController: NavController? = null) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -106,10 +114,24 @@ fun MeScreen(modifier: Modifier = Modifier) {
                 }
             }
             item {
-                YourEssentialsSection()
+                YourEssentialsSection(onCategoryClick = { title ->
+                    when (title) {
+                        "Messages" -> navController?.navigate(Messages)
+                        "Announcements" -> navController?.navigate(Announcements)
+                        "Meetings" -> navController?.navigate(Meeting)
+                        "Feedbacks" -> navController?.navigate(Feedbacks)
+                    }
+                })
             }
             item {
-                SettingsSection()
+                SettingsSection(onCategoryClick = { title ->
+                    when (title) {
+                        "Preferences" -> navController?.navigate(Preference)
+                        "Data safety" -> navController?.navigate(DataSafety)
+                        "Edit profile" -> navController?.navigate(EditProfile)
+                        "Sign out" -> { /* Handle sign out */ }
+                    }
+                })
             }
         }
     }

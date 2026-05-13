@@ -3,14 +3,12 @@ package com.mis.parentapp.features.student
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.mis.parentapp.data.AttendanceRecord
 import com.mis.parentapp.data.CourseGrade
 import com.mis.parentapp.data.StudentMonitoringDao
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 class StudentViewModel(private val dao: StudentMonitoringDao) : ViewModel() {
 
@@ -45,16 +43,14 @@ class StudentViewModel(private val dao: StudentMonitoringDao) : ViewModel() {
    //         dao.insertAttendance(AttendanceRecord(date = date, status = status, reason = reason))
    //     }
    // }
-}
 
-// 5. A Factory to help Compose build this ViewModel with the Room Database
-class StudentViewModelFactory(private val dao: StudentMonitoringDao) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(StudentViewModel::class.java)) {
+    companion object {
+        fun provideFactory(dao: StudentMonitoringDao): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            return StudentViewModel(dao) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return StudentViewModel(dao) as T
+            }
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 

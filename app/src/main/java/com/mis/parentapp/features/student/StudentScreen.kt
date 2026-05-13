@@ -72,7 +72,7 @@ fun StudentScreen(
         selectedStudent?.schedules?.let { resolveSchedulePair(it) }
     }
     val studentRoomVM: StudentViewModel = viewModel(
-        factory = StudentViewModelFactory(dao)
+        factory = StudentViewModel.provideFactory(dao)
     )
     val currentGpa by studentRoomVM.gpa.collectAsState()
     Box(

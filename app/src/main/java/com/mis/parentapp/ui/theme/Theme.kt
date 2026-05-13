@@ -11,7 +11,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
@@ -40,7 +39,7 @@ private val LightColorScheme = lightColorScheme(
     primaryContainer = Color(0xFF215C18),
     secondary = Color(0xFFDEF731),
     secondaryContainer = Color(0xFFFAFD0B),
-    surface = Color(0xFFFFFFFF),
+    surface = Color(0xFFF6FDE7),
     onSurface = Color(0xFF1C1B1F),
     background = Color(0xFFFFFFFF),
     onBackground = Color(0xFF1C1B1F),
@@ -122,12 +121,11 @@ fun ParentAppTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = Color.Transparent.toArgb()
-            window.navigationBarColor = Color.Transparent.toArgb()
-            
-            val windowInsetsController = WindowCompat.getInsetsController(window, view)
-            windowInsetsController.isAppearanceLightStatusBars = !darkTheme
-            windowInsetsController.isAppearanceLightNavigationBars = !darkTheme
+            val insetsController = WindowCompat.getInsetsController(window, view)
+
+            // We only need to tell the system if the icons should be dark or light
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

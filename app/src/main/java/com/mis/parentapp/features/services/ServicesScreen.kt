@@ -5,7 +5,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
+import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -27,26 +30,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.R
+import com.mis.parentapp.features.services.sections.SearchBarSection
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.utilities.modals.ServiceAccountSwitchModal
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
 // ================= SERVICES SCREEN =================
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServicesScreen(
+    studentVM: StudentSharedViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val showPaymentScreen = remember { mutableStateOf(false) }
     val paymentHistory = remember { mutableStateOf(listOf<PaymentRecord>()) }
     val invoiceCounter = remember { mutableIntStateOf(1) }
+    
+    val selectedStudent = studentVM.selectedStudent
+    val otherStudents = studentVM.students.filter { it.id != selectedStudent?.id }
+
+    val sheetState = rememberModalBottomSheetState()
+    var showAccountModal by remember { mutableStateOf(false) }
+
+    // Camera Launcher for QR scanning placeholder
+    val scannerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        // Handle scanning result here if using a real library
+    }
 
     if (showPaymentScreen.value) {
         ContributionDuesSelectionScreen(
-            onBack = { },
+            onBack = { showPaymentScreen.value = false },
             onPaymentSuccess = { records ->
                 paymentHistory.value += records
                 invoiceCounter.intValue += records.size
@@ -54,11 +77,39 @@ fun ServicesScreen(
             currentInvoiceNumber = invoiceCounter.intValue
         )
     } else {
-        Body(
-            modifier = modifier,
-            onPayClick = { showPaymentScreen.value = true },
-            paymentHistory = paymentHistory.value
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Body(
+                modifier = modifier,
+                studentVM = studentVM,
+                onPayClick = { showPaymentScreen.value = true },
+                onProfileClick = { showAccountModal = true },
+                onQrClick = {
+                    val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    if (intent.resolveActivity(context.packageManager) != null) {
+                        scannerLauncher.launch(intent)
+                    } else {
+                        Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                paymentHistory = paymentHistory.value
+            )
+
+            if (showAccountModal) {
+                ModalBottomSheet(
+                    onDismissRequest = { showAccountModal = false },
+                    sheetState = sheetState,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    ServiceAccountSwitchModal(
+                        selectedStudent = selectedStudent,
+                        otherStudents = otherStudents,
+                        onStudentSelect = { studentVM.selectStudent(it) },
+                        onSeeMoreClick = { /* Handle See More */ },
+                        onDismiss = { showAccountModal = false }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -67,7 +118,10 @@ fun ServicesScreen(
 @Composable
 fun Body(
     modifier: Modifier = Modifier,
+    studentVM: StudentSharedViewModel,
     onPayClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onQrClick: () -> Unit,
     paymentHistory: List<PaymentRecord>
 ) {
     LazyColumn(
@@ -77,8 +131,17 @@ fun Body(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        item { Spacer(modifier = Modifier.height(40.dp)) } // Space for the floating top bar
-        item { FilterButtonsSection() }
+        item { Spacer(modifier = Modifier.height(60.dp)) } // Space for the floating top bar
+        
+        item {
+            SearchBarSection(
+                selectedStudent = studentVM.selectedStudent,
+                onProfileClick = onProfileClick,
+                onQrClick = onQrClick,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+
         item {
             Image(
                 painter = painterResource(id = R.drawable.program),
@@ -100,33 +163,6 @@ fun Body(
     }
 }
 
-@Composable
-fun FilterButtonsSection() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .horizontalScroll(rememberScrollState())
-    ) {
-        listOf("Accounting", "Forms & documents", "Payment options").forEach { label ->
-            val isSelected = label == "Accounting"
-            Button(
-                onClick = { },
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                modifier = Modifier.height(36.dp)
-            ) {
-                Text(text = label, style = AppTypes.type_M3_label_small)
-            }
-        }
-    }
-}
 
 @Composable
 fun ContributionDuesSection(onPayClick: () -> Unit) {

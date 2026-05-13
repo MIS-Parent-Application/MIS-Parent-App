@@ -58,26 +58,19 @@ fun GenericMenuModal(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = item.title,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
                         item.description?.let {
                             Text(
                                 text = it,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                                 fontSize = 14.sp
                             )
                         }
                     }
                 }
-            }
-            
-            if (index < items.size - 1) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                    thickness = 1.dp
-                )
             }
         }
     }

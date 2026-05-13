@@ -26,7 +26,7 @@ import com.mis.parentapp.utilities.cards.CategoryCard
 import com.mis.parentapp.utilities.cards.dataclass.Category
 
 @Composable
-fun SettingsSection(){
+fun SettingsSection(onCategoryClick: (String) -> Unit){
     val categories = listOf(
         Category(title = stringResource(id = R.string.preferences_btn_txt), icon = Icons.Filled.Palette),
         Category(title = stringResource(id = R.string.data_safety_btn_txt), icon = Icons.Filled.Shield),
@@ -38,12 +38,12 @@ fun SettingsSection(){
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ){
         SettingsSectionTitle()
-        SettingsCategoryGrid(categories = categories)
+        SettingsCategoryGrid(categories = categories, onCategoryClick = onCategoryClick)
     }
 }
 
 @Composable
-fun SettingsCategoryGrid(categories: List<Category>) {
+fun SettingsCategoryGrid(categories: List<Category>, onCategoryClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -60,7 +60,7 @@ fun SettingsCategoryGrid(categories: List<Category>) {
                         CategoryCard(
                             category = category,
                             onClick = {
-                                // Handle navigation or filtering here
+                                onCategoryClick(category.title)
                             }
                         )
                     }

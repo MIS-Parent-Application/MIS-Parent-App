@@ -38,6 +38,13 @@ import com.mis.parentapp.features.services.menu.FAQsScreen
 import com.mis.parentapp.features.services.menu.PaymentOptionsScreen
 import com.mis.parentapp.features.widgets.AcademicCalendarScreen
 import com.mis.parentapp.features.widgets.NotificationsWidget
+import com.mis.parentapp.features.me.essentials.AnnouncementsScreen
+import com.mis.parentapp.features.me.essentials.FeedbacksScreen
+import com.mis.parentapp.features.me.essentials.MeetingScreen
+import com.mis.parentapp.features.me.essentials.MessagesScreen
+import com.mis.parentapp.features.me.settings.DataSafetyScreen
+import com.mis.parentapp.features.me.settings.EditProfileScreen
+import com.mis.parentapp.features.me.settings.PreferenceScreen
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.Notification
@@ -50,6 +57,13 @@ import com.mis.parentapp.navigation.Documents
 import com.mis.parentapp.navigation.FormsAndRequest
 import com.mis.parentapp.navigation.FAQs
 import com.mis.parentapp.navigation.PaymentOptions
+import com.mis.parentapp.navigation.Announcements
+import com.mis.parentapp.navigation.Feedbacks
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
+import com.mis.parentapp.navigation.DataSafety
+import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 
@@ -67,7 +81,7 @@ fun SubScreen(
     val title = when {
         currentDestination?.hasRoute(Notification::class) == true -> "Notifications"
         currentDestination?.hasRoute(UpcomingEvents::class) == true -> "Upcoming events"
-        currentDestination?.hasRoute(RecentActivities::class) == true -> "Recent events"
+        currentDestination?.hasRoute(RecentActivities::class) == true -> "Recent activities"
         currentDestination?.hasRoute(Analytics::class) == true -> "Analytics"
         currentDestination?.hasRoute(Calendar::class) == true -> "Calendar"
         currentDestination?.hasRoute(StudyLoad::class) == true -> "Study Load"
@@ -77,6 +91,13 @@ fun SubScreen(
         currentDestination?.hasRoute(FormsAndRequest::class) == true -> "Forms & Request"
         currentDestination?.hasRoute(FAQs::class) == true -> "FAQs"
         currentDestination?.hasRoute(PaymentOptions::class) == true -> "Payment Options"
+        currentDestination?.hasRoute(Announcements::class) == true -> "Announcements"
+        currentDestination?.hasRoute(Feedbacks::class) == true -> "Feedbacks"
+        currentDestination?.hasRoute(Meeting::class) == true -> "Meeting"
+        currentDestination?.hasRoute(Messages::class) == true -> "Messages"
+        currentDestination?.hasRoute(DataSafety::class) == true -> "Data Safety"
+        currentDestination?.hasRoute(EditProfile::class) == true -> "Edit Profile"
+        currentDestination?.hasRoute(Preference::class) == true -> "Preference"
         else -> ""
     }
 
@@ -95,13 +116,13 @@ fun SubScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack, 
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -183,7 +204,7 @@ fun SubScreen(
                     // Ensure you import com.mis.parentapp.features.student.StudentViewModel
                     // and com.mis.parentapp.features.student.StudentViewModelFactory
                     val academicVM: com.mis.parentapp.features.student.StudentViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-                        factory = com.mis.parentapp.features.student.StudentViewModelFactory(dao)
+                        factory = com.mis.parentapp.features.student.StudentViewModel.provideFactory(dao)
                     )
 
                     // 4. Pass the VM to your screen
@@ -217,6 +238,27 @@ fun SubScreen(
                 }
                 composable<PaymentOptions> {
                     PaymentOptionsScreen()
+                }
+                composable<Announcements> {
+                    AnnouncementsScreen()
+                }
+                composable<Feedbacks> {
+                    FeedbacksScreen()
+                }
+                composable<Meeting> {
+                    MeetingScreen()
+                }
+                composable<Messages> {
+                    MessagesScreen()
+                }
+                composable<DataSafety> {
+                    DataSafetyScreen()
+                }
+                composable<EditProfile> {
+                    EditProfileScreen()
+                }
+                composable<Preference> {
+                    PreferenceScreen()
                 }
             }
         }
