@@ -65,6 +65,8 @@ import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
+import com.mis.parentapp.data.StudentWithSchedules
+import com.mis.parentapp.data.StudentsRepo
 import com.mis.parentapp.features.home.menu.EventCard
 import com.mis.parentapp.features.home.menu.EventDetailScreen
 
@@ -124,34 +126,44 @@ fun Body(
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
-    val repo = EventRepository(db.eventDao())
-    val viewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(repo))
+    val eventRepo = remember { EventRepository(db.eventDao()) }
+    val studentRepo = remember { StudentsRepo(db.studentMonitoringDao(), db.userDao()) }
 
-    val upcomingEvents by viewModel.upcomingEvents.collectAsState()
-    val recentEvents by viewModel.recentEvents.collectAsState()
+    val localStudentsWithSchedules by studentRepo.getChildrenForParent("admin").collectAsState(initial = emptyList())
+
+    val eventViewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(eventRepo))
+    val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
+    val recentEvents by eventViewModel.recentEvents.collectAsState()
 
     var dashboardError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
+        if (localStudentsWithSchedules.isEmpty()) {
+            studentRepo.seedDummyStudents("admin")
+        }
+
+        //Fetch retrofit
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM?.updateStudents(dashboard.children)
+
+            dashboard.children.forEach { remoteChild ->
+                val homeStudent = remoteChild.toHomeStudent()
+                db.studentMonitoringDao().insertStudent(homeStudent.student)
+                db.studentMonitoringDao().insertSchedules(homeStudent.schedules)
+            }
+
             dashboardError = null
-        } catch (_: Exception) {
-            dashboardError = "Unable to load student dashboard."
+        } catch (e: Exception) {
+            //Use Room if offline/Node js off
+            dashboardError = "Running in offline mode."
         }
     }
 
-    val students = remember(studentVM?.students) {
-        studentVM?.students?.map { it.toHomeStudent() } ?: emptyList()
-    }
-    var selectedStudent by remember { mutableStateOf<HomeStudent?>(null) }
+    var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
 
-    LaunchedEffect(students) {
-        if (students.isEmpty()) {
-            selectedStudent = null
-        } else if (selectedStudent == null || students.none { it.student.studentId == selectedStudent?.student?.studentId }) {
-            selectedStudent = students.first()
+    LaunchedEffect(localStudentsWithSchedules) {
+        if (localStudentsWithSchedules.isNotEmpty() && selectedStudent == null) {
+            selectedStudent = localStudentsWithSchedules.first()
         }
     }
 
@@ -159,14 +171,15 @@ fun Body(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
-        item { Spacer(modifier = Modifier.height(36.dp)) } // Space for the floating top bar
-        //HORIZONTAL STUDENT SELECTOR
+        item { Spacer(modifier = Modifier.height(36.dp)) }
+
+        // STUDENT SELECTOR (Using Local Room Data)
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
                 dashboardError?.let { message ->
                     Text(
                         text = message,
-                        color = Color.Red,
+                        color = Color.Gray,
                         style = AppTypes.type_Body_Small,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
@@ -176,32 +189,32 @@ fun Body(
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(students) { studentWithSchedules ->
+                    items(localStudentsWithSchedules) { studentWrapper ->
                         StudentSelectorItem(
-                            student = studentWithSchedules.student,
-                            isSelected = selectedStudent?.student?.studentId == studentWithSchedules.student.studentId,
-                            onClick = { selectedStudent = studentWithSchedules }
+                            student = studentWrapper.student,
+                            isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
+                            onClick = { selectedStudent = studentWrapper }
                         )
                     }
                 }
             }
         }
 
-        //PRESENCE HEADER
+        // PRESENCE HEADER
         item {
             selectedStudent?.student?.let { child ->
                 StudentPresenceHeader(student = child)
             }
         }
 
-        //SCHEDULE LISTS
+        // SCHEDULE LISTS
         item {
             selectedStudent?.let { studentWithSchedules ->
                 ScheduleSection(schedules = studentWithSchedules.schedules)
             }
         }
 
-        //QUICK STATS
+        // QUICK STATS
         item {
             selectedStudent?.student?.let { child ->
                 QuickStatsSection(
