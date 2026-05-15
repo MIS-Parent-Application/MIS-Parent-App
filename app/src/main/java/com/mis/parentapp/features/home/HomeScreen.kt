@@ -2,6 +2,7 @@ package com.mis.parentapp.features.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,10 +66,13 @@ import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.runtime.rememberCoroutineScope
 import com.mis.parentapp.data.StudentWithSchedules
 import com.mis.parentapp.data.StudentsRepo
+import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.home.menu.EventCard
 import com.mis.parentapp.features.home.menu.EventDetailScreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,18 +132,20 @@ fun Body(
     val db = AppDatabase.getDatabase(context)
     val eventRepo = remember { EventRepository(db.eventDao()) }
     val studentRepo = remember { StudentsRepo(db.studentMonitoringDao(), db.userDao()) }
-
-    val localStudentsWithSchedules by studentRepo.getChildrenForParent("admin").collectAsState(initial = emptyList())
-
+    val userRepo = remember { UserRepository(db.userDao()) }
+    val currentUser by db.userDao().getUserFlow("user").collectAsState(initial = null)
+    var showNoteDialog by remember { mutableStateOf(false) }
+    var tempNote by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val localStudentsWithSchedules by studentRepo.getChildrenForParent("user").collectAsState(initial = emptyList())
     val eventViewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(eventRepo))
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
-
     var dashboardError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         if (localStudentsWithSchedules.isEmpty()) {
-            studentRepo.seedDummyStudents("admin")
+            studentRepo.seedDummyStudents("user")
         }
 
         //Fetch retrofit
@@ -154,7 +160,7 @@ fun Body(
 
             dashboardError = null
         } catch (e: Exception) {
-            //Use Room if offline/Node js off
+            //Use Room if offline/no server
             dashboardError = "Running in offline mode."
         }
     }
@@ -167,28 +173,112 @@ fun Body(
         }
     }
 
+    if (showNoteDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showNoteDialog = false },
+            title = { Text("Update Status") },
+            text = {
+                androidx.compose.material3.OutlinedTextField(
+                    value = tempNote,
+                    onValueChange = { tempNote = it },
+                    placeholder = { Text("Post a note...") },
+                    maxLines = 2
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    scope.launch {
+                        val noteToSave = if (tempNote.isBlank()) "+" else tempNote
+                        db.userDao().updateUserNote("user", noteToSave)
+                        showNoteDialog = false
+                    }
+                }) {
+                    Text("Share", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        )
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
         item { Spacer(modifier = Modifier.height(36.dp)) }
 
-        // STUDENT SELECTOR (Using Local Room Data)
+        //STUDENT SELECTOR
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
                 dashboardError?.let { message ->
                     Text(
                         text = message,
-                        color = Color.Gray,
+                        color = Color.Red,
                         style = AppTypes.type_Body_Small,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp), // Closer spacing
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    //PARENT PIC
+                    item {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clickable {
+                                val currentNote = currentUser?.note ?: "+"
+                                tempNote = if (currentNote == "+") "" else currentNote
+                                showNoteDialog = true
+                            }
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(bottom = 4.dp, end = 12.dp),
+                                contentAlignment = Alignment.BottomEnd
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.parent_pic),
+                                    contentDescription = "Parent Profile",
+                                    modifier = Modifier
+                                        .requiredSize(50.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentScale = ContentScale.Crop
+                                )
+
+                                if (!currentUser?.note.isNullOrBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 12.dp, y = 4.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(MaterialTheme.colorScheme.surface)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.outlineVariant,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = currentUser!!.note!!,
+                                            fontSize = 10.sp,
+                                            maxLines = 1,
+                                            style = AppTypes.type_Caption,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+
+                            Text(
+                                text = "Me",
+                                style = AppTypes.type_Caption,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    }
+
+                    //STUDENT SELECTORS
                     items(localStudentsWithSchedules) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
@@ -210,7 +300,7 @@ fun Body(
         // SCHEDULE LISTS
         item {
             selectedStudent?.let { studentWithSchedules ->
-                ScheduleSection(schedules = studentWithSchedules.schedules)
+                ScheduleSection(schedules = studentWithSchedules.schedules.take(2))
             }
         }
 
@@ -293,16 +383,22 @@ fun StudentSelectorItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val highlightColor = if (student.isPresent) {
+        ColorsDefaultTheme.color_Primary_green
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
     ) {
         Box(
             modifier = Modifier
-                .requiredSize(70.dp)
+                .requiredSize(50.dp) //circle size
                 .clip(CircleShape)
-                .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent)
-                .padding(4.dp) // Space for the "border" effect
+                .background(if (isSelected) highlightColor.copy(alpha = 0.2f) else Color.Transparent)
+                .padding(3.dp)
         ) {
             Image(
                 painter = painterResource(id = student.profileImageRes),
@@ -313,21 +409,21 @@ fun StudentSelectorItem(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop
             )
-            // Optional Selection Ring
+
             if (isSelected) {
                 androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
-                        color = ColorsDefaultTheme.color_Primary_green,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 8f)
+                        color = highlightColor,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f) //border
                     )
                 }
             }
         }
         Text(
-            text = student.name.split(" ").first(), // Show only first name
+            text = student.name.split(" ").first(),
             style = AppTypes.type_Caption,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+            color = if (isSelected) highlightColor else MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(top = 4.dp)
         )
     }

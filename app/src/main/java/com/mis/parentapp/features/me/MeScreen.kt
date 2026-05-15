@@ -53,7 +53,7 @@ fun MeScreen(modifier: Modifier = Modifier, navController: NavController? = null
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
                     Image(
-                        painter = painterResource(id = R.drawable.bgpic),
+                        painter = painterResource(id = R.drawable.parent_pic),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -102,7 +102,7 @@ fun MeScreen(modifier: Modifier = Modifier, navController: NavController? = null
 
                         // CIRCLE PROFILE IMAGE
                         Image(
-                            painter = painterResource(id = R.drawable.student_image),
+                            painter = painterResource(id = R.drawable.parent_pic),
                             contentDescription = null,
                             modifier = Modifier
                                 .size(48.dp)
