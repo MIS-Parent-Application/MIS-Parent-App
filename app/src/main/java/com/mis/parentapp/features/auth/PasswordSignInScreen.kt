@@ -203,21 +203,21 @@ fun PasswordSignInScreen(
     }
 
 
-@Preview(showBackground = true)
-@Composable
-fun PasswordSignInScreenPreview() {
-    ParentAppTheme {
-        val dummyUserDao = object : UserDAO {
-            override suspend fun registerUser(user: UserEntity) {}
-            override suspend fun loginUser(email: String, password: String): UserEntity? = null
-        }
-        val viewModel = remember { AuthViewModel(dummyUserDao) }
-        PasswordSignInScreen(
-            username = "test@example.com",
-            backgroundResId = R.drawable.bg_one_sign_screen,
-            viewModel = viewModel,
-            onBack = {},
-            onSignInSuccess = {}
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PasswordSignInScreenPreview() {
+//    ParentAppTheme {
+//        val dummyUserDao = object : UserDAO {
+//            override suspend fun registerUser(user: UserEntity) {}
+//            override suspend fun loginUser(email: String, password: String): UserEntity? = null
+//        }
+//        val viewModel = remember { AuthViewModel(dummyUserDao) }
+//        PasswordSignInScreen(
+//            username = "test@example.com",
+//            backgroundResId = R.drawable.bg_one_sign_screen,
+//            viewModel = viewModel,
+//            onBack = {},
+//            onSignInSuccess = {}
+//        )
+//    }
+//}
