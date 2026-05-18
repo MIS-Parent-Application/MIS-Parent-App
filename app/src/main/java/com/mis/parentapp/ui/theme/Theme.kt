@@ -30,7 +30,9 @@ private val DarkColorScheme = darkColorScheme(
     background = Color(0xFF1C1B1F),
     onBackground = Color(0xFFE6E1E5),
     outline = Color(0xFF938F99),
-    error = Color(0xFFF2B8B5)
+    error = Color(0xFFF2B8B5),
+    tertiaryContainer = Color(0xFFF58500),
+    onTertiaryContainer = Color(0xFFFFFFFF)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -44,7 +46,9 @@ private val LightColorScheme = lightColorScheme(
     background = Color(0xFFFFFFFF),
     onBackground = Color(0xFF1C1B1F),
     outline = Color(0xFF79747E),
-    error = Color(0xFFB3261E)
+    error = Color(0xFFB3261E),
+    tertiaryContainer = Color(0xFFFF9A22),
+    onTertiaryContainer = Color(0xFFFFFFFF)
 )
 
 object ColorsDefaultTheme {
