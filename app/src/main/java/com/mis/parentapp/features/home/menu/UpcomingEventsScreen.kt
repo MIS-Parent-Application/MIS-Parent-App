@@ -17,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -167,7 +169,14 @@ fun EventCard(event: EventItem, onClick: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
-                    .background(MaterialTheme.colorScheme.tertiaryContainer) // Updated placeholder
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFF9A22),
+                                Color(0xFFF58500)
+                            )
+                        )
+                    )
             )
             
             Column(modifier = Modifier.padding(12.dp)) {
@@ -234,7 +243,14 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.tertiaryContainer)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFF9A22),
+                                Color(0xFFF58500)
+                            )
+                        )
+                    )
             )
             
             Spacer(modifier = Modifier.height(24.dp))
