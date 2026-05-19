@@ -48,6 +48,10 @@ import com.mis.parentapp.R
 import com.mis.parentapp.network.CreatePaymentRequest
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.features.services.sections.SearchBarSection
+import com.mis.parentapp.navigation.Documents
+import com.mis.parentapp.navigation.FAQs
+import com.mis.parentapp.navigation.FormsAndRequest
+import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ParentAppTheme
@@ -245,7 +249,7 @@ fun ServicesScreen(
                         verticalArrangement = Arrangement.spacedBy(28.dp)
                     ) {
                         // Safe navigation handler that closes the sheet first
-                        val navigateTo: (String) -> Unit = { route ->
+                        val navigateTo: (Any) -> Unit = { route ->
                             scope.launch { menuSheetState.hide() }.invokeOnCompletion {
                                 if (!menuSheetState.isVisible) {
                                     showMenuBottomSheet = false
@@ -258,28 +262,28 @@ fun ServicesScreen(
                             icon = Icons.Default.Article,
                             title = "Forms and request",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.Forms.route) }
+                            onClick = { navigateTo(FormsAndRequest) }
                         )
 
                         MenuItem(
                             icon = Icons.Default.Payment,
                             title = "Payment options",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.Payments.route) }
+                            onClick = { navigateTo(PaymentOptions) }
                         )
 
                         MenuItem(
                             icon = Icons.Default.Description,
                             title = "Documents",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.Documents.route) }
+                            onClick = { navigateTo(Documents) }
                         )
 
                         MenuItem(
                             icon = Icons.Default.LiveHelp,
                             title = "FAQs",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.FAQs.route) }
+                            onClick = { navigateTo(FAQs) }
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
