@@ -31,7 +31,6 @@ import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
-import com.mis.parentapp.navigation.GetStarted
 
 @Composable
 fun MeScreen(
