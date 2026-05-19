@@ -106,7 +106,9 @@ import com.mis.parentapp.utilities.modals.MenuItem
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    onSignOut: () -> Unit
+) {
     val navController = rememberNavController()
     val studentSharedViewModel: StudentSharedViewModel = viewModel()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -325,7 +327,14 @@ fun MainScreen() {
                 composable<Services> {
                     ServicesScreen(studentVM = studentSharedViewModel)
                 }
-                composable<Me> { MeScreen(navController = navController) }
+                composable<Me> {
+                    MeScreen(
+                        navController = navController,
+                        // Pass the viewmodel AND the top-level callback down
+                        authViewModel = authViewModel,
+                        onSignOutClick = onSignOut
+                    )
+                }
                 composable<Home> {
                     HomeScreen(
                         studentVM = studentSharedViewModel,
@@ -563,10 +572,10 @@ data class BottomTab(
     val unselectedIcon: ImageVector
 )
 
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreview() {
-    ParentAppTheme {
-        MainScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun MainScreenPreview() {
+//    ParentAppTheme {
+//        MainScreen()
+//    }
+//}

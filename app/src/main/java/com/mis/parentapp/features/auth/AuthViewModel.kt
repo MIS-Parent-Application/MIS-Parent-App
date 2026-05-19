@@ -22,4 +22,11 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
             }
         }
     }
+
+    fun signOut(onSignOutComplete: () -> Unit) {
+        viewModelScope.launch {
+            //clear session here, eventually
+            onSignOutComplete()
+        }
+    }
 }

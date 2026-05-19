@@ -61,3 +61,6 @@ object PaymentOptions
 @Serializable object DataSafety
 @Serializable object EditProfile
 @Serializable object Preference
+
+@Serializable
+object GetStarted
