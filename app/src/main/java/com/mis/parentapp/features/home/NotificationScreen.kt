@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack // <-- Added missing import!
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,7 +48,7 @@ fun NotificationScreen(
                         id = dto.id.toString(),
                         type = try { NotificationType.valueOf(dto.type.uppercase()) } catch (_: Exception) { NotificationType.ACTIVITY },
                         content = dto.text,
-                        category = dto.type.capitalize(),
+                        category = dto.type.replaceFirstChar { it.uppercase() },
                         timeAgo = dto.time,
                         isNew = dto.isNew,
                         gradientColors = if (dto.type.lowercase() == "event") listOf(Color(0xFFFFA726), Color(0xFFFF7043)) else null
@@ -90,7 +91,8 @@ fun NotificationScreen(
                 selectedFilter = selectedFilter,
                 onFilterClick = { selectedFilter = it }
             )
-            
+
+            // Cleaned up the duplicated logic blocks here!
             if (isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -108,42 +110,26 @@ fun NotificationScreen(
                     val newOnes = filteredNotifications.filter { it.isNew }
                     val earlierOnes = filteredNotifications.filter { !it.isNew }
 
-        if (isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (errorMessage != null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(errorMessage ?: "", color = Color.Red)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val newOnes = filteredNotifications.filter { it.isNew }
-                val earlierOnes = filteredNotifications.filter { !it.isNew }
-
-                if (newOnes.isNotEmpty()) {
-                    item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
-                    items(newOnes) { notification ->
-                        NotificationCard(notification)
+                    if (newOnes.isNotEmpty()) {
+                        item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+                        items(newOnes) { notification ->
+                            NotificationCard(notification)
+                        }
                     }
-                }
 
-                if (earlierOnes.isNotEmpty()) {
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                    item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
-                    items(earlierOnes) { notification ->
-                        NotificationCard(notification)
+                    if (earlierOnes.isNotEmpty()) {
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                        item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+                        items(earlierOnes) { notification ->
+                            NotificationCard(notification)
+                        }
                     }
-                }
 
-                if (filteredNotifications.isEmpty()) {
-                    item {
-                        Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                            Text("No notifications found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (filteredNotifications.isEmpty()) {
+                        item {
+                            Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                                Text("No notifications found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     }
                 }

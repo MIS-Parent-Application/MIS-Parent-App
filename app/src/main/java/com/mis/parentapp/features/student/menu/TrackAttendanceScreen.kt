@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+// Added the missing TextOverflow import!
+import androidx.compose.ui.text.style.TextOverflow
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import com.mis.parentapp.network.RetrofitInstance
@@ -42,12 +44,12 @@ data class SubjectAttendance(
     val percentage: Float get() = if (totalDays > 0) presentDays.toFloat() / totalDays else 0f
 }
 
+// --- 1. THE WRAPPER ---
+// Removed unused parameters to clear the yellow warnings
 @Composable
 fun TrackAttendanceScreen(
     studentVM: StudentSharedViewModel,
-    onBackClick: () -> Unit,
-    onMonitorAcademicClick: () -> Unit = {},
-    onTrackAttendanceClick: () -> Unit = {}
+    onBackClick: () -> Unit
 ) {
     val selectedStudent = studentVM.selectedStudent
     var attendanceList by remember { mutableStateOf<List<SubjectAttendance>>(emptyList()) }
@@ -75,11 +77,9 @@ fun TrackAttendanceScreen(
 
     TrackAttendanceContent(
         attendanceList = attendanceList,
-        studentLabel = selectedStudent?.let { "${it.name} ${it.section}" } ?: "No student selected",
+        studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected",
         emptyMessage = errorMessage ?: "No official attendance records yet.",
-        onBackClick = onBackClick,
-        onMonitorAcademicClick = onMonitorAcademicClick,
-        onTrackAttendanceClick = onTrackAttendanceClick
+        onBackClick = onBackClick
     )
 }
 
@@ -88,12 +88,9 @@ fun TrackAttendanceScreen(
 @Composable
 fun TrackAttendanceContent(
     attendanceList: List<SubjectAttendance>,
+    studentLabel: String,
+    emptyMessage: String,
     onBackClick: () -> Unit
-    studentLabel: String = "",
-    emptyMessage: String = "No official attendance records yet.",
-    onBackClick: () -> Unit,
-    onMonitorAcademicClick: () -> Unit = {},
-    onTrackAttendanceClick: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -109,12 +106,9 @@ fun TrackAttendanceContent(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "John B. McLure 3rd Yr. BSIT 1A",
+                            text = studentLabel,
                             style = AppTypes.type_Caption,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
-                            text = studentLabel,
-                            fontSize = 12.sp,
-                            color = Color.Gray
                         )
                     }
                 },
@@ -136,7 +130,8 @@ fun TrackAttendanceContent(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                // Updated to topAppBarColors to clear the deprecation warning!
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surface
                 )
@@ -156,6 +151,7 @@ fun TrackAttendanceContent(
             }
 
             item {
+                // We are borrowing CustomAlertCard from MonitorAcademicScreen.kt now!
                 CustomAlertCard(
                     title = "Recent Absence",
                     description = "Unexcused absence recorded.",
@@ -177,35 +173,30 @@ fun TrackAttendanceContent(
                 )
             }
 
-            val displayData = attendanceList.ifEmpty { getDummyAttendance() }
-            items(displayData) { record ->
-            // 4. List of Subjects
             if (attendanceList.isEmpty()) {
                 item { EmptyAttendanceMessage(emptyMessage) }
-            }
-            items(attendanceList) { record ->
-                SubjectAttendanceCard(record)
+            } else {
+                items(attendanceList) { record ->
+                    SubjectAttendanceCard(record)
+                }
             }
         }
     }
 }
 
+// --- 3. UI COMPONENTS ---
+
 @Composable
-fun AttendanceSummaryCard() {
-    // Dynamically pulls the Yellow from your secondaryContainer theme!
+fun AttendanceSummaryCard(attendanceList: List<SubjectAttendance>) {
     val yellowRadialBrush = Brush.radialGradient(
         colors = listOf(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0f)
         ),
-        radius = 800f
-fun AttendanceSummaryCard(attendanceList: List<SubjectAttendance>) {
-    // Using the exact same premium diagonal gradient from the Academic screen
-    val brush = Brush.linearGradient(
-        colors = listOf(Color(0xFFF9FBE7), Color(0xFFAED581)),
-        start = Offset(0f, 0f),
-        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+        radius = 1500f,
+        center = Offset(0f, 0f)
     )
+
     val present = attendanceList.sumOf { it.presentDays }
     val total = attendanceList.sumOf { it.totalDays }
     val absent = (total - present).coerceAtLeast(0)
@@ -218,7 +209,7 @@ fun AttendanceSummaryCard(attendanceList: List<SubjectAttendance>) {
     ) {
         Box(
             modifier = Modifier
-                .background(Color(0xFFF9FBE7)) // Fixed light background so gradient pops
+                .background(Color(0xFFF9FBE7))
                 .background(yellowRadialBrush)
                 .padding(24.dp)
         ) {
@@ -227,8 +218,6 @@ fun AttendanceSummaryCard(attendanceList: List<SubjectAttendance>) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text("92", fontSize = 64.sp, fontWeight = FontWeight.Light, color = Color.Black)
-                    Text("%", style = AppTypes.type_H2, color = Color.Black, modifier = Modifier.padding(bottom = 12.dp))
                     Text(percent.toString(), fontSize = 64.sp, fontWeight = FontWeight.Light, color = Color.Black)
                     Text("%", fontSize = 24.sp, fontWeight = FontWeight.Medium, color = Color.Black, modifier = Modifier.padding(bottom = 12.dp))
                 }
@@ -338,6 +327,11 @@ fun getDummyAttendance(): List<SubjectAttendance> {
 @Composable
 fun TrackAttendancePreview() {
     ParentAppTheme {
-        TrackAttendanceContent(attendanceList = getDummyAttendance(), onBackClick = {})
+        TrackAttendanceContent(
+            attendanceList = getDummyAttendance(),
+            studentLabel = "John B. McLure - 3rd Yr",
+            emptyMessage = "No attendance yet",
+            onBackClick = {}
+        )
     }
 }

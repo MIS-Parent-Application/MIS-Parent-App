@@ -1,8 +1,5 @@
 package com.mis.parentapp.features.student.menu
 
-import com.mis.parentapp.features.student.StudentViewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,20 +29,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.data.CourseGrade
-import com.mis.parentapp.ui.theme.AppTypes // Pulling your team's typography!
+import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
-// --- 1. THE WRAPPER ---
+// --- 1. THE WRAPPER (Integrated with Teammate's API Logic) ---
 @Composable
 fun MonitorAcademicScreen(
-    viewModel: StudentViewModel,
-    onBackClick: () -> Unit
     studentVM: StudentSharedViewModel,
-    onBackClick: () -> Unit,
-    onMonitorAcademicClick: () -> Unit = {},
-    onTrackAttendanceClick: () -> Unit = {}
+    onBackClick: () -> Unit
 ) {
     val selectedStudent = studentVM.selectedStudent
     var grades by remember { mutableStateOf<List<CourseGrade>>(emptyList()) }
@@ -72,12 +65,9 @@ fun MonitorAcademicScreen(
 
     MonitorAcademicContent(
         grades = grades,
-        onBackClick = onBackClick
-        studentLabel = selectedStudent?.let { "${it.name} ${it.section}" } ?: "No student selected",
+        studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected",
         emptyMessage = errorMessage ?: "No official grade records yet.",
-        onBackClick = onBackClick,
-        onMonitorAcademicClick = onMonitorAcademicClick,
-        onTrackAttendanceClick = onTrackAttendanceClick
+        onBackClick = onBackClick
     )
 }
 
@@ -86,12 +76,9 @@ fun MonitorAcademicScreen(
 @Composable
 fun MonitorAcademicContent(
     grades: List<CourseGrade>,
+    studentLabel: String,
+    emptyMessage: String,
     onBackClick: () -> Unit
-    studentLabel: String = "",
-    emptyMessage: String = "No official grade records yet.",
-    onBackClick: () -> Unit,
-    onMonitorAcademicClick: () -> Unit = {},
-    onTrackAttendanceClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -105,16 +92,14 @@ fun MonitorAcademicContent(
                     ) {
                         Text(
                             text = "Academic",
-                            style = AppTypes.type_H2, // Using your official style
+                            style = AppTypes.type_H2,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        // Repaired the duplicated text parameters here!
                         Text(
-                            text = "John B. McLure 3rd Yr. BSIT 1A",
+                            text = studentLabel,
                             style = AppTypes.type_Caption,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
-                            text = studentLabel,
-                            fontSize = 12.sp,
-                            color = Color.Gray
                         )
                     }
                 },
@@ -175,7 +160,6 @@ fun AllTabContent(grades: List<CourseGrade>, emptyMessage: String) {
         item {
             CustomAlertCard(
                 title = "Missing assignment",
-                // 👇 Here is the updated realistic text!
                 description = "Please submit your final essay draft before the deadline.",
                 trailingText = "English 101",
                 trailingSubText = "4hrs ago",
@@ -355,13 +339,14 @@ fun CustomAlertCard(
 
 @Composable
 fun GradientGradeCard(grade: CourseGrade) {
-    // Dynamically pulls the Green from your theme!
+    // Restored the Offset and huge radius so the glowing effect works perfectly!
     val greenRadialBrush = Brush.radialGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primary,
             MaterialTheme.colorScheme.primary.copy(alpha = 0f)
         ),
-        radius = 800f
+        radius = 1500f,
+        center = Offset(0f, 0f)
     )
 
     Card(
@@ -371,15 +356,15 @@ fun GradientGradeCard(grade: CourseGrade) {
     ) {
         Box(
             modifier = Modifier
-                .background(Color(0xFFF9FBE7)) // Fixed light background so gradient pops
+                .background(Color(0xFFE8F5E9)) // Restored Dark Mode contrast background
                 .background(greenRadialBrush)
                 .padding(20.dp)
         ) {
             Column {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                     Column {
-                        Text(grade.subjectName, style = AppTypes.type_H2, color = Color.Black)
-                        Text("Mr. John Doe\nInstructor", style = AppTypes.type_Caption, color = Color(0xFF333333), lineHeight = 16.sp)
+                        Text(grade.subjectName, style = AppTypes.type_H2, color = Color(0xFF1B5E20))
+                        Text("Mr. John Doe\nInstructor", style = AppTypes.type_Caption, color = Color(0xFF2E7D32), lineHeight = 16.sp)
                     }
                     Box(
                         modifier = Modifier
@@ -398,7 +383,8 @@ fun GradientGradeCard(grade: CourseGrade) {
                         text = String.format(java.util.Locale.US, "%.1f", grade.grade),
                         fontSize = 56.sp,
                         fontWeight = FontWeight.Light,
-                        color = Color.Black
+                        color = Color(0xFF1B5E20),
+                        modifier = Modifier.padding(bottom = 4.dp) // Stops the text clipping!
                     )
                     Box(
                         modifier = Modifier
@@ -445,7 +431,7 @@ fun PerformanceOrangeCard() {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.primary) // Adapts to your theme
+                        .background(MaterialTheme.colorScheme.primary)
                         .clickable { /* TODO: View Action */ }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
@@ -468,6 +454,11 @@ fun getDummyGrades(): List<CourseGrade> {
 @Composable
 fun MonitorAcademicPreview() {
     ParentAppTheme {
-        MonitorAcademicContent(grades = getDummyGrades(), onBackClick = {})
+        MonitorAcademicContent(
+            grades = getDummyGrades(),
+            studentLabel = "Test Student - 3rd Yr",
+            emptyMessage = "No grades yet",
+            onBackClick = {}
+        )
     }
 }
