@@ -58,7 +58,15 @@ data class StudyLoadSubject(
     val units: Int,
     val instructor: String,
     val schedule: String,
-    val room: String
+    val room: String,
+    val scheduleNumber: String = "",
+    val courseNumber: String = code,
+    val time: String = schedule,
+    val days: String = "",
+    val remarks: String = "",
+    val semester: String = "2nd Sem.",
+    val schoolYear: String = "S.Y. 2025-2026",
+    val dateEnrolled: String = ""
 )
 
 data class NotificationDto(

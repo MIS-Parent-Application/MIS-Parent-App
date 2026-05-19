@@ -1,6 +1,5 @@
 package com.mis.parentapp.features.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -8,38 +7,23 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mis.parentapp.R
-import com.mis.parentapp.network.NotificationDto
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
-import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ParentAppTheme
-
-data class NotificationItem(
-    val id: Int,
-    val text: String,
-    val type: String,
-    val time: String,
-    val imageRes: Int? = null,
-    val isNew: Boolean = false
-)
+import com.mis.parentapp.utilities.cards.NotificationCard
+import com.mis.parentapp.utilities.cards.NotificationData
+import com.mis.parentapp.utilities.cards.NotificationType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +32,7 @@ fun NotificationScreen(
     onBackClick: () -> Unit
 ) {
     var selectedFilter by remember { mutableStateOf("All") }
-    var notifications by remember { mutableStateOf<List<NotificationItem>>(emptyList()) }
+    var notifications by remember { mutableStateOf<List<NotificationData>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val selectedStudent = studentVM?.selectedStudent
@@ -57,9 +41,20 @@ fun NotificationScreen(
         isLoading = true
         errorMessage = null
         try {
+            // Mapping from DTO to our UI data model
             notifications = RetrofitInstance.api
                 .getNotifications(selectedStudent?.id)
-                .map { it.toNotificationItem() }
+                .map { dto ->
+                    NotificationData(
+                        id = dto.id.toString(),
+                        type = try { NotificationType.valueOf(dto.type.uppercase()) } catch (_: Exception) { NotificationType.ACTIVITY },
+                        content = dto.text,
+                        category = dto.type.capitalize(),
+                        timeAgo = dto.time,
+                        isNew = dto.isNew,
+                        gradientColors = if (dto.type.lowercase() == "event") listOf(Color(0xFFFFA726), Color(0xFFFF7043)) else null
+                    )
+                }
         } catch (e: Exception) {
             errorMessage = "Unable to load notifications."
         } finally {
@@ -70,29 +65,24 @@ fun NotificationScreen(
     val filteredNotifications = notifications.filter {
         selectedFilter == "All" ||
             (selectedFilter == "Unread" && it.isNew) ||
-            it.type.equals(selectedFilter, ignoreCase = true)
+            it.type.name.equals(selectedFilter, ignoreCase = true) ||
+            it.category.equals(selectedFilter, ignoreCase = true)
     }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Notifications", style = AppTypes.type_H1, fontSize = 20.sp) },
+            TopAppBar(
+                title = { Text("Notifications", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Handle menu */ }) {
+                    IconButton(onClick = { /* Menu */ }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -103,28 +93,44 @@ fun NotificationScreen(
                 onFilterClick = { selectedFilter = it }
             )
             
-            when {
-                isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-                errorMessage != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            } else if (errorMessage != null) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(errorMessage ?: "", color = Color.Red)
                 }
-                else -> LazyColumn(
+            } else {
+                LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground) }
-                    items(filteredNotifications.filter { it.isNew }) { notification ->
-                        NotificationCard(notification)
+                    val newOnes = filteredNotifications.filter { it.isNew }
+                    val earlierOnes = filteredNotifications.filter { !it.isNew }
+
+                    if (newOnes.isNotEmpty()) {
+                        item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+                        items(newOnes) { notification ->
+                            NotificationCard(notification)
+                        }
                     }
 
-                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                    if (earlierOnes.isNotEmpty()) {
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                        item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+                        items(earlierOnes) { notification ->
+                            NotificationCard(notification)
+                        }
+                    }
 
-                    item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground) }
-                    items(filteredNotifications.filter { !it.isNew }) { notification ->
-                        NotificationCard(notification)
+                    if (filteredNotifications.isEmpty()) {
+                        item {
+                            Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                                Text("No notifications found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
                     }
                 }
             }
@@ -147,90 +153,16 @@ fun NotificationFilterRow(selectedFilter: String, onFilterClick: (String) -> Uni
             Surface(
                 modifier = Modifier.clickable { onFilterClick(filter) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
             ) {
                 Text(
                     text = filter,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = AppTypes.type_M3_label_small
-                )
-            }
-        }
-    }
-}
-
-private fun NotificationDto.toNotificationItem(): NotificationItem {
-    return NotificationItem(
-        id = id,
-        text = text,
-        type = type,
-        time = time,
-        imageRes = if (studentId != null) R.drawable.studentswitcher else null,
-        isNew = isNew
-    )
-}
-
-@Composable
-fun NotificationCard(notification: NotificationItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (notification.imageRes != null) {
-                Image(
-                    painter = painterResource(id = notification.imageRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = notification.text,
-                    style = AppTypes.type_Body_Small,
                     fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            Column(horizontalAlignment = Alignment.End) {
-                Text(text = notification.type, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
-                Text(
-                    text = notification.time, 
-                    fontSize = 10.sp, 
-                    fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun NotificationScreenPreview() {
-    ParentAppTheme {
-        NotificationScreen(onBackClick = {})
     }
 }

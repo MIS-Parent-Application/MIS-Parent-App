@@ -37,7 +37,6 @@ import com.mis.parentapp.navigation.GetStarted
 fun MeScreen(
     modifier: Modifier = Modifier,
     navController: NavController? = null,
-    globalNavController: NavController? = null,
     authViewModel: AuthViewModel,
     onSignOutClick: () -> Unit
 ) {
@@ -137,7 +136,7 @@ fun MeScreen(
                         "Edit profile" -> navController?.navigate(EditProfile)
                         "Sign out" -> {
                             authViewModel.signOut {
-                                onSignOutClick() // Tell the parent container to pop us out of MainScreen!
+                                onSignOutClick()
                             }
                         }
                     }

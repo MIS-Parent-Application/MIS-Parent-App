@@ -12,6 +12,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,8 +45,12 @@ data class SubjectAttendance(
 @Composable
 fun TrackAttendanceContent(
     attendanceList: List<SubjectAttendance>,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -74,11 +82,30 @@ fun TrackAttendanceContent(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Menu action */ }) {
+                    IconButton(onClick = { showMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More options",
                             tint = Color.Black
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Monitor Academic") },
+                            onClick = {
+                                showMenu = false
+                                onMonitorAcademicClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Track Attendance") },
+                            onClick = {
+                                showMenu = false
+                                onTrackAttendanceClick()
+                            }
                         )
                     }
                 },
