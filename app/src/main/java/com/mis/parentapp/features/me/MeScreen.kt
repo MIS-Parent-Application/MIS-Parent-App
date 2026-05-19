@@ -17,11 +17,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.mis.parentapp.R
+import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.me.sections.SettingsSection
 import com.mis.parentapp.features.me.sections.YourEssentialsSection
 import com.mis.parentapp.navigation.Announcements
@@ -31,13 +31,14 @@ import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
-import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.navigation.GetStarted
 
 @Composable
 fun MeScreen(
     modifier: Modifier = Modifier,
     navController: NavController? = null,
-    onSignOut: () -> Unit = {}
+    authViewModel: AuthViewModel,
+    onSignOutClick: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -133,7 +134,11 @@ fun MeScreen(
                         "Preferences" -> navController?.navigate(Preference)
                         "Data safety" -> navController?.navigate(DataSafety)
                         "Edit profile" -> navController?.navigate(EditProfile)
-                        "Sign out" -> onSignOut()
+                        "Sign out" -> {
+                            authViewModel.signOut {
+                                onSignOutClick()
+                            }
+                        }
                     }
                 })
             }
@@ -141,10 +146,10 @@ fun MeScreen(
     }
 }
 
-@Preview(showBackground = true, widthDp = 360)
-@Composable
-private fun MeScreenPreview() {
-    ParentAppTheme {
-        MeScreen()
-    }
-}
+//@Preview(showBackground = true, widthDp = 360)
+//@Composable
+//private fun MeScreenPreview() {
+//    ParentAppTheme {
+//        MeScreen()
+//    }
+//}

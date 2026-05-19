@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -67,12 +68,12 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.rememberCoroutineScope
-import com.mis.parentapp.data.StudentWithSchedules
-import com.mis.parentapp.data.StudentsRepo
-import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.home.menu.EventCard
 import com.mis.parentapp.features.home.menu.EventDetailScreen
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,46 +132,31 @@ fun Body(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val eventRepo = remember { EventRepository(db.eventDao()) }
-    val studentRepo = remember { StudentsRepo(db.studentMonitoringDao(), db.userDao()) }
-    val userRepo = remember { UserRepository(db.userDao()) }
     val currentUser by db.userDao().getUserFlow("user").collectAsState(initial = null)
     var showNoteDialog by remember { mutableStateOf(false) }
     var tempNote by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val localStudentsWithSchedules by studentRepo.getChildrenForParent("user").collectAsState(initial = emptyList())
     val eventViewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(eventRepo))
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        if (localStudentsWithSchedules.isEmpty()) {
-            studentRepo.seedDummyStudents("user")
-        }
-
-        //Fetch retrofit
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-
-            dashboard.children.forEach { remoteChild ->
-                val homeStudent = remoteChild.toHomeStudent()
-                db.studentMonitoringDao().insertStudent(homeStudent.student)
-                db.studentMonitoringDao().insertSchedules(homeStudent.schedules)
-            }
-
+            studentVM?.updateStudents(dashboard.children)
             dashboardError = null
         } catch (e: Exception) {
-            //Use Room if offline/no server
-            dashboardError = "Running in offline mode."
+            dashboardError = "Unable to load server student data."
         }
     }
 
-    var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
-
-    LaunchedEffect(localStudentsWithSchedules) {
-        if (localStudentsWithSchedules.isNotEmpty() && selectedStudent == null) {
-            selectedStudent = localStudentsWithSchedules.first()
-        }
+    val students = remember(studentVM?.students) {
+        studentVM?.students?.map { it.toHomeStudent() } ?: emptyList()
+    }
+    val selectedStudent = remember(students, studentVM?.selectedStudent) {
+        val selectedId = studentVM?.selectedStudent?.id?.toString()
+        students.firstOrNull { it.student.studentId == selectedId } ?: students.firstOrNull()
     }
 
     if (showNoteDialog) {
@@ -279,11 +265,15 @@ fun Body(
                     }
 
                     //STUDENT SELECTORS
-                    items(localStudentsWithSchedules) { studentWrapper ->
+                    items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
-                            onClick = { selectedStudent = studentWrapper }
+                            onClick = {
+                                studentVM?.students
+                                    ?.firstOrNull { it.id.toString() == studentWrapper.student.studentId }
+                                    ?.let { studentVM.selectStudent(it) }
+                            }
                         )
                     }
                 }
@@ -292,15 +282,20 @@ fun Body(
 
         // PRESENCE HEADER
         item {
-            selectedStudent?.student?.let { child ->
-                StudentPresenceHeader(student = child)
+            selectedStudent?.let { studentWithSchedules ->
+                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                StudentPresenceHeader(
+                    student = studentWithSchedules.student,
+                    isInClass = schedulePair.first != null
+                )
             }
         }
 
         // SCHEDULE LISTS
         item {
             selectedStudent?.let { studentWithSchedules ->
-                ScheduleSection(schedules = studentWithSchedules.schedules.take(2))
+                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                ScheduleSection(now = schedulePair.first, next = schedulePair.second)
             }
         }
 
@@ -310,7 +305,7 @@ fun Body(
                 QuickStatsSection(
                     attendance = "${(child.attendanceScore * 100).toInt()}%",
                     gpa = child.gpa.toString(),
-                    pending = "₱${child.pendingPayment}",
+                    pending = "PHP ${child.pendingPayment}",
                     notifications = child.notificationCount.toString()
                 )
             }
@@ -360,7 +355,7 @@ private fun Child.toHomeStudent(): HomeStudent {
             pendingPayment = pendingPayments.toDouble(),
             notificationCount = 0,
             profileImageRes = R.drawable.student_image,
-            isPresent = attendanceValue > 0.0
+            isPresent = resolveCurrentClass(schedules) != null
         ),
         schedules = schedules.map { it.toScheduleEntity(studentId) }
     )
@@ -432,14 +427,19 @@ fun StudentSelectorItem(
 
 @Composable
 fun StudentPresenceHeader(student: StudentEntity) {
-    val (brightColor, deepColor) = if (student.isPresent) {
+    StudentPresenceHeader(student = student, isInClass = student.isPresent)
+}
+
+@Composable
+fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
+    val (brightColor, deepColor) = if (isInClass) {
         MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
     }
 
-    val statusText = if (student.isPresent) "At class" else "Not in class"
-    val statusColor = if (student.isPresent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val statusText = if (isInClass) "At class" else "Not in class"
+    val statusColor = if (isInClass) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Column(
         modifier = Modifier
@@ -514,74 +514,155 @@ fun StudentPresenceHeader(student: StudentEntity) {
 
 
 @Composable
-fun ScheduleSection(schedules: List<SubjectScheduleEntity>) {
+fun ScheduleSection(now: SubjectScheduleEntity?, next: SubjectScheduleEntity?) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            itemsIndexed(schedules) { index, item ->
-                val isNow = index == 0
-                ScheduleCard(schedule = item, status = if (isNow) "Now" else "Up Next", isNow = isNow)
+            item {
+                ScheduleCard(
+                    schedule = now,
+                    status = "Now",
+                    fallbackSubject = "No class",
+                    fallbackRoom = "-",
+                    fallbackTime = "No class now",
+                    isNow = true
+                )
+            }
+            item {
+                ScheduleCard(
+                    schedule = next,
+                    status = "Up Next",
+                    fallbackSubject = "VACANT",
+                    fallbackRoom = "-",
+                    fallbackTime = "No next class",
+                    isNow = false
+                )
             }
         }
     }
 }
 
 @Composable
-fun ScheduleCard(schedule: SubjectScheduleEntity, status: String, isNow: Boolean) {
+fun ScheduleCard(
+    schedule: SubjectScheduleEntity?,
+    status: String,
+    fallbackSubject: String,
+    fallbackRoom: String,
+    fallbackTime: String,
+    isNow: Boolean
+) {
     // Theme logic
     val backgroundColor = if (isNow) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
     val primaryText = if (isNow) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     val secondaryText = if (isNow) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
-    Box(
+    Column(
         modifier = Modifier
-            .requiredSize(width = 220.dp, height = 150.dp)
+            .requiredSize(width = 220.dp, height = 156.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.formkit_date), // or a specific schedule icon
-            contentDescription = null,
-            modifier = Modifier.requiredSize(24.dp).align(Alignment.TopStart),
-            tint = primaryText
-        )
-
-        Text(
-            text = status,
-            style = AppTypes.type_Caption,
-            fontWeight = FontWeight.Bold,
-            color = primaryText,
-            modifier = Modifier.align(Alignment.TopEnd)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.formkit_date),
+                contentDescription = null,
+                modifier = Modifier.requiredSize(24.dp),
+                tint = primaryText
+            )
+            Text(
+                text = status,
+                style = AppTypes.type_Caption,
+                fontWeight = FontWeight.Bold,
+                color = primaryText
+            )
+        }
 
         Column(
-            modifier = Modifier.align(Alignment.BottomStart),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
-                text = schedule.subject,
+                text = schedule?.subject ?: fallbackSubject,
                 style = AppTypes.type_H1,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = primaryText,
-                maxLines = 1
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = schedule.room,
+                text = schedule?.room ?: fallbackRoom,
                 style = AppTypes.type_Body_Small,
-                color = secondaryText
+                color = secondaryText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = schedule.time,
+                text = schedule?.time ?: fallbackTime,
                 style = AppTypes.type_Body_Small,
                 fontWeight = FontWeight.Bold,
-                color = secondaryText
+                color = secondaryText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
+}
+
+private fun resolveHomeSchedulePair(
+    schedules: List<SubjectScheduleEntity>
+): Pair<SubjectScheduleEntity?, SubjectScheduleEntity?> {
+    val calendar = Calendar.getInstance()
+    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    val todaySchedules = schedules
+        .filter { it.day.equals(today, ignoreCase = true) }
+        .sortedBy { startMinutesFromRange(it.time) }
+
+    val current = todaySchedules.firstOrNull {
+        val start = startMinutesFromRange(it.time)
+        val end = endMinutesFromRange(it.time)
+        nowMinutes in start until end
+    }
+    val next = todaySchedules.firstOrNull { startMinutesFromRange(it.time) > nowMinutes }
+        ?: schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) }).firstOrNull()
+
+    return current to next
+}
+
+private fun resolveCurrentClass(schedules: List<ClassSchedule>): ClassSchedule? {
+    val calendar = Calendar.getInstance()
+    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    return schedules.firstOrNull {
+        it.day.equals(today, ignoreCase = true) &&
+            nowMinutes in minutesFromTime(it.startTime) until minutesFromTime(it.endTime)
+    }
+}
+
+private fun startMinutesFromRange(value: String): Int = minutesFromTime(value.substringBefore("-").trim())
+
+private fun endMinutesFromRange(value: String): Int = minutesFromTime(value.substringAfter("-", value).trim())
+
+private fun minutesFromTime(value: String): Int {
+    val parts = value.split(":")
+    val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val minute = parts.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
+    return hour * 60 + minute
+}
+
+private fun dayOrder(day: String): Int {
+    return listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+        .indexOfFirst { it.equals(day, ignoreCase = true) }
+        .let { if (it == -1) 99 else it }
 }
 
 

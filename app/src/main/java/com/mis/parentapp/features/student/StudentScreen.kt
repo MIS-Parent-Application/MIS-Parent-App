@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,9 +36,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.R
 import com.mis.parentapp.data.StudentMonitoringDao
 import com.mis.parentapp.network.Child
@@ -71,10 +74,6 @@ fun StudentScreen(
     val schedulePair = remember(selectedStudent) {
         selectedStudent?.schedules?.let { resolveSchedulePair(it) }
     }
-    val studentRoomVM: StudentViewModel = viewModel(
-        factory = StudentViewModel.provideFactory(dao)
-    )
-    val currentGpa by studentRoomVM.gpa.collectAsState()
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -121,8 +120,13 @@ fun StudentScreen(
                             Text("ID number: ${selectedStudent?.rollNumber ?: "--"}", color = Color.White)
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            students.forEach { student ->
+                        LazyRow(
+                            modifier = Modifier
+                                .widthIn(max = 176.dp)
+                                .padding(start = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(students, key = { it.id }) { student ->
                                 Image(
                                     painter = painterResource(id = R.drawable.student_image),
                                     contentDescription = student.name,
@@ -154,7 +158,7 @@ fun StudentScreen(
                     if (errorMessage != null) {
                         Text(errorMessage ?: "", color = Color.Red, fontSize = 14.sp)
                     }
-                    AcademicProgramSection(selectedStudent, currentGpa)
+                    AcademicProgramSection(selectedStudent)
                     ClassScheduleSection(
                         now = schedulePair?.first,
                         next = schedulePair?.second,
@@ -167,7 +171,7 @@ fun StudentScreen(
 }
 
 @Composable
-fun AcademicProgramSection(student: Child?, gpa: Double, ) {
+fun AcademicProgramSection(student: Child?) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = "Academic Program",
@@ -175,7 +179,7 @@ fun AcademicProgramSection(student: Child?, gpa: Double, ) {
             color = MaterialTheme.colorScheme.primary
         )
         ProgramItem(icon = Icons.Default.School, text = student?.program ?: "Loading program")
-        ProgramItem(icon = Icons.Default.Star, text = "Current GPA: $gpa") // Now dynamic!
+        ProgramItem(icon = Icons.Default.Star, text = "Current GPA: ${student?.gpa ?: "--"}")
         ProgramItem(icon = Icons.Default.Verified, text = "Officially enrolled for ${student?.year ?: "current A.Y."}")
     }
 }
@@ -225,13 +229,16 @@ fun ClassScheduleSection(
                     .clickable { onStudyLoadClick() }
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             ScheduleCardSmall(
                 status = "Now",
                 schedule = now,
                 fallbackSubject = "No class",
                 fallbackRoom = "-",
-                fallbackTime = "Current time",
+                fallbackTime = "No class now",
                 iconRes = R.drawable.basil_current_location_outline,
                 isHighlight = true,
                 modifier = Modifier.weight(1f)
@@ -261,44 +268,57 @@ fun ScheduleCardSmall(
     isHighlight: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
-            .requiredHeight(148.dp)
+            .heightIn(min = 168.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(if (isHighlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .padding(16.dp)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Image(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            modifier = Modifier
-                .size(32.dp)
-                .align(Alignment.TopStart),
-            colorFilter = ColorFilter.tint(if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary)
-        )
-        Text(
-            text = status,
-            fontSize = 12.sp,
-            color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline,
-            modifier = Modifier.align(Alignment.TopEnd)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Image(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                colorFilter = ColorFilter.tint(if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary)
+            )
+            Text(
+                text = status,
+                fontSize = 12.sp,
+                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline
+            )
+        }
         Text(
             text = schedule?.subject ?: fallbackSubject,
-            fontSize = 17.sp,
+            fontSize = 15.sp,
+            lineHeight = 18.sp,
             fontWeight = FontWeight.Bold,
             color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.align(Alignment.CenterStart)
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
         )
-        Column(modifier = Modifier.align(Alignment.BottomStart)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = schedule?.room ?: fallbackRoom,
                 fontSize = 14.sp,
-                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = schedule?.let { "${it.startTime} - ${it.endTime}" } ?: fallbackTime,
                 fontSize = 12.sp,
-                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

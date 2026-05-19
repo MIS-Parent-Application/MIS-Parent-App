@@ -80,7 +80,13 @@ fun AppNavigation() {
         }
 
         composable<MainContainer> {
-            MainScreen()
+            MainScreen(
+                onSignOut = {
+                    navController.navigate(OnBoarding) {
+                        popUpTo(MainContainer) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
