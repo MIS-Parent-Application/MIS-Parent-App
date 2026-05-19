@@ -32,7 +32,7 @@ fun NotificationsWidget() {
     val filteredNotifications = if (selectedFilter == "All") {
         notifications
     } else {
-        notifications.filter { 
+        notifications.filter {
             when (selectedFilter) {
                 "Unread" -> it.isNew
                 "Events" -> it.type == NotificationType.EVENT
@@ -123,7 +123,7 @@ fun NotificationsWidget() {
                     NotificationCard(notification = notification)
                 }
             }
-            
+
             if (filteredNotifications.isEmpty()) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp)) {

@@ -17,11 +17,35 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.utilities.cards.AnnouncementCard
 import com.mis.parentapp.utilities.cards.AnnouncementData
+import com.mis.parentapp.network.RetrofitInstance
 
 @Composable
 fun AnnouncementsScreen() {
     var selectedTab by remember { mutableStateOf("School-wide") }
-    val announcements = remember { getDummyAnnouncements() }
+    var announcements by remember { mutableStateOf<List<AnnouncementData>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        runCatching {
+            RetrofitInstance.api.getAnnouncements().map {
+                AnnouncementData(
+                    id = it.id.toString(),
+                    title = it.title,
+                    content = it.content,
+                    isNew = it.urgent,
+                    category = when (it.category.lowercase()) {
+                        "college" -> "College"
+                        else -> "School-wide"
+                    }
+                )
+            }
+        }.onSuccess {
+            announcements = it
+            errorMessage = null
+        }.onFailure {
+            errorMessage = "Unable to load announcements from the server."
+        }
+    }
 
     val filteredAnnouncements = announcements.filter { it.category == selectedTab }
     val newOnes = filteredAnnouncements.filter { it.isNew }
@@ -61,6 +85,14 @@ fun AnnouncementsScreen() {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (filteredAnnouncements.isEmpty()) {
+                item {
+                    Text(
+                        text = errorMessage ?: "No announcements for $selectedTab.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             if (newOnes.isNotEmpty()) {
                 item {
                     Text(text = "New", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
@@ -82,6 +114,7 @@ fun AnnouncementsScreen() {
     }
 }
 
+// Preview-only sample data.
 fun getDummyAnnouncements(): List<AnnouncementData> {
     return listOf(
         AnnouncementData("1", "Announcement", "Lorem ipsum dolor sit amet consectetur...", true, "School-wide"),

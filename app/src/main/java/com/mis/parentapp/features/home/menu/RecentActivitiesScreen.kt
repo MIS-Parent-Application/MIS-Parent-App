@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
@@ -37,7 +34,7 @@ fun RecentActivitiesScreen(
     )
 
     val events by viewModel.recentEvents.collectAsState(initial = emptyList())
-    val selectedFilter = remember { mutableStateOf("All") } // Track state here
+    val selectedFilter = remember { mutableStateOf("All") }
     val selectedEvent = remember { mutableStateOf<EventItem?>(null) }
 
     val filteredEvents = remember(events, selectedFilter.value) {
@@ -58,7 +55,7 @@ fun RecentActivitiesScreen(
                         "This month" -> eventCal.get(Calendar.MONTH) == currentMonth &&
                                 eventCal.get(Calendar.YEAR) == currentYear
                         "This year" -> eventCal.get(Calendar.YEAR) == currentYear
-                        else -> true // "All"
+                        else -> true
                     }
                 } else true
             } catch (_: Exception) {
@@ -73,44 +70,28 @@ fun RecentActivitiesScreen(
             event = selectedEvent.value!!,
             onBackClick = { selectedEvent.value = null })
     } else {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Recent events", style = AppTypes.type_H1, fontSize = 20.sp) },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) { paddingValues ->
-            Column(modifier = Modifier.padding(paddingValues)) {
-                // Pass the state and the setter to the row
-                RecentFilterRow(
-                    selectedFilter = selectedFilter.value,
-                    onFilterSelected = { selectedFilter.value = it }
-                )
+        // FIX: Removed Scaffold and CenterAlignedTopAppBar entirely.
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            RecentFilterRow(
+                selectedFilter = selectedFilter.value,
+                onFilterSelected = { selectedFilter.value = it }
+            )
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    groupedEvents.forEach { (category, eventList) ->
-                        item {
-                            EventSection(
-                                title = category,
-                                events = eventList,
-                                onEventClick = { selectedEvent.value = it }
-                            )
-                        }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                groupedEvents.forEach { (category, eventList) ->
+                    item {
+                        EventSection(
+                            title = category,
+                            events = eventList,
+                            onEventClick = { selectedEvent.value = it }
+                        )
                     }
                 }
             }
@@ -118,6 +99,7 @@ fun RecentActivitiesScreen(
     }
 }
 
+// ... RecentFilterRow function stays exactly the same ...
 @Composable
 fun RecentFilterRow(
     selectedFilter: String,
@@ -148,11 +130,3 @@ fun RecentFilterRow(
         }
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun RecentActivitiesScreenPreview() {
-//    ParentAppTheme {
-//        RecentActivitiesScreen(onBackClick = {})
-//    }
-//}
