@@ -74,6 +74,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +86,10 @@ fun HomeScreen(
     val sheetState = rememberModalBottomSheetState()
     val showSheet = remember { mutableStateOf(false) }
     val selectedEventForDetail = remember { mutableStateOf<EventItem?>(null) }
+
+    BackHandler(enabled = selectedEventForDetail.value != null) {
+        selectedEventForDetail.value = null
+    }
 
     if (showSheet.value) {
         ModalBottomSheet(

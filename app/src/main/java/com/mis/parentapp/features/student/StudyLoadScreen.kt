@@ -68,38 +68,31 @@ fun StudyLoadScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Study Load", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(
-                        enabled = selectedStudent != null && subjects.isNotEmpty(),
-                        onClick = {
-                            selectedStudent?.let {
-                                exportStudyLoadPdf(context, it, subjects)
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Default.Download, contentDescription = "Download study load")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        },
-        containerColor = Color.White
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .background(Color(0xFFF7FAEF))
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF7FAEF))
+    ) {
+        if (selectedStudent != null && subjects.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(
+                    onClick = { exportStudyLoadPdf(context, selectedStudent, subjects) }
+                ) {
+                    Icon(
+                        Icons.Default.Download,
+                        contentDescription = "Download study load",
+                        tint = ColorsDefaultTheme.color_Primary_green_container
+                    )
+                }
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
             when {
                 isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 errorMessage != null && subjects.isEmpty() -> Text(
@@ -368,10 +361,10 @@ private fun openPdf(context: Context, uri: android.net.Uri) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun StudyLoadScreenPreview() {
-    ParentAppTheme {
-        StudyLoadScreen(studentVM = StudentSharedViewModel(), onBackClick = {})
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//private fun StudyLoadScreenPreview() {
+//    ParentAppTheme {
+//        StudyLoadScreen(studentVM = StudentSharedViewModel(), onBackClick = {})
+//    }
+//}
