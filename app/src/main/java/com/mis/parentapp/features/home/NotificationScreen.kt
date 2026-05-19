@@ -99,7 +99,7 @@ fun NotificationScreen(
                 }
             } else if (errorMessage != null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(errorMessage ?: "", color = Color.Red)
+                    Text(errorMessage ?: "", color = MaterialTheme.colorScheme.error)
                 }
             } else {
                 LazyColumn(
