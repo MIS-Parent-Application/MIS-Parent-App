@@ -7,10 +7,16 @@ import androidx.room.Query
 
 @Dao
 interface UserDAO {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun registerUser(user: UserEntity)
 
     // Updated query to check username instead of email
     @Query("SELECT * FROM users WHERE username = :username AND password = :password")
     suspend fun loginUser(username: String, password: String): UserEntity?
+
+    @Query("UPDATE users SET note = :newNote WHERE username = :username")
+    suspend fun updateUserNote(username: String, newNote: String)
+
+    @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
+    fun getUserFlow(username: String): kotlinx.coroutines.flow.Flow<UserEntity?>
 }

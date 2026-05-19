@@ -1,5 +1,75 @@
 # MIS Parent App
 
+[![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
+
+<table style="border-collapse: collapse; border: none;">
+  <tr>
+    <td style="text-align:center; border: none;">
+      <a href="https://github.com/CarlXT">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/CarlXT.png" width="100px;" alt="CarlXT"/>
+        <br />
+        <sub><b>Carl Sagario</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻🎨📄</i></sub>
+      </a>
+    </td>
+    <td style="text-align:center; border: none;">
+      <a href="https://github.com/Fallen032">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Fallen032.png" width="100px;" alt="Fallen032"/>
+        <br />
+        <sub><b>Serge Keneth Lim</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/semi-naan">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/semi-naan.png" width="100px;" alt="semi-naan"/>
+        <br />
+        <sub><b>Keenan Semine</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/Namkee">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Namkee.png" width="100px;" alt="Namkee"/>
+        <br />
+        <sub><b>Jethro Nathaniel Cabahug</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻📄</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/Axiala01">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Axiala01.png" width="100px;" alt="Axiala01"/>
+        <br />
+        <sub><b>Juliana Mae Lloveras</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/vicben2">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/vicben2.png" width="100px;" alt="vicben2"/>
+        <br />
+        <sub><b>Zeth Brandinno</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  <td style="text-align:center; border: none;">
+      <a href="https://github.com/b1nsz">
+        <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/b1nsz.png" width="100px;" alt="b1nsz"/>
+        <br />
+        <sub><b>Vince Cherry Betache</b></sub>
+        <br />
+        <sub><i>🧑🏻‍💻</i></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
 ![MIS Parent App Banner](https://github.com/user-attachments/assets/abdc165d-234e-4263-8b16-76bef772de4f)
 
 ## 📌 Overview

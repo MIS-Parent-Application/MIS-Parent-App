@@ -2,25 +2,19 @@ package com.mis.parentapp.features.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mis.parentapp.data.UserDAO
+import com.mis.parentapp.data.UserRepository
 import kotlinx.coroutines.launch
 
-class AuthViewModel(private val userDao: UserDAO) : ViewModel() {
-
-    fun signIn(
-        username: String,
-        pass: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
+class AuthViewModel(private val repository: UserRepository) : ViewModel() {
+    fun signIn(username: String, pass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val user = userDao.loginUser(username, pass)
-            if (user != null) {
+            val result = repository.login(username.trim(), pass)
+
+            result.onSuccess {
                 onSuccess()
-            } else {
-                onError("Invalid email or password")
+            }.onFailure { error ->
+                onError(error.message ?: "Login failed")
             }
         }
     }
-
 }

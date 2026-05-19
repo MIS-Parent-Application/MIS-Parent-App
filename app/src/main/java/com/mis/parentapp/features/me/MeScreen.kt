@@ -1,252 +1,145 @@
 package com.mis.parentapp.features.me
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.mis.parentapp.R
-import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
+import com.mis.parentapp.features.me.sections.SettingsSection
+import com.mis.parentapp.features.me.sections.YourEssentialsSection
+import com.mis.parentapp.navigation.Announcements
+import com.mis.parentapp.navigation.DataSafety
+import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.Feedbacks
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
+import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @Composable
-fun MeScreen(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = Color.White
+fun MeScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController? = null,
+    onSignOut: () -> Unit = {}
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 32.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp), // Spacing between items
+            contentPadding = PaddingValues(bottom = 24.dp) // Extra bottom padding
         ) {
             item {
-                ProfileHeader()
-            }
-            item {
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 24.dp, horizontal = 16.dp),
-                    color = Color(0xFFE0E0E0),
-                    thickness = 1.dp
-                )
-            }
-            item {
-                MenuSection(
-                    title = "Connect",
-                    items = listOf(
-                        MeMenuItem("Your student", Icons.Default.School),
-                        MeMenuItem("Instructors", Icons.Default.Forum),
-                        MeMenuItem("Dean", Icons.Default.ManageAccounts),
-                        MeMenuItem("Registrar’s Office", Icons.AutoMirrored.Filled.MenuBook),
-                        MeMenuItem("Guidance Office", Icons.Default.Explore),
-                        MeMenuItem("School Clinic", Icons.Default.MedicalServices),
-                        MeMenuItem("Cashier’s Office", Icons.Default.Payments)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(380.dp) // Match StudentScreen height
+                ) {
+                    // BACKGROUND IMAGE WITH ROUNDED BOTTOM
+                    Image(
+                        painter = painterResource(id = R.drawable.parent_pic),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(
+                                RoundedCornerShape(
+                                    bottomStart = 32.dp,
+                                    bottomEnd = 32.dp
+                                )
+                            )
                     )
-                )
-            }
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-                MenuSection(
-                    title = "Support",
-                    items = listOf(
-                        MeMenuItem("Schedule a meeting", Icons.Default.CalendarMonth),
-                        MeMenuItem("Send school a feedback", Icons.Default.Feedback)
+
+                    // DARK OVERLAY
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(
+                                RoundedCornerShape(
+                                    bottomStart = 32.dp,
+                                    bottomEnd = 32.dp
+                                )
+                            )
+                            .background(Color.Black.copy(alpha = 0.25f))
                     )
-                )
+
+                    // NAME + DETAILS + PROFILE (Match StudentScreen Layout)
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // TEXT
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Nathaniel B. McClure",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text("Parent Account", color = Color.White)
+                            Text("ID number: 123456789", color = Color.White)
+                        }
+
+                        // CIRCLE PROFILE IMAGE
+                        Image(
+                            painter = painterResource(id = R.drawable.parent_pic),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, Color.White, CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
             }
             item {
-                Spacer(modifier = Modifier.height(32.dp))
-                SettingsSection()
+                YourEssentialsSection(onCategoryClick = { title ->
+                    when (title) {
+                        "Messages" -> navController?.navigate(Messages)
+                        "Announcements" -> navController?.navigate(Announcements)
+                        "Meetings" -> navController?.navigate(Meeting)
+                        "Feedbacks" -> navController?.navigate(Feedbacks)
+                    }
+                })
+            }
+            item {
+                SettingsSection(onCategoryClick = { title ->
+                    when (title) {
+                        "Preferences" -> navController?.navigate(Preference)
+                        "Data safety" -> navController?.navigate(DataSafety)
+                        "Edit profile" -> navController?.navigate(EditProfile)
+                        "Sign out" -> onSignOut()
+                    }
+                })
             }
         }
     }
 }
-
-@Composable
-fun ProfileHeader() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.student_image),
-            contentDescription = "Parent Profile Photo",
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = "Jordan B. McClure",
-                style = AppTypes.type_H2,
-                color = ColorsDefaultTheme.color_On_surface,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            )
-            Text(
-                text = "Primary Guardian",
-                style = AppTypes.type_Body_Small,
-                color = Color.Gray,
-                fontSize = 16.sp
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.clickable { }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = ColorsDefaultTheme.color_Primary_green,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = "Verified account",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = Color.Gray,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MenuSection(title: String, items: List<MeMenuItem>) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = title,
-            style = AppTypes.type_H1,
-            color = Color(0xFF1B4D13),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-        items.forEach { item ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { }
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = ColorsDefaultTheme.color_On_surface
-                )
-                Text(
-                    text = item.label,
-                    fontSize = 16.sp,
-                    color = Color(0xFF1B4D13).copy(alpha = 0.8f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingsSection() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Settings",
-            style = AppTypes.type_H1,
-            color = Color(0xFF1B4D13),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            MeSettingsCard(
-                title = "Preferences",
-                description = "Set your own preference in using this app.",
-                icon = Icons.Default.Tune,
-                modifier = Modifier.weight(1f)
-            )
-            MeSettingsCard(
-                title = "Data Safety",
-                description = "Your data, your rules.",
-                icon = Icons.Default.Lock,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun MeSettingsCard(title: String, description: String, icon: ImageVector, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.height(160.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = ColorsDefaultTheme.color_Surface
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = Color(0xFF1B4D13)
-            )
-            Text(
-                text = title,
-                style = AppTypes.type_H2,
-                color = Color(0xFF1B4D13),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = description,
-                fontSize = 12.sp,
-                color = Color.Gray,
-                lineHeight = 16.sp
-            )
-        }
-    }
-}
-
-data class MeMenuItem(val label: String, val icon: ImageVector)
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable

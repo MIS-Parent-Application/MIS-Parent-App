@@ -7,6 +7,17 @@ data class ParentDashboard(
     val upcomingEvents: List<String>
 )
 
+data class LoginRequest(
+    val username: String,
+    val password: String
+)
+
+data class LoginResponse(
+    val token: String,
+    val parent: Parent,
+    val dashboard: ParentDashboard
+)
+
 data class Parent(
     val id: Int,
     val name: String,
@@ -47,7 +58,15 @@ data class StudyLoadSubject(
     val units: Int,
     val instructor: String,
     val schedule: String,
-    val room: String
+    val room: String,
+    val scheduleNumber: String = "",
+    val courseNumber: String = code,
+    val time: String = schedule,
+    val days: String = "",
+    val remarks: String = "",
+    val semester: String = "2nd Sem.",
+    val schoolYear: String = "S.Y. 2025-2026",
+    val dateEnrolled: String = ""
 )
 
 data class NotificationDto(

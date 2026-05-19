@@ -11,14 +11,16 @@ import androidx.room.RoomDatabase
         UserEntity::class,
         CourseGrade::class,
         AttendanceRecord::class,
-        EventItem::class
+        EventItem::class,
+        StudentEntity::class,          // Added
+        SubjectScheduleEntity::class   // Added
     ],
-    version = 3
+    version = 5, // Incremented
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun userDao(): UserDAO
-    // CHANGE 2: Added the Student Monitoring DAO
     abstract fun studentMonitoringDao(): StudentMonitoringDao
     abstract fun eventDao(): EventDao
 
@@ -33,7 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "parent_app_db"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance
                 instance
