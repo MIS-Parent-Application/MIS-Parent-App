@@ -11,10 +11,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,6 +115,7 @@ fun ServicesScreen(
     }
 }
 
+
 // ================= BODY =================
 
 @Composable
@@ -124,41 +127,105 @@ fun Body(
     onQrClick: () -> Unit,
     paymentHistory: List<PaymentRecord>
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.Start,
+
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        item { Spacer(modifier = Modifier.height(60.dp)) } // Space for the floating top bar
-        
-        item {
-            SearchBarSection(
-                selectedStudent = studentVM.selectedStudent,
-                onProfileClick = onProfileClick,
-                onQrClick = onQrClick,
-                modifier = Modifier.padding(horizontal = 16.dp)
+
+        // TOP BAR
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.formkit_date),
+                    contentDescription = "Date",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { }
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.ph_bell),
+                    contentDescription = "Notifications",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { }
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.studentswitcher),
+                    contentDescription = "Student Switcher",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .clickable { },
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
 
-        item {
-            Image(
-                painter = painterResource(id = R.drawable.program),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.FillWidth
-            )
-        }
-        item { ContributionDuesSection(onPayClick = onPayClick) }
-        item {
-            PaymentHistorySection(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                paymentHistory = paymentHistory
-            )
+        // CONTENT
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            item {
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                SearchBarSection(
+                    selectedStudent = studentVM.selectedStudent,
+                    onProfileClick = onProfileClick,
+                    onQrClick = onQrClick,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            item {
+                Image(
+                    painter = painterResource(id = R.drawable.program),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.FillWidth
+                )
+            }
+
+            item {
+                ContributionDuesSection(
+                    onPayClick = onPayClick
+                )
+            }
+
+            item {
+                PaymentHistorySection(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    paymentHistory = paymentHistory
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
     }
 }
