@@ -144,6 +144,8 @@ async function initDatabase() {
             is_new INTEGER NOT NULL DEFAULT 0
         )
     `);
+    
+    // FIX: Added image_url TEXT column to handle the mock image asset strings
     await run(`
         CREATE TABLE IF NOT EXISTS calendar_events (
             id INTEGER PRIMARY KEY,
@@ -153,7 +155,8 @@ async function initDatabase() {
             date TEXT NOT NULL,
             time TEXT NOT NULL,
             description TEXT NOT NULL,
-            status TEXT NOT NULL
+            status TEXT NOT NULL,
+            image_url TEXT
         )
     `);
 
@@ -241,21 +244,23 @@ async function seedDatabase() {
         );
     }
 
+    // FIX: Appended event[X].jpg files sequentially to each dummy calendar entry array
     const events = [
-        [1, 101, 'Mobile Development Practical Exam', 'Exam', '2026-05-15', '08:00 AM', 'Hands-on Android Compose assessment in Lab 402.', 'Academic'],
-        [2, 101, 'Capstone Consultation', 'Academic', '2026-05-17', '03:00 PM', 'Project progress check with Dr. Lim.', 'Reminder'],
-        [3, 102, 'Data Structures Long Quiz', 'Exam', '2026-05-16', '09:00 AM', 'Trees, graphs, and sorting algorithms.', 'Academic'],
-        [4, null, 'College Assembly', 'College', '2026-05-24', '10:00 AM', 'Required assembly for all CCS students.', 'School-wide'],
-        [5, null, 'Parent-Teacher Consultation Day', 'School-wide', '2026-05-30', '01:00 PM', 'Parents may meet instructors by appointment.', 'Reminder']
+        [1, 101, 'Mobile Development Practical Exam', 'Exam', '2026-05-15', '08:00 AM', 'Hands-on Android Compose assessment in Lab 402.', 'Academic', 'event1.jpg'],
+        [2, 101, 'Capstone Consultation', 'Academic', '2026-05-17', '03:00 PM', 'Project progress check with Dr. Lim.', 'Reminder', 'event2.jpg'],
+        [3, 102, 'Data Structures Long Quiz', 'Exam', '2026-05-16', '09:00 AM', 'Trees, graphs, and sorting algorithms.', 'Academic', 'event3.jpg'],
+        [4, null, 'College Assembly', 'College', '2026-05-24', '10:00 AM', 'Required assembly for all CCS students.', 'School-wide', 'event1.jpg'],
+        [5, null, 'Parent-Teacher Consultation Day', 'School-wide', '2026-05-30', '01:00 PM', 'Parents may meet instructors by appointment.', 'Reminder', 'event2.jpg']
     ];
     for (const event of events) {
         await run(
-            'INSERT INTO calendar_events (id, student_id, title, category, date, time, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO calendar_events (id, student_id, title, category, date, time, description, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             event
         );
     }
 }
 
+// ... Intermediate parsing and get methods remain untouched ...
 function mapStudent(row, schedules = [], studyLoad = []) {
     return {
         id: row.id,
@@ -465,6 +470,7 @@ app.get('/api/notifications', asyncHandler(async (req, res) => {
     })));
 }));
 
+// FIX: Updated the map payload mapping step to include imageUrl field property output
 app.get('/api/calendar', asyncHandler(async (req, res) => {
     const studentId = req.query.studentId ? Number(req.query.studentId) : null;
     const rows = await all(
@@ -481,7 +487,8 @@ app.get('/api/calendar', asyncHandler(async (req, res) => {
         date: item.date,
         time: item.time,
         description: item.description,
-        status: item.status
+        status: item.status,
+        imageUrl: item.image_url
     })));
 }));
 
@@ -508,12 +515,12 @@ initDatabase()
             console.log(`SQLite database: ${DB_PATH}`);
             console.log(`Phone URL example: http://192.168.1.248:${PORT}`);
             console.log('Available endpoints:');
-            console.log('  GET /api/health');
-            console.log('  POST /api/auth/login');
-            console.log('  GET /api/parent/dashboard');
-            console.log('  GET /api/notifications?studentId=101');
-            console.log('  GET /api/calendar?studentId=101');
-            console.log('  GET /api/student/:id/studyload');
+            console.log('   GET /api/health');
+            console.log('   POST /api/auth/login');
+            console.log('   GET /api/parent/dashboard');
+            console.log('   GET /api/notifications?studentId=101');
+            console.log('   GET /api/calendar?studentId=101');
+            console.log('   GET /api/student/:id/studyload');
         });
     })
     .catch(error => {

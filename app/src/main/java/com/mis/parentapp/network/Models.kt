@@ -81,11 +81,11 @@ data class NotificationDto(
 
 data class CalendarEventDto(
     val id: Int,
-    val studentId: Int?,
     val title: String,
     val category: String,
     val date: String,
     val time: String,
     val description: String,
-    val status: String
+    val status: String,
+    val imageUrl: String?
 )
