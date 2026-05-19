@@ -251,11 +251,6 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = { },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
                 actions = {
                     IconButton(onClick = { /* Handle share */ }) {
                         Icon(Icons.Default.Share, contentDescription = "Share")
