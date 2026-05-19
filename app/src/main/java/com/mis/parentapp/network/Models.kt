@@ -173,6 +173,11 @@ data class ChatMessageDto(
     val created_at: String? = null
 )
 
+data class ChatHistoryResponse(
+    val status: String,
+    val data: List<ChatMessageDto>
+)
+
 data class SendChatMessageRequest(
     val sender_id: String = "parent_1",
     val receiver_id: String,

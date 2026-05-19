@@ -33,6 +33,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,42 +52,72 @@ import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.ChatMessageDto
 import com.mis.parentapp.network.FacultyContactDto
-import com.mis.parentapp.network.RetrofitInstance
-import com.mis.parentapp.network.SendChatMessageRequest
+import com.mis.parentapp.network.FacultyChatRetrofit
+import com.mis.parentapp.network.ParentChatLoginRequest
 import com.mis.parentapp.utilities.cards.MessageCard
 import com.mis.parentapp.utilities.cards.MessageData
+import io.socket.client.IO
+import io.socket.client.Socket
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
-private const val ParentChatId = "parent_1"
+private const val ParentChatName = "Mrs. Santerna"
+
+private val FacultyContacts = listOf(
+    FacultyContactDto(
+        facultyId = "2023-00154",
+        name = "Prof. Reyes",
+        department = "Faculty",
+        email = "faculty ID 2023-00154",
+        subject = "Faculty chat"
+    ),
+    FacultyContactDto(
+        facultyId = "2018-00088",
+        name = "Dr. Maria Santos",
+        department = "Faculty",
+        email = "faculty ID 2018-00088",
+        subject = "Faculty chat"
+    )
+)
 
 @Composable
 fun MessagesScreen() {
     var selectedContact by remember { mutableStateOf<FacultyContactDto?>(null) }
-    var contacts by remember { mutableStateOf<List<FacultyContactDto>>(emptyList()) }
+    var contacts by remember { mutableStateOf(FacultyContacts) }
     var lastMessages by remember { mutableStateOf<Map<String, ChatMessageDto>>(emptyMap()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var chatToken by remember { mutableStateOf<String?>(null) }
+    var parentChatId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         runCatching {
-            val faculty = RetrofitInstance.api.getFacultyContacts()
-            val latest = faculty.associate { contact ->
-                contact.facultyId to RetrofitInstance.api
-                    .getChatHistory(contact.facultyId, ParentChatId)
+            val login = FacultyChatRetrofit.api.parentLogin(ParentChatLoginRequest(ParentChatName))
+            val token = login.token
+            val parentId = login.parent_data.userId
+            val latest = FacultyContacts.associate { contact ->
+                contact.facultyId to FacultyChatRetrofit.api
+                    .getChatHistory(contact.facultyId, "Bearer $token")
+                    .data
                     .lastOrNull()
             }.filterValues { it != null }.mapValues { it.value!! }
-            faculty to latest
-        }.onSuccess { (faculty, latest) ->
-            contacts = faculty
+            Triple(token, parentId, latest)
+        }.onSuccess { (token, parentId, latest) ->
+            contacts = FacultyContacts
+            chatToken = token
+            parentChatId = parentId
             lastMessages = latest
             errorMessage = null
         }.onFailure {
-            errorMessage = "Unable to load messages from the server."
+            contacts = FacultyContacts
+            errorMessage = "Unable to connect to faculty chat server."
         }
     }
 
     if (selectedContact != null) {
         ChatView(
             contact = selectedContact!!,
+            token = chatToken,
+            parentChatId = parentChatId,
             onBack = { selectedContact = null }
         )
     } else {
@@ -143,20 +174,69 @@ private fun MessagesList(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChatView(contact: FacultyContactDto, onBack: () -> Unit) {
+private fun ChatView(
+    contact: FacultyContactDto,
+    token: String?,
+    parentChatId: String?,
+    onBack: () -> Unit
+) {
     val scope = rememberCoroutineScope()
     var textState by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<ChatMessageDto>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var socket by remember { mutableStateOf<Socket?>(null) }
 
-    LaunchedEffect(contact.facultyId) {
+    LaunchedEffect(contact.facultyId, token) {
+        val currentToken = token ?: return@LaunchedEffect
         runCatching {
-            RetrofitInstance.api.getChatHistory(contact.facultyId, ParentChatId)
+            FacultyChatRetrofit.api.getChatHistory(contact.facultyId, "Bearer $currentToken")
+                .data
         }.onSuccess {
             messages = it
             errorMessage = null
         }.onFailure {
             errorMessage = "Unable to load chat history."
+        }
+    }
+
+    DisposableEffect(contact.facultyId, token, parentChatId) {
+        val currentToken = token
+        val currentParentId = parentChatId
+        if (currentToken.isNullOrBlank() || currentParentId.isNullOrBlank()) {
+            onDispose { }
+        } else {
+            val options = IO.Options().apply {
+                auth = mapOf("token" to currentToken)
+                reconnection = true
+            }
+            val liveSocket = IO.socket(FacultyChatRetrofit.BASE_URL, options)
+            val receiveListener = { args: Array<Any> ->
+                val payload = args.firstOrNull() as? JSONObject
+                if (payload != null) {
+                    val incoming = ChatMessageDto(
+                        sender_id = payload.optString("sender_id"),
+                        receiver_id = payload.optString("receiver_id"),
+                        message = payload.optString("message"),
+                        created_at = payload.optString("created_at")
+                    )
+                    val belongsToThread =
+                        (incoming.sender_id == contact.facultyId && incoming.receiver_id == currentParentId) ||
+                            (incoming.sender_id == currentParentId && incoming.receiver_id == contact.facultyId)
+                    if (belongsToThread) {
+                        scope.launch {
+                            messages = messages + incoming
+                        }
+                    }
+                }
+            }
+            liveSocket.on("receive_message", receiveListener)
+            liveSocket.connect()
+            socket = liveSocket
+            onDispose {
+                liveSocket.off("receive_message", receiveListener)
+                liveSocket.disconnect()
+                socket = null
+            }
         }
     }
 
@@ -202,23 +282,24 @@ private fun ChatView(contact: FacultyContactDto, onBack: () -> Unit) {
                 onSend = {
                     val outgoing = textState.trim()
                     if (outgoing.isEmpty()) return@ChatInputBar
-                    scope.launch {
-                        runCatching {
-                            RetrofitInstance.api.sendChatMessage(
-                                SendChatMessageRequest(
-                                    sender_id = ParentChatId,
-                                    receiver_id = contact.facultyId,
-                                    message = outgoing
-                                )
-                            )
-                        }.onSuccess {
-                            messages = messages + it
-                            textState = ""
-                            errorMessage = null
-                        }.onFailure {
-                            errorMessage = "Message was not sent. Please check the server."
-                        }
+                    val currentParentId = parentChatId
+                    if (currentParentId.isNullOrBlank()) {
+                        errorMessage = "Faculty chat login is not ready yet."
+                        return@ChatInputBar
                     }
+                    val payload = JSONObject().apply {
+                        put("receiver_id", contact.facultyId)
+                        put("message", outgoing)
+                    }
+                    socket?.emit("send_message", payload)
+                    messages = messages + ChatMessageDto(
+                        sender_id = currentParentId,
+                        receiver_id = contact.facultyId,
+                        message = outgoing,
+                        created_at = "Sending..."
+                    )
+                    textState = ""
+                    errorMessage = null
                 }
             )
         }
@@ -247,7 +328,7 @@ private fun ChatView(contact: FacultyContactDto, onBack: () -> Unit) {
                     ChatBubble(
                         content = item.message,
                         time = item.created_at?.replace("T", " ")?.take(16) ?: "",
-                        isOutgoing = item.sender_id == ParentChatId
+                        isOutgoing = item.sender_id == parentChatId
                     )
                 }
             }
