@@ -14,7 +14,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
@@ -95,6 +104,7 @@ import com.mis.parentapp.navigation.Announcements
 import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
+import com.mis.parentapp.navigation.Chat
 import com.mis.parentapp.navigation.DataSafety
 import com.mis.parentapp.navigation.EditProfile
 import com.mis.parentapp.navigation.Preference
@@ -114,6 +124,8 @@ fun MainScreen() {
 
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
+
+    var chatTextState by remember { mutableStateOf("") }
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
@@ -145,9 +157,12 @@ fun MainScreen() {
             currentDestination?.hasRoute(Feedbacks::class) == true ||
             currentDestination?.hasRoute(Meeting::class) == true ||
             currentDestination?.hasRoute(Messages::class) == true ||
+            currentDestination?.hasRoute(Chat::class) == true ||
             currentDestination?.hasRoute(DataSafety::class) == true ||
             currentDestination?.hasRoute(EditProfile::class) == true ||
             currentDestination?.hasRoute(Preference::class) == true
+
+    val isChatScreen = currentDestination?.hasRoute(Chat::class) == true
 
     // Only show the shared top bar on the main tab screens
     val showSharedTopBar = bottomTabs.any { tab ->
@@ -196,7 +211,13 @@ fun MainScreen() {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            if (showBottomBar) {
+            if (isChatScreen) {
+                ChatInputBar(
+                    text = chatTextState,
+                    onTextChange = { chatTextState = it },
+                    onSend = { chatTextState = "" }
+                )
+            } else if (showBottomBar) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.background
                 ) {
@@ -220,6 +241,7 @@ fun MainScreen() {
                                     currentDestination?.hasRoute(Feedbacks::class) == true ||
                                     currentDestination?.hasRoute(Meeting::class) == true ||
                                     currentDestination?.hasRoute(Messages::class) == true ||
+                                    currentDestination?.hasRoute(Chat::class) == true ||
                                     currentDestination?.hasRoute(DataSafety::class) == true ||
                                     currentDestination?.hasRoute(EditProfile::class) == true ||
                                     currentDestination?.hasRoute(Preference::class) == true
@@ -330,6 +352,7 @@ fun MainScreen() {
                         navController = navController,
                         onSignOut = {
                             navController.navigate(SignIn(R.drawable.bgpic)) {
+                                // Pop up to the very beginning of the nav graph to effectively "reset" the app session
                                 popUpTo(0) { inclusive = true }
                             }
                         }
@@ -457,6 +480,15 @@ fun MainScreen() {
                     SubScreen(
                         startDestination = Messages,
                         studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() },
+                        onNavigate = { route: Any -> navController.navigate(route) }
+                    )
+                }
+                composable<Chat> { backStackEntry ->
+                    val args = backStackEntry.toRoute<Chat>()
+                    SubScreen(
+                        startDestination = args,
+                        studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }
@@ -560,6 +592,47 @@ fun MainTopBar(
                     tint = menuIconTint,
                     modifier = Modifier.size(32.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+    Surface(
+        tonalElevation = 2.dp,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = text,
+                onValueChange = onTextChange,
+                placeholder = { Text("Text message") },
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(24.dp)),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                trailingIcon = {
+                    Row {
+                        IconButton(onClick = { /* Emoji */ }) { Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji") }
+                        IconButton(onClick = { /* Image */ }) { Icon(Icons.Default.Image, contentDescription = "Image") }
+                    }
+                }
+            )
+            IconButton(onClick = onSend) {
+                Icon(Icons.Default.Mic, contentDescription = "Voice", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }

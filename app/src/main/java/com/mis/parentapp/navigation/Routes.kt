@@ -56,6 +56,7 @@ object PaymentOptions
 @Serializable object Feedbacks
 @Serializable object Meeting
 @Serializable object Messages
+@Serializable data class Chat(val senderName: String, val imageRes: Int)
 
 // Me Settings
 @Serializable object DataSafety
