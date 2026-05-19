@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.mis.parentapp.features.home.NotificationScreen
 import com.mis.parentapp.features.home.menu.AnalyticsScreen
 import com.mis.parentapp.features.home.menu.RecentActivitiesScreen
 import com.mis.parentapp.features.home.menu.UpcomingEventsScreen
@@ -157,7 +158,12 @@ fun SubScreen(
                 }
             ) {
                 composable<Notification> {
-                    NotificationsWidget()
+                    NotificationScreen(
+                        studentVM = studentVM,
+                        onBackClick = { 
+                            if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        }
+                    )
                 }
                 composable<UpcomingEvents> {
                     UpcomingEventsScreen(
