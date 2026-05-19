@@ -1,5 +1,7 @@
 package com.mis.parentapp.data
 
+import com.mis.parentapp.R
+
 class EventRepository(private val eventDao: EventDao) {
 
     // These look at the DB (which was filled by your SQL seed)
