@@ -75,7 +75,6 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.border
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -375,13 +374,14 @@ fun StudentPresenceHeader(student: StudentEntity) {
 
 @Composable
 fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
-    val highlightColor = if (isInClass) {
-        MaterialTheme.colorScheme.primary
+    val (brightColor, deepColor) = if (isInClass) {
+        MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.error
+        MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
     }
 
     val statusText = if (isInClass) "At class" else "Not in class"
+    val statusColor = if (isInClass) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Column(
         modifier = Modifier
@@ -393,14 +393,13 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
             contentAlignment = Alignment.Center,
             modifier = Modifier.height(180.dp).fillMaxWidth()
         ) {
-            // Background Radial Glow "Aura" elements
             Box(
                 modifier = Modifier
                     .offset(x = (-40).dp)
                     .requiredSize(300.dp)
                     .background(
                         brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                            colors = listOf(highlightColor.copy(alpha = 0.4f), Color.Transparent)
+                            colors = listOf(brightColor.copy(alpha = 1f), Color.Transparent)
                         ),
                         shape = CircleShape
                     )
@@ -412,31 +411,23 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
                     .requiredSize(300.dp)
                     .background(
                         brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                            colors = listOf(highlightColor.copy(alpha = 0.4f), Color.Transparent)
+                            colors = listOf(deepColor.copy(alpha = 1f), Color.Transparent)
                         ),
                         shape = CircleShape
                     )
             )
 
-            // MAIN IMAGE - Updated with identical ring styling as selectors
-            Box(
+            Image(
+                painter = painterResource(id = student.profileImageRes),
+                contentDescription = null,
                 modifier = Modifier
-                    .requiredSize(116.dp)
+                    .requiredSize(110.dp)
                     .clip(CircleShape)
-                    .background(highlightColor.copy(alpha = 0.2f))
-                    .border(width = 3.dp, color = highlightColor, shape = CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(4.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = student.profileImageRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface),
-                    contentScale = ContentScale.Crop
-                )
-            }
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -444,12 +435,12 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .background(highlightColor)
+                .background(statusColor)
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
             Text(
                 text = statusText,
-                color = if (isInClass) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onError,
+                color = if (student.isPresent) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onError,
                 style = AppTypes.type_Caption.copy(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Black,

@@ -89,3 +89,97 @@ data class CalendarEventDto(
     val status: String,
     val imageUrl: String?
 )
+
+data class AnnouncementDto(
+    val id: Int,
+    val title: String,
+    val content: String,
+    val category: String,
+    val urgent: Boolean
+)
+
+data class GradeDto(
+    val id: Int,
+    val studentId: Int,
+    val subjectName: String,
+    val units: Int,
+    val grade: Double,
+    val instructor: String,
+    val remarks: String,
+    val term: String
+)
+
+data class AttendanceDto(
+    val id: Int,
+    val studentId: Int,
+    val subjectName: String,
+    val instructor: String,
+    val presentDays: Int,
+    val totalDays: Int,
+    val lateDays: Int,
+    val absentDays: Int
+)
+
+data class PaymentRecordDto(
+    val id: Int,
+    val studentId: Int,
+    val invoiceNumber: String,
+    val purchasedItem: String,
+    val paymentOption: String,
+    val paidDate: String,
+    val totalAmount: Double,
+    val pdfBreakdown: String,
+    val status: String
+)
+
+data class CreatePaymentRequest(
+    val invoiceNumber: String,
+    val purchasedItem: String,
+    val paymentOption: String,
+    val paidDate: String,
+    val totalAmount: Double,
+    val pdfBreakdown: String,
+    val status: String = "Paid"
+)
+
+data class FacultyContactDto(
+    val facultyId: String,
+    val name: String,
+    val department: String,
+    val email: String,
+    val subject: String
+)
+
+data class ParentChatLoginRequest(
+    val parentName: String
+)
+
+data class ParentChatLoginResponse(
+    val status: String,
+    val token: String,
+    val parent_data: ParentChatData
+)
+
+data class ParentChatData(
+    val userId: String,
+    val parentName: String
+)
+
+data class ChatMessageDto(
+    val id: Int? = null,
+    val sender_id: String,
+    val receiver_id: String,
+    val message: String,
+    val created_at: String? = null
+)
+
+data class ChatHistoryResponse(
+    val status: String,
+    val data: List<ChatMessageDto>
+)
+
+data class SendChatMessageRequest(
+    val sender_id: String = "parent_1",
+    val receiver_id: String,
+    val message: String
+)

@@ -45,7 +45,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
+import com.mis.parentapp.network.CreatePaymentRequest
+import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.features.services.sections.SearchBarSection
+import com.mis.parentapp.navigation.Documents
+import com.mis.parentapp.navigation.FAQs
+import com.mis.parentapp.navigation.FormsAndRequest
+import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ParentAppTheme
@@ -115,6 +121,25 @@ fun ServicesScreen(
     val selectedStudent = studentVM.selectedStudent
     val otherStudents = studentVM.students.filter { it.id != selectedStudent?.id }
 
+    LaunchedEffect(selectedStudent?.id) {
+        val studentId = selectedStudent?.id ?: return@LaunchedEffect
+        runCatching {
+            RetrofitInstance.api.getStudentPayments(studentId).map {
+                PaymentRecord(
+                    invoiceNumber = it.invoiceNumber,
+                    purchasedItem = it.purchasedItem,
+                    paymentOption = it.paymentOption,
+                    paidDate = it.paidDate,
+                    totalAmount = it.totalAmount,
+                    pdfBreakdown = it.pdfBreakdown
+                )
+            }
+        }.onSuccess {
+            paymentHistory.value = it
+            invoiceCounter.intValue = it.size + 1
+        }
+    }
+
     // Separate sheet states to avoid conflict properties
     val accountSheetState = rememberModalBottomSheetState()
     val menuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -133,8 +158,40 @@ fun ServicesScreen(
         ContributionDuesSelectionScreen(
             onBack = { showPaymentScreen.value = false },
             onPaymentSuccess = { records ->
-                paymentHistory.value += records
-                invoiceCounter.intValue += records.size
+                val studentId = selectedStudent?.id
+                if (studentId == null) {
+                    paymentHistory.value += records
+                    invoiceCounter.intValue += records.size
+                } else {
+                    scope.launch {
+                        val savedRecords = records.map { record ->
+                            runCatching {
+                                RetrofitInstance.api.createStudentPayment(
+                                    studentId,
+                                    CreatePaymentRequest(
+                                        invoiceNumber = record.invoiceNumber,
+                                        purchasedItem = record.purchasedItem,
+                                        paymentOption = record.paymentOption,
+                                        paidDate = record.paidDate,
+                                        totalAmount = record.totalAmount,
+                                        pdfBreakdown = record.pdfBreakdown
+                                    )
+                                ).let {
+                                    PaymentRecord(
+                                        invoiceNumber = it.invoiceNumber,
+                                        purchasedItem = it.purchasedItem,
+                                        paymentOption = it.paymentOption,
+                                        paidDate = it.paidDate,
+                                        totalAmount = it.totalAmount,
+                                        pdfBreakdown = it.pdfBreakdown
+                                    )
+                                }
+                            }.getOrElse { record }
+                        }
+                        paymentHistory.value = savedRecords + paymentHistory.value
+                        invoiceCounter.intValue += savedRecords.size
+                    }
+                }
             },
             currentInvoiceNumber = invoiceCounter.intValue
         )
@@ -192,7 +249,7 @@ fun ServicesScreen(
                         verticalArrangement = Arrangement.spacedBy(28.dp)
                     ) {
                         // Safe navigation handler that closes the sheet first
-                        val navigateTo: (String) -> Unit = { route ->
+                        val navigateTo: (Any) -> Unit = { route ->
                             scope.launch { menuSheetState.hide() }.invokeOnCompletion {
                                 if (!menuSheetState.isVisible) {
                                     showMenuBottomSheet = false
@@ -205,28 +262,28 @@ fun ServicesScreen(
                             icon = Icons.Default.Article,
                             title = "Forms and request",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.Forms.route) }
+                            onClick = { navigateTo(FormsAndRequest) }
                         )
 
                         MenuItem(
                             icon = Icons.Default.Payment,
                             title = "Payment options",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.Payments.route) }
+                            onClick = { navigateTo(PaymentOptions) }
                         )
 
                         MenuItem(
                             icon = Icons.Default.Description,
                             title = "Documents",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.Documents.route) }
+                            onClick = { navigateTo(Documents) }
                         )
 
                         MenuItem(
                             icon = Icons.Default.LiveHelp,
                             title = "FAQs",
                             subtitle = "Be updated to your student attendance.",
-                            onClick = { navigateTo(Screen.FAQs.route) }
+                            onClick = { navigateTo(FAQs) }
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))

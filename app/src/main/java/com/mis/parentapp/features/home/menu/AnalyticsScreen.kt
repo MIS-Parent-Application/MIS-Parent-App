@@ -29,7 +29,7 @@ import com.mis.parentapp.ui.theme.AppTypes
 @Composable
 fun AnalyticsScreen(onBackClick: () -> Unit) {
     var selectedTab by remember { mutableStateOf("Summary") }
-    
+
     Scaffold(
         topBar = {
             AnalyticsHeader(onBackClick)
@@ -49,7 +49,7 @@ fun AnalyticsScreen(onBackClick: () -> Unit) {
                     onTabSelected = { selectedTab = it }
                 )
             }
-            
+
             when (selectedTab) {
                 "Summary" -> {
                     item { GpaCard() }
@@ -75,7 +75,7 @@ fun AnalyticsScreen(onBackClick: () -> Unit) {
                     item { OverallAttendanceCard() }
                 }
             }
-            
+
             item {
                 ActionButtons()
             }
@@ -98,7 +98,7 @@ fun AnalyticsHeader(onBackClick: () -> Unit) {
         ) {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack, 
+                    Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     tint = MaterialTheme.colorScheme.onBackground
                 )
@@ -110,7 +110,7 @@ fun AnalyticsHeader(onBackClick: () -> Unit) {
             )
             IconButton(onClick = { /* More options */ }) {
                 Icon(
-                    Icons.Default.MoreVert, 
+                    Icons.Default.MoreVert,
                     contentDescription = "More",
                     tint = MaterialTheme.colorScheme.onBackground
                 )
@@ -258,19 +258,19 @@ fun AcademicYearCard() {
             ) {
                 IconButton(onClick = { /* Prev */ }) {
                     Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowLeft, 
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "A.Y. 2025-2026", 
+                    text = "A.Y. 2025-2026",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = { /* Next */ }) {
                     Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight, 
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurface
                     )
@@ -292,13 +292,13 @@ fun AcademicYearCard() {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "205", 
-                        fontSize = 24.sp, 
+                        text = "205",
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "days of this A.Y.", 
+                        text = "days of this A.Y.",
                         style = AppTypes.type_Caption,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -327,14 +327,14 @@ fun LegendItem(color: Color, label: String, value: String) {
         Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(color))
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = label, 
-            style = AppTypes.type_Body_Small, 
+            text = label,
+            style = AppTypes.type_Body_Small,
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = value, 
-            style = AppTypes.type_Body_Small, 
+            text = value,
+            style = AppTypes.type_Body_Small,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -355,14 +355,14 @@ fun AcademicTrendCard() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Academic Trend", 
-                    style = AppTypes.type_H2, 
+                    text = "Academic Trend",
+                    style = AppTypes.type_H2,
                     fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "2025-2026", 
-                    color = MaterialTheme.colorScheme.outline, 
+                    text = "2025-2026",
+                    color = MaterialTheme.colorScheme.outline,
                     style = AppTypes.type_Caption
                 )
             }
@@ -380,7 +380,7 @@ fun AcademicTrendCard() {
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             TrendChart()
         }
     }
@@ -481,14 +481,14 @@ fun EnrolledCoursesCard() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Enrolled courses", 
-                    style = AppTypes.type_H2, 
+                    text = "Enrolled courses",
+                    style = AppTypes.type_H2,
                     fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "2025-2026", 
-                    color = MaterialTheme.colorScheme.outline, 
+                    text = "2025-2026",
+                    color = MaterialTheme.colorScheme.outline,
                     style = AppTypes.type_Caption
                 )
             }
@@ -558,14 +558,14 @@ fun CourseBreakdownCard(courseName: String, instructor: String) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = courseName, 
-                    style = AppTypes.type_H2, 
+                    text = courseName,
+                    style = AppTypes.type_H2,
                     fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Instructor: $instructor", 
-                    color = MaterialTheme.colorScheme.outline, 
+                    text = "Instructor: $instructor",
+                    color = MaterialTheme.colorScheme.outline,
                     style = AppTypes.type_Caption
                 )
             }
@@ -589,8 +589,8 @@ fun OverallAttendanceCard() {
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text(
-                text = "Over all attendance", 
-                style = AppTypes.type_H2, 
+                text = "Over all attendance",
+                style = AppTypes.type_H2,
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.onSurface
             )
