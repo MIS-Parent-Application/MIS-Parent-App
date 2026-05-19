@@ -28,6 +28,8 @@ import com.mis.parentapp.ui.theme.AppTypes
 
 @Composable
 fun AnalyticsScreen(onBackClick: () -> Unit) {
+    var selectedTab by remember { mutableStateOf("Summary") }
+
     Scaffold(
         topBar = {
             AnalyticsHeader(onBackClick)
@@ -42,20 +44,38 @@ fun AnalyticsScreen(onBackClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
-                AnalyticsTabs()
+                AnalyticsTabs(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it }
+                )
             }
-            item {
-                GpaCard()
+
+            when (selectedTab) {
+                "Summary" -> {
+                    item { GpaCard() }
+                    item { StatsRow() }
+                    item { AcademicYearCard() }
+                    item { AcademicTrendCard() }
+                }
+                "Grades" -> {
+                    item { EnrolledCoursesCard() }
+                    item {
+                        Text(
+                            text = "Breakdown",
+                            style = AppTypes.type_H1,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                    item { CourseBreakdownCard("English 101", "Mr. Doe") }
+                }
+                "Attendance" -> {
+                    item { AcademicYearCard() }
+                    item { OverallAttendanceCard() }
+                }
             }
-            item {
-                StatsRow()
-            }
-            item {
-                AcademicYearCard()
-            }
-            item {
-                AcademicTrendCard()
-            }
+
             item {
                 ActionButtons()
             }
@@ -77,7 +97,11 @@ fun AnalyticsHeader(onBackClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
             Text(
                 text = "Analytics",
@@ -86,7 +110,7 @@ fun AnalyticsHeader(onBackClick: () -> Unit) {
             )
             IconButton(onClick = { /* More options */ }) {
                 Icon(
-                    Icons.Default.MoreVert, 
+                    Icons.Default.MoreVert,
                     contentDescription = "More",
                     tint = MaterialTheme.colorScheme.onBackground
                 )
@@ -95,16 +119,15 @@ fun AnalyticsHeader(onBackClick: () -> Unit) {
         Text(
             text = "John B. Mclure 3rd Yr. BSIT 1A",
             style = AppTypes.type_Caption,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.outline,
             textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
-fun AnalyticsTabs() {
+fun AnalyticsTabs(selectedTab: String, onTabSelected: (String) -> Unit) {
     val tabs = listOf("Summary", "Grades", "Attendance", "Export")
-    var selectedTab by remember { mutableStateOf("Summary") }
 
     Row(
         modifier = Modifier
@@ -117,14 +140,14 @@ fun AnalyticsTabs() {
             Surface(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { selectedTab = tab },
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    .clickable { onTabSelected(tab) },
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = tab,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                     style = AppTypes.type_M3_label_small,
                     fontWeight = FontWeight.Bold
                 )
@@ -143,8 +166,8 @@ fun GpaCard() {
             .background(
                 Brush.radialGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                        MaterialTheme.colorScheme.surface,
                         MaterialTheme.colorScheme.background
                     )
                 )
@@ -153,7 +176,7 @@ fun GpaCard() {
     ) {
         Card(
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier.size(160.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -166,13 +189,13 @@ fun GpaCard() {
                     text = "1.5",
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "GPA",
                     style = AppTypes.type_Caption,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -207,21 +230,13 @@ fun StatCircle(label: String, percentage: Float, points: String, color: Color) {
                 text = "${(percentage * 100).toInt()}%",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label, 
-            style = AppTypes.type_Caption, 
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = points, 
-            style = AppTypes.type_Caption, 
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-        )
+        Text(text = label, style = AppTypes.type_Caption, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = points, style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.outline)
+        Text(text = "earned", style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.outline)
     }
 }
 
@@ -229,7 +244,7 @@ fun StatCircle(label: String, percentage: Float, points: String, color: Color) {
 fun AcademicYearCard() {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -243,21 +258,21 @@ fun AcademicYearCard() {
             ) {
                 IconButton(onClick = { /* Prev */ }) {
                     Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowLeft, 
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "A.Y. 2025-2026", 
+                    text = "A.Y. 2025-2026",
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 IconButton(onClick = { /* Next */ }) {
                     Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight, 
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -277,15 +292,15 @@ fun AcademicYearCard() {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "205", 
-                        fontSize = 24.sp, 
+                        text = "205",
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "days of this A.Y.", 
+                        text = "days of this A.Y.",
                         style = AppTypes.type_Caption,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -312,16 +327,16 @@ fun LegendItem(color: Color, label: String, value: String) {
         Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(color))
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = label, 
-            style = AppTypes.type_Body_Small, 
+            text = label,
+            style = AppTypes.type_Body_Small,
             modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = value, 
-            style = AppTypes.type_Body_Small, 
+            text = value,
+            style = AppTypes.type_Body_Small,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -330,7 +345,7 @@ fun LegendItem(color: Color, label: String, value: String) {
 fun AcademicTrendCard() {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -340,14 +355,15 @@ fun AcademicTrendCard() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Academic Trend", 
-                    style = AppTypes.type_H2, 
+                    text = "Academic Trend",
+                    style = AppTypes.type_H2,
                     fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "2025-2026", 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    text = "2025-2026",
+                    color = MaterialTheme.colorScheme.outline,
+                    style = AppTypes.type_Caption
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -355,47 +371,258 @@ fun AcademicTrendCard() {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Outputs", 
-                        style = AppTypes.type_Caption,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(text = "Outputs", style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Performance", 
-                        style = AppTypes.type_Caption,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text(text = "Performance", style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))
-            
-            // Placeholder for Bar Chart
-            Row(
-                modifier = Modifier.fillMaxWidth().height(150.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                val months = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun")
-                val primaryColor = MaterialTheme.colorScheme.primary
-                val secondaryColor = MaterialTheme.colorScheme.secondary
-                months.forEach { month ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(modifier = Modifier.width(8.dp).height(100.dp).background(primaryColor, RoundedCornerShape(4.dp)))
-                            Box(modifier = Modifier.width(8.dp).height(120.dp).background(secondaryColor, RoundedCornerShape(4.dp)))
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = month, 
-                            style = AppTypes.type_Caption, 
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+
+            TrendChart()
+        }
+    }
+}
+
+@Composable
+fun TrendChart() {
+    val yLabels = listOf("100%", "95%", "80%", "75%", "60%")
+    val data = listOf(
+        Pair(0.80f, 0.97f), // Jan
+        Pair(0.97f, 0.99f), // Feb
+        Pair(0.82f, 0.95f), // Mar
+        Pair(0.80f, 0.97f), // Apr
+        Pair(0.93f, 1.00f), // May
+        Pair(0.80f, 1.00f)  // Jun
+    )
+    val months = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun")
+    val performanceColor = MaterialTheme.colorScheme.primary
+    val outputsColor = MaterialTheme.colorScheme.secondary
+
+    Row(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+        // Y-axis labels
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(bottom = 28.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.End
+        ) {
+            yLabels.forEach { label ->
+                Text(
+                    text = label,
+                    style = AppTypes.type_Caption,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                    fontSize = 10.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // Chart area
+        Row(
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            data.forEachIndexed { index, pair ->
+                Column(
+                    modifier = Modifier.fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Performance bar (Dark Green)
+                        Box(
+                            modifier = Modifier
+                                .width(8.dp)
+                                .fillMaxHeight(pair.first)
+                                .background(performanceColor, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                        )
+                        // Outputs bar (Light Green)
+                        Box(
+                            modifier = Modifier
+                                .width(8.dp)
+                                .fillMaxHeight(pair.second)
+                                .background(outputsColor, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                         )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = months[index],
+                        style = AppTypes.type_Caption,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                        fontSize = 10.sp
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun EnrolledCoursesCard() {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Enrolled courses",
+                    style = AppTypes.type_H2,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "2025-2026",
+                    color = MaterialTheme.colorScheme.outline,
+                    style = AppTypes.type_Caption
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            val courses = listOf(
+                "Eng 101" to 0.85f,
+                "Math 101" to 0.75f,
+                "Art" to 0.80f,
+                "IntCom" to 0.90f,
+                "Bio 101" to 0.95f,
+                "Physics" to 0.78f
+            )
+
+            courses.forEach { (name, grade) ->
+                CourseGradeItem(name, grade)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun CourseGradeItem(name: String, grade: Float) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = name,
+            style = AppTypes.type_Body_Small,
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.width(80.dp)
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(14.dp)
+                .clip(RoundedCornerShape(7.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(grade)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp))
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = "${(grade * 100).toInt()}%",
+            style = AppTypes.type_Body_Small,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+fun CourseBreakdownCard(courseName: String, instructor: String) {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = courseName,
+                    style = AppTypes.type_H2,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Instructor: $instructor",
+                    color = MaterialTheme.colorScheme.outline,
+                    style = AppTypes.type_Caption
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CourseGradeItem("Quizzes", 0.85f)
+            Spacer(modifier = Modifier.height(16.dp))
+            CourseGradeItem("Attendance", 0.90f)
+            Spacer(modifier = Modifier.height(16.dp))
+            CourseGradeItem("Final Exam", 0.82f)
+        }
+    }
+}
+
+@Composable
+fun OverallAttendanceCard() {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text(
+                text = "Over all attendance",
+                style = AppTypes.type_H2,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "A.Y. 2025-2026",
+                    style = AppTypes.type_Caption,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.width(100.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.85f)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp))
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "85%",
+                    style = AppTypes.type_Body_Small,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
@@ -410,24 +637,18 @@ fun ActionButtons() {
         Button(
             onClick = { /* Track attendance */ },
             modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(text = "Track attendance", style = AppTypes.type_M3_label_small)
+            Text(text = "Track attendance", color = MaterialTheme.colorScheme.onSurface, style = AppTypes.type_M3_label_small)
         }
         Button(
             onClick = { /* Monitor academic */ },
             modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(text = "Monitor academic", style = AppTypes.type_M3_label_small)
+            Text(text = "Monitor academic", color = MaterialTheme.colorScheme.onSurface, style = AppTypes.type_M3_label_small)
         }
     }
 }

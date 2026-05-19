@@ -26,11 +26,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
+import com.mis.parentapp.network.RetrofitInstance
 
 @Composable
 fun MeetingScreen() {
     var searchQuery by remember { mutableStateOf("") }
-    val contacts = remember { getDummyContacts() }
+    var contacts by remember { mutableStateOf<List<ContactData>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        runCatching {
+            RetrofitInstance.api.getFacultyContacts().map {
+                ContactData(
+                    name = it.name,
+                    email = it.email,
+                    imageRes = null
+                )
+            }
+        }.onSuccess {
+            contacts = it
+            errorMessage = null
+        }.onFailure {
+            errorMessage = "Unable to load meeting contacts from the server."
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -80,6 +99,14 @@ fun MeetingScreen() {
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (contacts.isEmpty()) {
+            Text(
+                text = errorMessage ?: "No faculty meeting contacts yet.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Contacts Grid
         LazyVerticalGrid(
@@ -177,6 +204,7 @@ fun ContactItem(contact: ContactData) {
 
 data class ContactData(val name: String, val email: String, val imageRes: Int? = null)
 
+// Preview-only sample contacts.
 fun getDummyContacts(): List<ContactData> {
     return listOf(
         ContactData("Nathaniel McClure", "nxthzi02@gmail.c...", R.drawable.student_image),

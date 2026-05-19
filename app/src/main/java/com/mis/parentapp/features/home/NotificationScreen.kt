@@ -41,7 +41,6 @@ fun NotificationScreen(
         isLoading = true
         errorMessage = null
         try {
-            // Mapping from DTO to our UI data model
             notifications = RetrofitInstance.api
                 .getNotifications(selectedStudent?.id)
                 .map { dto ->
@@ -49,7 +48,7 @@ fun NotificationScreen(
                         id = dto.id.toString(),
                         type = try { NotificationType.valueOf(dto.type.uppercase()) } catch (_: Exception) { NotificationType.ACTIVITY },
                         content = dto.text,
-                        category = dto.type.capitalize(),
+                        category = dto.type.replaceFirstChar { it.uppercase() },
                         timeAgo = dto.time,
                         isNew = dto.isNew,
                         gradientColors = if (dto.type.lowercase() == "event") listOf(Color(0xFFFFA726), Color(0xFFFF7043)) else null
@@ -64,72 +63,71 @@ fun NotificationScreen(
 
     val filteredNotifications = notifications.filter {
         selectedFilter == "All" ||
-            (selectedFilter == "Unread" && it.isNew) ||
-            it.type.name.equals(selectedFilter, ignoreCase = true) ||
-            it.category.equals(selectedFilter, ignoreCase = true)
+                (selectedFilter == "Unread" && it.isNew) ||
+                it.type.name.equals(selectedFilter, ignoreCase = true) ||
+                it.category.equals(selectedFilter, ignoreCase = true)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Notifications", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Menu */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                NotificationFilterRow(
+                    selectedFilter = selectedFilter,
+                    onFilterClick = { selectedFilter = it }
+                )
+            }
+            // Retained screen-specific context menu action
+            IconButton(
+                onClick = { /* Menu */ },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+            }
+        }
+
+        if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (errorMessage != null) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(errorMessage ?: "", color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val newOnes = filteredNotifications.filter { it.isNew }
+                val earlierOnes = filteredNotifications.filter { !it.isNew }
+
+                if (newOnes.isNotEmpty()) {
+                    item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+                    items(newOnes) { notification ->
+                        NotificationCard(notification)
                     }
                 }
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
-            NotificationFilterRow(
-                selectedFilter = selectedFilter,
-                onFilterClick = { selectedFilter = it }
-            )
-            
-            if (isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (errorMessage != null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(errorMessage ?: "", color = Color.Red)
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val newOnes = filteredNotifications.filter { it.isNew }
-                    val earlierOnes = filteredNotifications.filter { !it.isNew }
 
-                    if (newOnes.isNotEmpty()) {
-                        item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
-                        items(newOnes) { notification ->
-                            NotificationCard(notification)
-                        }
+                if (earlierOnes.isNotEmpty()) {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
+                    items(earlierOnes) { notification ->
+                        NotificationCard(notification)
                     }
+                }
 
-                    if (earlierOnes.isNotEmpty()) {
-                        item { Spacer(modifier = Modifier.height(16.dp)) }
-                        item { Text("Earlier", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
-                        items(earlierOnes) { notification ->
-                            NotificationCard(notification)
-                        }
-                    }
-
-                    if (filteredNotifications.isEmpty()) {
-                        item {
-                            Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                                Text("No notifications found", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                if (filteredNotifications.isEmpty()) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+                            Text("No notifications found", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -143,7 +141,7 @@ fun NotificationFilterRow(selectedFilter: String, onFilterClick: (String) -> Uni
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
