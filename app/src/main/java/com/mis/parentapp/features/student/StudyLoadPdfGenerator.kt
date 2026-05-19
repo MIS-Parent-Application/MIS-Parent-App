@@ -102,7 +102,7 @@ class StudyLoadPdfGenerator {
     }
 
     private fun loadLogo(context: Context): Image {
-        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.colegio_de_alicia_logo)
+        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.school_logo)
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return Image.getInstance(stream.toByteArray()).apply {

@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -125,8 +127,13 @@ fun StudentScreen(
                             Text("ID number: ${selectedStudent?.rollNumber ?: "--"}", color = Color.White)
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            students.forEach { student ->
+                        LazyRow(
+                            modifier = Modifier
+                                .widthIn(max = 176.dp)
+                                .padding(start = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(students, key = { it.id }) { student ->
                                 Image(
                                     painter = painterResource(id = R.drawable.student_image),
                                     contentDescription = student.name,
@@ -348,7 +355,10 @@ fun ClassScheduleSection(
                     .clickable { onStudyLoadClick() }
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             ScheduleCardSmall(
                 status = "Now",
                 schedule = now,
