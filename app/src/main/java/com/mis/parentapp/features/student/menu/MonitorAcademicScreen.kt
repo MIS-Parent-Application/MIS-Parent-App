@@ -35,13 +35,17 @@ import java.util.Locale
 @Composable
 fun MonitorAcademicScreen(
     viewModel: StudentViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
 ) {
     val grades by viewModel.grades.collectAsState()
 
     MonitorAcademicContent(
         grades = grades,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        onMonitorAcademicClick = onMonitorAcademicClick,
+        onTrackAttendanceClick = onTrackAttendanceClick
     )
 }
 
@@ -50,9 +54,12 @@ fun MonitorAcademicScreen(
 @Composable
 fun MonitorAcademicContent(
     grades: List<CourseGrade>,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) } // 0: All, 1: Grades, 2: Performance
+    var showMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -85,11 +92,30 @@ fun MonitorAcademicContent(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Menu action */ }) {
+                    IconButton(onClick = { showMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More options",
                             tint = Color.Black
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Monitor Academic") },
+                            onClick = {
+                                showMenu = false
+                                onMonitorAcademicClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Track Attendance") },
+                            onClick = {
+                                showMenu = false
+                                onTrackAttendanceClick()
+                            }
                         )
                     }
                 },

@@ -68,8 +68,6 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.rememberCoroutineScope
-import com.mis.parentapp.data.StudentWithSchedules
-import com.mis.parentapp.data.StudentsRepo
 import com.mis.parentapp.features.home.menu.EventCard
 import com.mis.parentapp.features.home.menu.EventDetailScreen
 import kotlinx.coroutines.launch
@@ -134,45 +132,31 @@ fun Body(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val eventRepo = remember { EventRepository(db.eventDao()) }
-    val studentRepo = remember { StudentsRepo(db.studentMonitoringDao(), db.userDao()) }
     val currentUser by db.userDao().getUserFlow("user").collectAsState(initial = null)
     var showNoteDialog by remember { mutableStateOf(false) }
     var tempNote by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val localStudentsWithSchedules by studentRepo.getChildrenForParent("user").collectAsState(initial = emptyList())
     val eventViewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(eventRepo))
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        if (localStudentsWithSchedules.isEmpty()) {
-            studentRepo.seedDummyStudents("user")
-        }
-
-        //Fetch retrofit
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-
-            dashboard.children.forEach { remoteChild ->
-                val homeStudent = remoteChild.toHomeStudent()
-                db.studentMonitoringDao().insertStudent(homeStudent.student)
-                db.studentMonitoringDao().insertSchedules(homeStudent.schedules)
-            }
-
+            studentVM?.updateStudents(dashboard.children)
             dashboardError = null
         } catch (e: Exception) {
-            //Use Room if offline/no server
-            dashboardError = "Running in offline mode."
+            dashboardError = "Unable to load server student data."
         }
     }
 
-    var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
-
-    LaunchedEffect(localStudentsWithSchedules) {
-        if (localStudentsWithSchedules.isNotEmpty() && selectedStudent == null) {
-            selectedStudent = localStudentsWithSchedules.first()
-        }
+    val students = remember(studentVM?.students) {
+        studentVM?.students?.map { it.toHomeStudent() } ?: emptyList()
+    }
+    val selectedStudent = remember(students, studentVM?.selectedStudent) {
+        val selectedId = studentVM?.selectedStudent?.id?.toString()
+        students.firstOrNull { it.student.studentId == selectedId } ?: students.firstOrNull()
     }
 
     if (showNoteDialog) {
@@ -281,12 +265,11 @@ fun Body(
                     }
 
                     //STUDENT SELECTORS
-                    items(localStudentsWithSchedules) { studentWrapper ->
+                    items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
                             onClick = {
-                                selectedStudent = studentWrapper
                                 studentVM?.students
                                     ?.firstOrNull { it.id.toString() == studentWrapper.student.studentId }
                                     ?.let { studentVM.selectStudent(it) }
@@ -575,30 +558,35 @@ fun ScheduleCard(
     val primaryText = if (isNow) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     val secondaryText = if (isNow) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
-    Box(
+    Column(
         modifier = Modifier
-            .requiredSize(width = 220.dp, height = 150.dp)
+            .requiredSize(width = 220.dp, height = 156.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.formkit_date), // or a specific schedule icon
-            contentDescription = null,
-            modifier = Modifier.requiredSize(24.dp).align(Alignment.TopStart),
-            tint = primaryText
-        )
-
-        Text(
-            text = status,
-            style = AppTypes.type_Caption,
-            fontWeight = FontWeight.Bold,
-            color = primaryText,
-            modifier = Modifier.align(Alignment.TopEnd)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.formkit_date),
+                contentDescription = null,
+                modifier = Modifier.requiredSize(24.dp),
+                tint = primaryText
+            )
+            Text(
+                text = status,
+                style = AppTypes.type_Caption,
+                fontWeight = FontWeight.Bold,
+                color = primaryText
+            )
+        }
 
         Column(
-            modifier = Modifier.align(Alignment.BottomStart),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(

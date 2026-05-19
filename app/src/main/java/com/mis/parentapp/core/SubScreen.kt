@@ -222,6 +222,12 @@ fun SubScreen(
                             } else {
                                 onBack()
                             }
+                        },
+                        onMonitorAcademicClick = {
+                            navController.navigate(MonitorAcademic) { launchSingleTop = true }
+                        },
+                        onTrackAttendanceClick = {
+                            navController.navigate(TrackAttendance) { launchSingleTop = true }
                         }
                     )
                 }
@@ -230,6 +236,12 @@ fun SubScreen(
                         attendanceList = emptyList(),
                         onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        },
+                        onMonitorAcademicClick = {
+                            navController.navigate(MonitorAcademic) { launchSingleTop = true }
+                        },
+                        onTrackAttendanceClick = {
+                            navController.navigate(TrackAttendance) { launchSingleTop = true }
                         }
                     )
                 }

@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,9 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -130,8 +129,7 @@ private fun OfficialStudyLoadDocument(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var zoomPercent by remember { mutableFloatStateOf(58f) }
-    val zoom = zoomPercent / 100f
+    val horizontalScroll = rememberScrollState()
     val semester = subjects.firstOrNull()?.semester ?: "2nd Sem."
     val schoolYear = subjects.firstOrNull()?.schoolYear ?: "S.Y. 2025-2026"
     val dateEnrolled = subjects.firstOrNull()?.dateEnrolled ?: "--"
@@ -139,89 +137,36 @@ private fun OfficialStudyLoadDocument(
     Column(
         modifier = modifier
             .padding(16.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .horizontalScroll(horizontalScroll)
     ) {
-        StudyLoadZoomBar(
-            zoomPercent = zoomPercent,
-            onZoomChange = { zoomPercent = it }
-        )
-        Box(
+        Column(
             modifier = Modifier
-                .width((720 * zoom).dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Column(
-                modifier = Modifier
-                    .width(720.dp)
-                    .wrapContentHeight()
-                    .graphicsLayer {
-                        scaleX = zoom
-                        scaleY = zoom
-                        transformOrigin = TransformOrigin(0f, 0f)
-                    }
+                .width(720.dp)
+                .wrapContentHeight()
                 .background(Color.White, RoundedCornerShape(8.dp))
                 .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(8.dp))
-                    .padding(22.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Box {
-                    Image(
-                        painter = painterResource(id = R.drawable.school_logo),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .size(280.dp)
-                            .alpha(0.08f),
-                        contentScale = ContentScale.Fit
-                    )
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StudyLoadHeader(semester = semester, schoolYear = schoolYear)
-                        StudentInfoBlock(student = student)
-                        StudyLoadTable(subjects = subjects)
-                        StudyLoadFooter(subjects = subjects, dateEnrolled = dateEnrolled)
-                    }
+                .padding(22.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box {
+                Image(
+                    painter = painterResource(id = R.drawable.school_logo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(280.dp)
+                        .alpha(0.08f),
+                    contentScale = ContentScale.Fit
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StudyLoadHeader(semester = semester, schoolYear = schoolYear)
+                    StudentInfoBlock(student = student)
+                    StudyLoadTable(subjects = subjects)
+                    StudyLoadFooter(subjects = subjects, dateEnrolled = dateEnrolled)
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun StudyLoadZoomBar(
-    zoomPercent: Float,
-    onZoomChange: (Float) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(14.dp))
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Zoom",
-                color = ColorsDefaultTheme.color_Primary_green_container,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp
-            )
-            Text("${zoomPercent.toInt()}%", color = Color.DarkGray, fontSize = 12.sp)
-        }
-        Slider(
-            value = zoomPercent,
-            onValueChange = onZoomChange,
-            valueRange = 1f..100f,
-            steps = 98,
-            colors = SliderDefaults.colors(
-                thumbColor = ColorsDefaultTheme.color_Primary_green_container,
-                activeTrackColor = ColorsDefaultTheme.color_Primary_green_container
-            )
-        )
     }
 }
 
