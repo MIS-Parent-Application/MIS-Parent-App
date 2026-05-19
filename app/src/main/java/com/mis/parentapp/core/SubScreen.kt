@@ -38,6 +38,7 @@ import com.mis.parentapp.features.services.menu.FormsAndRequestScreen
 import com.mis.parentapp.features.services.menu.FAQsScreen
 import com.mis.parentapp.features.services.menu.PaymentOptionsScreen
 import com.mis.parentapp.features.widgets.AcademicCalendarScreen
+import com.mis.parentapp.features.widgets.NotificationsWidget
 import com.mis.parentapp.features.me.essentials.AnnouncementsScreen
 import com.mis.parentapp.features.me.essentials.FeedbacksScreen
 import com.mis.parentapp.features.me.essentials.MeetingScreen
@@ -107,7 +108,7 @@ fun SubScreen(
             TopAppBar(
                 title = { Text(text = title, style = AppTypes.type_H1, fontSize = 20.sp) },
                 navigationIcon = {
-                    IconButton(onClick = {
+                    IconButton(onClick = { 
                         if (navController.previousBackStackEntry != null) {
                             navController.popBackStack()
                         } else {
@@ -115,7 +116,7 @@ fun SubScreen(
                         }
                     }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            Icons.AutoMirrored.Filled.ArrowBack, 
                             contentDescription = "Back",
                             tint = MaterialTheme.colorScheme.onBackground
                         )
@@ -160,28 +161,28 @@ fun SubScreen(
                 composable<Notification> {
                     NotificationScreen(
                         studentVM = studentVM,
-                        onBackClick = {
+                        onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
                         }
                     )
                 }
                 composable<UpcomingEvents> {
                     UpcomingEventsScreen(
-                        onBackClick = {
+                        onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
                         }
                     )
                 }
                 composable<RecentActivities> {
                     RecentActivitiesScreen(
-                        onBackClick = {
+                        onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
                         }
                     )
                 }
                 composable<Analytics> {
                     AnalyticsScreen(
-                        onBackClick = {
+                        onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
                         }
                     )
@@ -192,13 +193,13 @@ fun SubScreen(
                 composable<StudyLoad> {
                     StudyLoadScreen(
                         studentVM = studentVM,
-                        onBackClick = {
+                        onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
                         }
                     )
                 }
+                // ... inside SubScreen.kt
                 composable<MonitorAcademic> {
-                    // Cleaned up! Now uses your teammate's Retrofit logic via studentVM
                     MonitorAcademicScreen(
                         studentVM = studentVM,
                         onBackClick = {
@@ -207,19 +208,26 @@ fun SubScreen(
                             } else {
                                 onBack()
                             }
+                        },
+                        onMonitorAcademicClick = {
+                            navController.navigate(MonitorAcademic) { launchSingleTop = true }
+                        },
+                        onTrackAttendanceClick = {
+                            navController.navigate(TrackAttendance) { launchSingleTop = true }
                         }
                     )
                 }
                 composable<TrackAttendance> {
-                    // Cleaned up! Calls the Screen Wrapper instead of the Content UI
                     TrackAttendanceScreen(
                         studentVM = studentVM,
-                        onBackClick = {
-                            if (navController.previousBackStackEntry != null) {
-                                navController.popBackStack()
-                            } else {
-                                onBack()
-                            }
+                        onBackClick = { 
+                            if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        },
+                        onMonitorAcademicClick = {
+                            navController.navigate(MonitorAcademic) { launchSingleTop = true }
+                        },
+                        onTrackAttendanceClick = {
+                            navController.navigate(TrackAttendance) { launchSingleTop = true }
                         }
                     )
                 }
