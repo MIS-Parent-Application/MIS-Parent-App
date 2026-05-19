@@ -2,7 +2,6 @@ package com.mis.parentapp.features.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -59,7 +59,6 @@ import com.mis.parentapp.data.SubjectScheduleEntity
 import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
-import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.shared.StudentSharedViewModel
@@ -69,9 +68,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.mis.parentapp.data.StudentWithSchedules
 import com.mis.parentapp.data.StudentsRepo
 import com.mis.parentapp.data.UserRepository
+import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.features.home.menu.EventCard
 import com.mis.parentapp.features.home.menu.EventDetailScreen
-import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,7 +98,6 @@ fun HomeScreen(
                     when (route) {
                         "Upcoming events" -> mainNavController?.navigate(UpcomingEvents)
                         "Recent activities" -> mainNavController?.navigate(RecentActivities)
-                        "Analytics" -> mainNavController?.navigate(Analytics)
                     }
                 }
             )
@@ -130,72 +131,27 @@ fun Body(
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
     val eventRepo = remember { EventRepository(db.eventDao()) }
-    val studentRepo = remember { StudentsRepo(db.studentMonitoringDao(), db.userDao()) }
-    val userRepo = remember { UserRepository(db.userDao()) }
-    val currentUser by db.userDao().getUserFlow("user").collectAsState(initial = null)
-    var showNoteDialog by remember { mutableStateOf(false) }
-    var tempNote by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-    val localStudentsWithSchedules by studentRepo.getChildrenForParent("user").collectAsState(initial = emptyList())
     val eventViewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(eventRepo))
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        if (localStudentsWithSchedules.isEmpty()) {
-            studentRepo.seedDummyStudents("user")
-        }
-
-        //Fetch retrofit
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-
-            dashboard.children.forEach { remoteChild ->
-                val homeStudent = remoteChild.toHomeStudent()
-                db.studentMonitoringDao().insertStudent(homeStudent.student)
-                db.studentMonitoringDao().insertSchedules(homeStudent.schedules)
-            }
-
+            studentVM?.updateStudents(dashboard.children)
             dashboardError = null
         } catch (e: Exception) {
-            //Use Room if offline/no server
-            dashboardError = "Running in offline mode."
+            dashboardError = "Unable to load server student data."
         }
     }
 
-    var selectedStudent by remember { mutableStateOf<StudentWithSchedules?>(null) }
-
-    LaunchedEffect(localStudentsWithSchedules) {
-        if (localStudentsWithSchedules.isNotEmpty() && selectedStudent == null) {
-            selectedStudent = localStudentsWithSchedules.first()
-        }
+    val students = remember(studentVM?.students) {
+        studentVM?.students?.map { it.toHomeStudent() } ?: emptyList()
     }
-
-    if (showNoteDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showNoteDialog = false },
-            title = { Text("Update Status") },
-            text = {
-                androidx.compose.material3.OutlinedTextField(
-                    value = tempNote,
-                    onValueChange = { tempNote = it },
-                    placeholder = { Text("Post a note...") },
-                    maxLines = 2
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    scope.launch {
-                        val noteToSave = if (tempNote.isBlank()) "+" else tempNote
-                        db.userDao().updateUserNote("user", noteToSave)
-                        showNoteDialog = false
-                    }
-                }) {
-                    Text("Share", color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        )
+    val selectedStudent = remember(students, studentVM?.selectedStudent) {
+        val selectedId = studentVM?.selectedStudent?.id?.toString()
+        students.firstOrNull { it.student.studentId == selectedId } ?: students.firstOrNull()
     }
 
     LazyColumn(
@@ -217,72 +173,44 @@ fun Body(
                 }
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp), // Closer spacing
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     //PARENT PIC
                     item {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable {
-                                val currentNote = currentUser?.note ?: "+"
-                                tempNote = if (currentNote == "+") "" else currentNote
-                                showNoteDialog = true
-                            }
+                            modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            Box(
-                                modifier = Modifier.padding(bottom = 4.dp, end = 12.dp),
-                                contentAlignment = Alignment.BottomEnd
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.parent_pic),
-                                    contentDescription = "Parent Profile",
-                                    modifier = Modifier
-                                        .requiredSize(50.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentScale = ContentScale.Crop
-                                )
-
-                                if (!currentUser?.note.isNullOrBlank()) {
-                                    Box(
-                                        modifier = Modifier
-                                            .offset(x = 12.dp, y = 4.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(MaterialTheme.colorScheme.surface)
-                                            .border(
-                                                width = 1.dp,
-                                                color = MaterialTheme.colorScheme.outlineVariant,
-                                                shape = RoundedCornerShape(12.dp)
-                                            )
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) {
-                                        Text(
-                                            text = currentUser!!.note!!,
-                                            fontSize = 10.sp,
-                                            maxLines = 1,
-                                            style = AppTypes.type_Caption,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                }
-                            }
+                            Image(
+                                painter = painterResource(id = R.drawable.parent_pic),
+                                contentDescription = "Parent Profile",
+                                modifier = Modifier
+                                    .requiredSize(50.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentScale = ContentScale.Crop
+                            )
 
                             Text(
                                 text = "Me",
                                 style = AppTypes.type_Caption,
                                 color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.padding(top = 4.dp)
+                                modifier = Modifier.padding(top = 8.dp)
                             )
                         }
                     }
 
                     //STUDENT SELECTORS
-                    items(localStudentsWithSchedules) { studentWrapper ->
+                    items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
-                            onClick = { selectedStudent = studentWrapper }
+                            onClick = {
+                                studentVM?.students
+                                    ?.firstOrNull { it.id.toString() == studentWrapper.student.studentId }
+                                    ?.let { studentVM.selectStudent(it) }
+                            }
                         )
                     }
                 }
@@ -291,25 +219,32 @@ fun Body(
 
         // PRESENCE HEADER
         item {
-            selectedStudent?.student?.let { child ->
-                StudentPresenceHeader(student = child)
+            selectedStudent?.let { studentWithSchedules ->
+                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                StudentPresenceHeader(
+                    student = studentWithSchedules.student,
+                    isInClass = schedulePair.first != null
+                )
             }
         }
 
         // SCHEDULE LISTS
         item {
             selectedStudent?.let { studentWithSchedules ->
-                ScheduleSection(schedules = studentWithSchedules.schedules.take(2))
+                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                ScheduleSection(now = schedulePair.first, next = schedulePair.second)
             }
         }
 
         // QUICK STATS
         item {
             selectedStudent?.student?.let { child ->
+                val formattedPending = String.format(Locale.US, "₱ %,.2f", child.pendingPayment)
+
                 QuickStatsSection(
                     attendance = "${(child.attendanceScore * 100).toInt()}%",
                     gpa = child.gpa.toString(),
-                    pending = "₱${child.pendingPayment}",
+                    pending = formattedPending,
                     notifications = child.notificationCount.toString()
                 )
             }
@@ -359,7 +294,7 @@ private fun Child.toHomeStudent(): HomeStudent {
             pendingPayment = pendingPayments.toDouble(),
             notificationCount = 0,
             profileImageRes = R.drawable.student_image,
-            isPresent = attendanceValue > 0.0
+            isPresent = resolveCurrentClass(schedules) != null
         ),
         schedules = schedules.map { it.toScheduleEntity(studentId) }
     )
@@ -374,7 +309,6 @@ private fun ClassSchedule.toScheduleEntity(studentId: String): SubjectScheduleEn
         time = "$startTime - $endTime"
     )
 }
-
 
 @Composable
 fun StudentSelectorItem(
@@ -394,7 +328,7 @@ fun StudentSelectorItem(
     ) {
         Box(
             modifier = Modifier
-                .requiredSize(50.dp) //circle size
+                .requiredSize(50.dp)
                 .clip(CircleShape)
                 .background(if (isSelected) highlightColor.copy(alpha = 0.2f) else Color.Transparent)
                 .padding(3.dp)
@@ -413,7 +347,7 @@ fun StudentSelectorItem(
                 androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
                         color = highlightColor,
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f) //border
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6f)
                     )
                 }
             }
@@ -428,17 +362,21 @@ fun StudentSelectorItem(
     }
 }
 
-
 @Composable
 fun StudentPresenceHeader(student: StudentEntity) {
-    val (brightColor, deepColor) = if (student.isPresent) {
+    StudentPresenceHeader(student = student, isInClass = student.isPresent)
+}
+
+@Composable
+fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
+    val (brightColor, deepColor) = if (isInClass) {
         MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
     }
 
-    val statusText = if (student.isPresent) "At class" else "Not in class"
-    val statusColor = if (student.isPresent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val statusText = if (isInClass) "At class" else "Not in class"
+    val statusColor = if (isInClass) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Column(
         modifier = Modifier
@@ -450,7 +388,6 @@ fun StudentPresenceHeader(student: StudentEntity) {
             contentAlignment = Alignment.Center,
             modifier = Modifier.height(180.dp).fillMaxWidth()
         ) {
-            //left aura
             Box(
                 modifier = Modifier
                     .offset(x = (-40).dp)
@@ -463,7 +400,6 @@ fun StudentPresenceHeader(student: StudentEntity) {
                     )
             )
 
-            //right aura
             Box(
                 modifier = Modifier
                     .offset(x = 40.dp)
@@ -491,7 +427,6 @@ fun StudentPresenceHeader(student: StudentEntity) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        //presence status badge
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
@@ -511,78 +446,156 @@ fun StudentPresenceHeader(student: StudentEntity) {
     }
 }
 
-
 @Composable
-fun ScheduleSection(schedules: List<SubjectScheduleEntity>) {
+fun ScheduleSection(now: SubjectScheduleEntity?, next: SubjectScheduleEntity?) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            itemsIndexed(schedules) { index, item ->
-                val isNow = index == 0
-                ScheduleCard(schedule = item, status = if (isNow) "Now" else "Up Next", isNow = isNow)
+            item {
+                ScheduleCard(
+                    schedule = now,
+                    status = "Now",
+                    fallbackSubject = "No class",
+                    fallbackRoom = "-",
+                    fallbackTime = "No class now",
+                    isNow = true
+                )
+            }
+            item {
+                ScheduleCard(
+                    schedule = next,
+                    status = "Up Next",
+                    fallbackSubject = "VACANT",
+                    fallbackRoom = "-",
+                    fallbackTime = "No next class",
+                    isNow = false
+                )
             }
         }
     }
 }
 
 @Composable
-fun ScheduleCard(schedule: SubjectScheduleEntity, status: String, isNow: Boolean) {
-    // Theme logic
+fun ScheduleCard(
+    schedule: SubjectScheduleEntity?,
+    status: String,
+    fallbackSubject: String,
+    fallbackRoom: String,
+    fallbackTime: String,
+    isNow: Boolean
+) {
     val backgroundColor = if (isNow) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
     val primaryText = if (isNow) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     val secondaryText = if (isNow) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
-    Box(
+    Column(
         modifier = Modifier
-            .requiredSize(width = 220.dp, height = 150.dp)
+            .requiredSize(width = 220.dp, height = 156.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.formkit_date), // or a specific schedule icon
-            contentDescription = null,
-            modifier = Modifier.requiredSize(24.dp).align(Alignment.TopStart),
-            tint = primaryText
-        )
-
-        Text(
-            text = status,
-            style = AppTypes.type_Caption,
-            fontWeight = FontWeight.Bold,
-            color = primaryText,
-            modifier = Modifier.align(Alignment.TopEnd)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.formkit_date),
+                contentDescription = null,
+                modifier = Modifier.requiredSize(24.dp),
+                tint = primaryText
+            )
+            Text(
+                text = status,
+                style = AppTypes.type_Caption,
+                fontWeight = FontWeight.Bold,
+                color = primaryText
+            )
+        }
 
         Column(
-            modifier = Modifier.align(Alignment.BottomStart),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
-                text = schedule.subject,
+                text = schedule?.subject ?: fallbackSubject,
                 style = AppTypes.type_H1,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = primaryText,
-                maxLines = 1
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = schedule.room,
+                text = schedule?.room ?: fallbackRoom,
                 style = AppTypes.type_Body_Small,
-                color = secondaryText
+                color = secondaryText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = schedule.time,
+                text = schedule?.time ?: fallbackTime,
                 style = AppTypes.type_Body_Small,
                 fontWeight = FontWeight.Bold,
-                color = secondaryText
+                color = secondaryText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
+private fun resolveHomeSchedulePair(
+    schedules: List<SubjectScheduleEntity>
+): Pair<SubjectScheduleEntity?, SubjectScheduleEntity?> {
+    val calendar = Calendar.getInstance()
+    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    val todaySchedules = schedules
+        .filter { it.day.equals(today, ignoreCase = true) }
+        .sortedBy { startMinutesFromRange(it.time) }
+
+    val current = todaySchedules.firstOrNull {
+        val start = startMinutesFromRange(it.time)
+        val end = endMinutesFromRange(it.time)
+        nowMinutes in start until end
+    }
+    val next = todaySchedules.firstOrNull { startMinutesFromRange(it.time) > nowMinutes }
+        ?: schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) }).firstOrNull()
+
+    return current to next
+}
+
+private fun resolveCurrentClass(schedules: List<ClassSchedule>): ClassSchedule? {
+    val calendar = Calendar.getInstance()
+    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    return schedules.firstOrNull {
+        it.day.equals(today, ignoreCase = true) &&
+                nowMinutes in minutesFromTime(it.startTime) until minutesFromTime(it.endTime)
+    }
+}
+
+private fun startMinutesFromRange(value: String): Int = minutesFromTime(value.substringBefore("-").trim())
+
+private fun endMinutesFromRange(value: String): Int = minutesFromTime(value.substringAfter("-", value).trim())
+
+private fun minutesFromTime(value: String): Int {
+    val parts = value.split(":")
+    val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
+    val minute = parts.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
+    return hour * 60 + minute
+}
+
+private fun dayOrder(day: String): Int {
+    return listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+        .indexOfFirst { it.equals(day, ignoreCase = true) }
+        .let { if (it == -1) 99 else it }
+}
 
 @Composable
 fun EventHorizontalSection(
@@ -613,7 +626,6 @@ fun EventHorizontalSection(
         }
 
         if (events.isEmpty()) {
-            // Re-using your placeholder look if no data
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                 SectionPlaceholderContent(emptyText = "No $title yet.")
             }
@@ -623,14 +635,12 @@ fun EventHorizontalSection(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(events) { event ->
-                    // Reusing EventCard from UpcomingEventsScreen
                     EventCard(event = event, onClick = { onEventClick(event) })
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun SectionPlaceholderContent(emptyText: String) {
@@ -651,7 +661,6 @@ fun SectionPlaceholderContent(emptyText: String) {
     }
 }
 
-
 @Composable
 fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
     Column(
@@ -666,7 +675,7 @@ fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        val menuItems = listOf("Analytics", "Upcoming events", "Recent activities")
+        val menuItems = listOf("Upcoming events", "Recent activities")
         menuItems.forEach { label ->
             Row(
                 modifier = Modifier
@@ -721,9 +730,11 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
 
 @Composable
 fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Modifier) {
+    var textSize by remember { mutableStateOf(40.sp) }
+
     Box(
         modifier = modifier
-            .heightIn(min = 140.dp) // Use heightIn to avoid cut-off if text grows
+            .heightIn(min = 140.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
@@ -740,21 +751,22 @@ fun StatCard(label: String, value: String, iconRes: Int, modifier: Modifier = Mo
             text = label,
             style = AppTypes.type_Caption,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.align(Alignment.TopEnd)
+            modifier = Modifier.align(Alignment.TopEnd),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
         Text(
             text = value,
             color = MaterialTheme.colorScheme.primary,
-            style = TextStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold),
-            modifier = Modifier.align(Alignment.BottomStart)
+            style = TextStyle(fontSize = textSize, fontWeight = FontWeight.Bold),
+            modifier = Modifier.align(Alignment.BottomStart),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { textLayoutResult ->
+                if (textLayoutResult.hasVisualOverflow) {
+                    textSize = (textSize.value * 0.8f).sp
+                }
+            }
         )
     }
 }
-
-//@Preview(showBackground = true, widthDp = 360)
-//@Composable
-//private fun BodyPreview() {
-//    ParentAppTheme {
-//        HomeScreen()
-//    }
-//}

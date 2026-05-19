@@ -11,17 +11,26 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.LiveHelp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -31,6 +40,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
 import com.mis.parentapp.features.services.sections.SearchBarSection
 import com.mis.parentapp.shared.StudentSharedViewModel
@@ -40,25 +53,74 @@ import com.mis.parentapp.utilities.modals.ServiceAccountSwitchModal
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.launch
+
+// ==========================================
+// NAVIGATION ROUTES DEFINITION
+// ==========================================
+sealed class Screen(val route: String) {
+    object Services : Screen("services")
+    object Forms : Screen("forms")
+    object Payments : Screen("payments")
+    object Documents : Screen("documents")
+    object FAQs : Screen("faqs")
+}
+
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Services.route
+    ) {
+        composable(Screen.Services.route) {
+            ServicesScreen(navController = navController)
+        }
+        composable(Screen.Forms.route) {
+            // Your separate file: FormsAndRequestScreen(navController)
+            Text("Forms Screen Placeholder")
+        }
+        composable(Screen.Payments.route) {
+            // Your separate file: PaymentOptionsScreen(navController)
+            Text("Payments Screen Placeholder")
+        }
+        composable(Screen.Documents.route) {
+            // Your separate file: DocumentsScreen(navController)
+            Text("Documents Screen Placeholder")
+        }
+        composable(Screen.FAQs.route) {
+            // Your separate file: FAQsScreen(navController)
+            Text("FAQs Screen Placeholder")
+        }
+    }
+}
 
 // ================= SERVICES SCREEN =================
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServicesScreen(
+    navController: NavController, // Integrated NavController
     studentVM: StudentSharedViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val showPaymentScreen = remember { mutableStateOf(false) }
     val paymentHistory = remember { mutableStateOf(listOf<PaymentRecord>()) }
     val invoiceCounter = remember { mutableIntStateOf(1) }
-    
+
     val selectedStudent = studentVM.selectedStudent
     val otherStudents = studentVM.students.filter { it.id != selectedStudent?.id }
 
-    val sheetState = rememberModalBottomSheetState()
+    // Separate sheet states to avoid conflict properties
+    val accountSheetState = rememberModalBottomSheetState()
+    val menuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     var showAccountModal by remember { mutableStateOf(false) }
+    var showMenuBottomSheet by remember { mutableStateOf(false) }
 
     // Camera Launcher for QR scanning placeholder
     val scannerLauncher = rememberLauncherForActivityResult(
@@ -83,6 +145,7 @@ fun ServicesScreen(
                 studentVM = studentVM,
                 onPayClick = { showPaymentScreen.value = true },
                 onProfileClick = { showAccountModal = true },
+                onMenuClick = { showMenuBottomSheet = true }, // Wired up burger menu action
                 onQrClick = {
                     val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                     if (intent.resolveActivity(context.packageManager) != null) {
@@ -94,10 +157,11 @@ fun ServicesScreen(
                 paymentHistory = paymentHistory.value
             )
 
+            // ACCOUNT SWITCH SHEET
             if (showAccountModal) {
                 ModalBottomSheet(
                     onDismissRequest = { showAccountModal = false },
-                    sheetState = sheetState,
+                    sheetState = accountSheetState,
                     containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     ServiceAccountSwitchModal(
@@ -107,6 +171,66 @@ fun ServicesScreen(
                         onSeeMoreClick = { /* Handle See More */ },
                         onDismiss = { showAccountModal = false }
                     )
+                }
+            }
+
+            // NAVIGATION BURGER MENU SHEET
+            if (showMenuBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showMenuBottomSheet = false },
+                    sheetState = menuSheetState,
+                    containerColor = Color(0xFFF5F5F5),
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    dragHandle = {
+                        BottomSheetDefaults.DragHandle(color = Color.Gray.copy(alpha = 0.5f))
+                    }
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 28.dp, vertical = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(28.dp)
+                    ) {
+                        // Safe navigation handler that closes the sheet first
+                        val navigateTo: (String) -> Unit = { route ->
+                            scope.launch { menuSheetState.hide() }.invokeOnCompletion {
+                                if (!menuSheetState.isVisible) {
+                                    showMenuBottomSheet = false
+                                    navController.navigate(route)
+                                }
+                            }
+                        }
+
+                        MenuItem(
+                            icon = Icons.Default.Article,
+                            title = "Forms and request",
+                            subtitle = "Be updated to your student attendance.",
+                            onClick = { navigateTo(Screen.Forms.route) }
+                        )
+
+                        MenuItem(
+                            icon = Icons.Default.Payment,
+                            title = "Payment options",
+                            subtitle = "Be updated to your student attendance.",
+                            onClick = { navigateTo(Screen.Payments.route) }
+                        )
+
+                        MenuItem(
+                            icon = Icons.Default.Description,
+                            title = "Documents",
+                            subtitle = "Be updated to your student attendance.",
+                            onClick = { navigateTo(Screen.Documents.route) }
+                        )
+
+                        MenuItem(
+                            icon = Icons.Default.LiveHelp,
+                            title = "FAQs",
+                            subtitle = "Be updated to your student attendance.",
+                            onClick = { navigateTo(Screen.FAQs.route) }
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
@@ -121,48 +245,159 @@ fun Body(
     studentVM: StudentSharedViewModel,
     onPayClick: () -> Unit,
     onProfileClick: () -> Unit,
+    onMenuClick: () -> Unit, // Parameter integrated
     onQrClick: () -> Unit,
     paymentHistory: List<PaymentRecord>
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.Start,
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        item { Spacer(modifier = Modifier.height(60.dp)) } // Space for the floating top bar
-        
-        item {
-            SearchBarSection(
-                selectedStudent = studentVM.selectedStudent,
-                onProfileClick = onProfileClick,
-                onQrClick = onQrClick,
-                modifier = Modifier.padding(horizontal = 16.dp)
+        // TOP BAR
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.formkit_date),
+                    contentDescription = "Date",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { }
+                )
+                Image(
+                    painter = painterResource(id = R.drawable.ph_bell),
+                    contentDescription = "Notifications",
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { }
+                )
+
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clickable { onMenuClick() } // Callback executed here
+                )
+            }
         }
 
-        item {
-            Image(
-                painter = painterResource(id = R.drawable.program),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.FillWidth
+        // CONTENT
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
+
+                SearchBarSection(
+                    selectedStudent = studentVM.selectedStudent,
+                    onProfileClick = onProfileClick,
+                    onQrClick = onQrClick,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+
+            item {
+                Image(
+                    painter = painterResource(id = R.drawable.program),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    contentScale = ContentScale.FillWidth
+                )
+            }
+
+            item {
+                ContributionDuesSection(
+                    onPayClick = onPayClick
+                )
+            }
+
+            item {
+                PaymentHistorySection(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    paymentHistory = paymentHistory
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+// ================= REUSABLE MENU ITEM =================
+
+@Composable
+fun MenuItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit // onClick listener setup added
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(58.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE8EDD8)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = Color(0xFF1F1F1F),
+                modifier = Modifier.size(28.dp)
             )
         }
-        item { ContributionDuesSection(onPayClick = onPayClick) }
-        item {
-            PaymentHistorySection(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                paymentHistory = paymentHistory
+        Spacer(modifier = Modifier.width(20.dp))
+        Column(modifier = Modifier.weight(1f)) { // Handles dynamic text wrapping safely
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1B5E20)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                fontSize = 14.sp,
+                color = Color(0xFF5D8A5A),
+                lineHeight = 18.sp
             )
         }
     }
 }
 
+// ================= CONTRIBUTION DUES SECTION =================
 
 @Composable
 fun ContributionDuesSection(onPayClick: () -> Unit) {
@@ -177,6 +412,8 @@ fun ContributionDuesSection(onPayClick: () -> Unit) {
         }
     }
 }
+
+// ================= PAYMENT HISTORY SECTION =================
 
 @Composable
 fun PaymentHistorySection(
@@ -303,7 +540,6 @@ private fun generateReceiptPDF(context: Context, record: PaymentRecord) {
             ?: throw IOException("Failed to create MediaStore entry")
 
         resolver.openOutputStream(uri)?.use { outputStream ->
-            // Use the PDF generator from ReceiptPdfGenerator.kt
             ReceiptPdfGenerator().createPdfContent(context, outputStream, record)
         }
 
@@ -375,6 +611,7 @@ private fun filterPaymentHistory(
 @Composable
 private fun BodyPreview() {
     ParentAppTheme {
-        ServicesScreen()
+        val mockNavController = rememberNavController()
+        ServicesScreen(navController = mockNavController)
     }
 }
