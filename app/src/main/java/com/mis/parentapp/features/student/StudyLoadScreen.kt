@@ -368,10 +368,10 @@ private fun openPdf(context: Context, uri: android.net.Uri) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun StudyLoadScreenPreview() {
-    ParentAppTheme {
-        StudyLoadScreen(studentVM = StudentSharedViewModel(), onBackClick = {})
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//private fun StudyLoadScreenPreview() {
+//    ParentAppTheme {
+//        StudyLoadScreen(studentVM = StudentSharedViewModel(), onBackClick = {})
+//    }
+//}
