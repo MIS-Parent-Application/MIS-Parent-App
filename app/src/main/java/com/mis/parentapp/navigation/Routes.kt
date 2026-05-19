@@ -25,9 +25,6 @@ object UpcomingEvents
 object RecentActivities
 
 @Serializable
-object Analytics
-
-@Serializable
 object Calendar
 
 @Serializable

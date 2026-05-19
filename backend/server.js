@@ -8,8 +8,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    next();
+});
+
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'mis_parent_app.db');
+
+if (process.env.NODE_ENV !== 'production') {
+    if (fs.existsSync(DB_PATH)) {
+        fs.unlinkSync(DB_PATH);
+        console.log('Cache cleared.');
+    }
+}
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 const db = new sqlite3.Database(DB_PATH);
@@ -158,12 +170,12 @@ async function seedDatabase() {
     );
     await run(
         'INSERT INTO parent_accounts (username, password, parent_id) VALUES (?, ?, ?), (?, ?, ?)',
-        ['jordan.mcclure@email.com', 'parent123', 1, 'jordan', 'parent123', 1]
+        ['jordan.mcclure@email.com', 'parent123', 1, 'jordan', 'parent', 1]
     );
 
     const students = [
         [101, 'Nathaniel B. McClure', '123456789', '3rd Year', 'BSIT 3-A', 'Bachelor of Science in Information Technology', 'BSIT - 3rd year', 'A.Y. 2025-2026', 'Prof. Santos', '94%', 1.5, 0],
-        [102, 'Sofia B. McClure', '987654321', '2nd Year', 'BSCS 2-B', 'Bachelor of Science in Computer Science', 'BSCS - 2nd year', 'A.Y. 2025-2026', 'Prof. Molina', '97%', 1.3, 400]
+        [102, 'Sofia B. McClure', '987654321', '2nd Year', 'BSCS 2-B', 'Bachelor of Science in Computer Science', 'BSCS - 2nd year', 'A.Y. 2025-2026', 'Prof. Molina', '97%', 1.3, 25000]
     ];
     for (const student of students) {
         await run(

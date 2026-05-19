@@ -34,7 +34,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.animation.animateColorAsState
@@ -53,6 +51,7 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.Composable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -72,7 +71,6 @@ import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.student.StudentScreen
-import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Documents
@@ -99,7 +97,6 @@ import com.mis.parentapp.navigation.DataSafety
 import com.mis.parentapp.navigation.EditProfile
 import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.shared.StudentSharedViewModel
-import com.mis.parentapp.ui.theme.ParentAppTheme
 import com.mis.parentapp.utilities.modals.GenericMenuModal
 import com.mis.parentapp.utilities.modals.MenuItem
 
@@ -136,7 +133,6 @@ fun MainScreen(
             currentDestination?.hasRoute(StudyLoad::class) == true ||
             currentDestination?.hasRoute(UpcomingEvents::class) == true ||
             currentDestination?.hasRoute(RecentActivities::class) == true ||
-            currentDestination?.hasRoute(Analytics::class) == true ||
             currentDestination?.hasRoute(MonitorAcademic::class) == true ||
             currentDestination?.hasRoute(TrackAttendance::class) == true ||
             currentDestination?.hasRoute(Documents::class) == true ||
@@ -151,12 +147,10 @@ fun MainScreen(
             currentDestination?.hasRoute(EditProfile::class) == true ||
             currentDestination?.hasRoute(Preference::class) == true
 
-    // Only show the shared top bar on the main tab screens
     val showSharedTopBar = bottomTabs.any { tab ->
         currentDestination?.hasRoute(tab.route::class) == true
     }
 
-    // Determine if we are on a screen that needs white icons (dark header)
     val useWhiteIcons = currentDestination?.hasRoute(Student::class) == true ||
             currentDestination?.hasRoute(Me::class) == true
 
@@ -168,14 +162,12 @@ fun MainScreen(
         animationSpec = tween(300),
         label = "TopBarBackground"
     )
-// Inside your NavHost or Main Content
+
     val db = AppDatabase.getDatabase(context)
     val dao = db.studentMonitoringDao()
 
-    // Build Dynamic Menu Items
     val menuItems = when {
         currentDestination?.hasRoute(Home::class) == true -> listOf(
-            MenuItem("Analytics", "View academic trends.", Icons.Filled.Settings) { navController.navigate(Analytics); showBottomSheet = false },
             MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents); showBottomSheet = false },
             MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities); showBottomSheet = false }
         )
@@ -208,7 +200,6 @@ fun MainScreen(
                         } == true || when (tab.route) {
                             Home -> currentDestination?.hasRoute(Notification::class) == true ||
                                     currentDestination?.hasRoute(Calendar::class) == true ||
-                                    currentDestination?.hasRoute(Analytics::class) == true ||
                                     currentDestination?.hasRoute(UpcomingEvents::class) == true ||
                                     currentDestination?.hasRoute(RecentActivities::class) == true
                             Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
@@ -330,20 +321,9 @@ fun MainScreen(
                         studentVM = studentSharedViewModel
                     )
                 }
-                composable<Me> { 
-                    MeScreen(
-                        navController = navController,
-                        onSignOut = {
-                            navController.navigate(SignIn(R.drawable.bgpic)) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
-                    ) 
-                }
                 composable<Me> {
                     MeScreen(
                         navController = navController,
-                        // Pass the viewmodel AND the top-level callback down
                         authViewModel = authViewModel,
                         onSignOutClick = onSignOut
                     )
@@ -357,7 +337,7 @@ fun MainScreen(
                 composable<Student> {
                     StudentScreen(
                         studentVM = studentSharedViewModel,
-                        dao = dao, // <--- ADD THIS LINE
+                        dao = dao,
                         onStudyLoadClick = { navController.navigate(StudyLoad) }
                     )
                 }
@@ -392,13 +372,6 @@ fun MainScreen(
                 composable<RecentActivities> {
                     SubScreen(
                         startDestination = RecentActivities,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Analytics> {
-                    SubScreen(
-                        startDestination = Analytics,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
@@ -496,7 +469,6 @@ fun MainScreen(
                 }
             }
 
-            // SHARED TOP BAR
             if (showSharedTopBar) {
                 MainTopBar(
                     onMenuClick = { showBottomSheet = true },
@@ -549,15 +521,10 @@ fun MainTopBar(
             contentDescription = "School Logo",
             modifier = Modifier.size(60.dp)
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(30.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onCalendarClick) {
-                Image(
-                    painter = painterResource(id = R.drawable.formkit_date),
-                    contentDescription = "Date",
-                    modifier = Modifier.size(32.dp),
-                    colorFilter = ColorFilter.tint(iconTint)
-                )
-            }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onNotificationClick) {
                 Image(
                     painter = painterResource(id = R.drawable.ph_bell),
@@ -584,11 +551,3 @@ data class BottomTab(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 )
-
-//@Preview(showBackground = true)
-//@Composable
-//fun MainScreenPreview() {
-//    ParentAppTheme {
-//        MainScreen()
-//    }
-//}

@@ -242,16 +242,7 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
             Text(text = event.title, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
             
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "Lorem ipsum dolor sit amet consectetur.",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
+
             Text(
                 text = event.description,
                 style = AppTypes.type_Body_Small,
