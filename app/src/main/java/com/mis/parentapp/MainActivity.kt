@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.GetStartedScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
@@ -40,7 +41,8 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
-    val authViewModel = remember { AuthViewModel(database.userDao()) }
+    val userRepository = remember { UserRepository(database.userDao()) }
+    val authViewModel = remember { AuthViewModel(userRepository) }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {

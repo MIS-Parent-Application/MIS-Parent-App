@@ -64,6 +64,7 @@ import androidx.navigation.toRoute
 import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
@@ -116,7 +117,8 @@ fun MainScreen() {
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
-    val authViewModel = remember { AuthViewModel(database.userDao()) }
+    val userRepository = remember { UserRepository(database.userDao()) }
+    val authViewModel = remember { AuthViewModel(userRepository) }
 
     val bottomTabs = listOf(
         BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
