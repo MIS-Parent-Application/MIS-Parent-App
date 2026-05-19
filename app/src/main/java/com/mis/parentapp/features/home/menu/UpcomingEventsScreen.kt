@@ -235,6 +235,18 @@ fun EventCard(event: EventItem, onClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
+    val context = LocalContext.current
+
+    val imageResource = remember(event.imageUrl) {
+        if (!event.imageUrl.isNullOrBlank()) {
+            val cleanName = event.imageUrl.substringBefore(".")
+            val resId = context.resources.getIdentifier(cleanName, "drawable", context.packageName)
+            if (resId != 0) resId else R.drawable.event1
+        } else {
+            R.drawable.event1
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -265,7 +277,7 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
                 .padding(16.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.event1),
+                painter = painterResource(id = imageResource),
                 contentDescription = "Event banner",
                 modifier = Modifier
                     .fillMaxWidth()
