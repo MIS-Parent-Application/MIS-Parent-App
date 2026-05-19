@@ -32,6 +32,7 @@ import com.mis.parentapp.features.home.menu.UpcomingEventsScreen
 import com.mis.parentapp.features.student.StudyLoadScreen
 import com.mis.parentapp.features.student.menu.MonitorAcademicScreen
 import com.mis.parentapp.features.student.menu.TrackAttendanceContent
+import com.mis.parentapp.features.student.menu.SubjectAttendance // Added import for the list
 import com.mis.parentapp.features.services.menu.DocumentsScreens
 import com.mis.parentapp.features.services.menu.FormsAndRequestScreen
 import com.mis.parentapp.features.services.menu.FAQsScreen
@@ -65,6 +66,7 @@ import com.mis.parentapp.navigation.EditProfile
 import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,26 +206,14 @@ fun SubScreen(
                             } else {
                                 onBack()
                             }
-                        },
-                        onMonitorAcademicClick = {
-                            navController.navigate(MonitorAcademic) { launchSingleTop = true }
-                        },
-                        onTrackAttendanceClick = {
-                            navController.navigate(TrackAttendance) { launchSingleTop = true }
                         }
                     )
                 }
                 composable<TrackAttendance> {
                     TrackAttendanceContent(
-                        attendanceList = emptyList(),
+                        attendanceList = emptyList<SubjectAttendance>(),
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
-                        },
-                        onMonitorAcademicClick = {
-                            navController.navigate(MonitorAcademic) { launchSingleTop = true }
-                        },
-                        onTrackAttendanceClick = {
-                            navController.navigate(TrackAttendance) { launchSingleTop = true }
                         }
                     )
                 }
