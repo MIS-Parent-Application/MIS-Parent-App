@@ -68,7 +68,6 @@ fun NotificationScreen(
                 it.category.equals(selectedFilter, ignoreCase = true)
     }
 
-    // Scaffold removed! Content fills parent directly to avoid double TopAppBars
     Column(
         modifier = Modifier
             .fillMaxSize()
