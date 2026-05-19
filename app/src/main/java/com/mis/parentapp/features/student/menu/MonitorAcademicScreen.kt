@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.data.CourseGrade
 import com.mis.parentapp.ui.theme.AppTypes // Pulling your team's typography!
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 // --- 1. THE WRAPPER ---
@@ -40,12 +42,42 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 fun MonitorAcademicScreen(
     viewModel: StudentViewModel,
     onBackClick: () -> Unit
+    studentVM: StudentSharedViewModel,
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
 ) {
-    val grades by viewModel.grades.collectAsState()
+    val selectedStudent = studentVM.selectedStudent
+    var grades by remember { mutableStateOf<List<CourseGrade>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(selectedStudent?.id) {
+        grades = emptyList()
+        errorMessage = null
+        val studentId = selectedStudent?.id ?: return@LaunchedEffect
+        runCatching {
+            RetrofitInstance.api.getStudentGrades(studentId).map {
+                CourseGrade(
+                    subjectName = it.subjectName,
+                    units = it.units,
+                    grade = it.grade
+                )
+            }
+        }.onSuccess {
+            grades = it
+        }.onFailure {
+            errorMessage = "Unable to load grades from the server."
+        }
+    }
 
     MonitorAcademicContent(
         grades = grades,
         onBackClick = onBackClick
+        studentLabel = selectedStudent?.let { "${it.name} ${it.section}" } ?: "No student selected",
+        emptyMessage = errorMessage ?: "No official grade records yet.",
+        onBackClick = onBackClick,
+        onMonitorAcademicClick = onMonitorAcademicClick,
+        onTrackAttendanceClick = onTrackAttendanceClick
     )
 }
 
@@ -55,6 +87,11 @@ fun MonitorAcademicScreen(
 fun MonitorAcademicContent(
     grades: List<CourseGrade>,
     onBackClick: () -> Unit
+    studentLabel: String = "",
+    emptyMessage: String = "No official grade records yet.",
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -75,6 +112,9 @@ fun MonitorAcademicContent(
                             text = "John B. McLure 3rd Yr. BSIT 1A",
                             style = AppTypes.type_Caption,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = studentLabel,
+                            fontSize = 12.sp,
+                            color = Color.Gray
                         )
                     }
                 },
@@ -116,8 +156,8 @@ fun MonitorAcademicContent(
             )
 
             when (selectedTab) {
-                0 -> AllTabContent(grades)
-                1 -> GradesTabContent(grades)
+                0 -> AllTabContent(grades, emptyMessage)
+                1 -> GradesTabContent(grades, emptyMessage)
                 2 -> PerformanceTabContent()
             }
         }
@@ -127,7 +167,7 @@ fun MonitorAcademicContent(
 // --- TAB LAYOUTS ---
 
 @Composable
-fun AllTabContent(grades: List<CourseGrade>) {
+fun AllTabContent(grades: List<CourseGrade>, emptyMessage: String) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 80.dp)
@@ -157,8 +197,10 @@ fun AllTabContent(grades: List<CourseGrade>) {
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val displayGrades = grades.ifEmpty { getDummyGrades() }
-                items(displayGrades) { grade ->
+                if (grades.isEmpty()) {
+                    item { EmptyAcademicMessage(emptyMessage, Modifier.width(280.dp)) }
+                }
+                items(grades) { grade ->
                     Box(modifier = Modifier.width(280.dp)) {
                         GradientGradeCard(grade)
                     }
@@ -183,16 +225,34 @@ fun AllTabContent(grades: List<CourseGrade>) {
 }
 
 @Composable
-fun GradesTabContent(grades: List<CourseGrade>) {
+fun GradesTabContent(grades: List<CourseGrade>, emptyMessage: String) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        val displayGrades = grades.ifEmpty { getDummyGrades() }
-        items(displayGrades) { grade ->
+        if (grades.isEmpty()) {
+            item { EmptyAcademicMessage(emptyMessage) }
+        }
+        items(grades) { grade ->
             GradientGradeCard(grade)
         }
+    }
+}
+
+@Composable
+fun EmptyAcademicMessage(message: String, modifier: Modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFF6FDE7)
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            fontSize = 14.sp,
+            color = Color(0xFF1B5E20)
+        )
     }
 }
 
@@ -396,6 +456,7 @@ fun PerformanceOrangeCard() {
     }
 }
 
+// Preview-only sample data.
 fun getDummyGrades(): List<CourseGrade> {
     return listOf(
         CourseGrade(subjectName = "Math 101", units = 3, grade = 1.0),

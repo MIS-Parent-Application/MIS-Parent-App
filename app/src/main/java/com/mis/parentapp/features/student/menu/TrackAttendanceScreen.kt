@@ -12,6 +12,11 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.shared.StudentSharedViewModel
 
 data class SubjectAttendance(
     val subjectName: String,
@@ -35,11 +42,58 @@ data class SubjectAttendance(
     val percentage: Float get() = if (totalDays > 0) presentDays.toFloat() / totalDays else 0f
 }
 
+@Composable
+fun TrackAttendanceScreen(
+    studentVM: StudentSharedViewModel,
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
+) {
+    val selectedStudent = studentVM.selectedStudent
+    var attendanceList by remember { mutableStateOf<List<SubjectAttendance>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(selectedStudent?.id) {
+        attendanceList = emptyList()
+        errorMessage = null
+        val studentId = selectedStudent?.id ?: return@LaunchedEffect
+        runCatching {
+            RetrofitInstance.api.getStudentAttendance(studentId).map {
+                SubjectAttendance(
+                    subjectName = it.subjectName,
+                    instructor = it.instructor,
+                    presentDays = it.presentDays,
+                    totalDays = it.totalDays
+                )
+            }
+        }.onSuccess {
+            attendanceList = it
+        }.onFailure {
+            errorMessage = "Unable to load attendance from the server."
+        }
+    }
+
+    TrackAttendanceContent(
+        attendanceList = attendanceList,
+        studentLabel = selectedStudent?.let { "${it.name} ${it.section}" } ?: "No student selected",
+        emptyMessage = errorMessage ?: "No official attendance records yet.",
+        onBackClick = onBackClick,
+        onMonitorAcademicClick = onMonitorAcademicClick,
+        onTrackAttendanceClick = onTrackAttendanceClick
+    )
+}
+
+// --- 2. THE UI CONTENT ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrackAttendanceContent(
     attendanceList: List<SubjectAttendance>,
     onBackClick: () -> Unit
+    studentLabel: String = "",
+    emptyMessage: String = "No official attendance records yet.",
+    onBackClick: () -> Unit,
+    onMonitorAcademicClick: () -> Unit = {},
+    onTrackAttendanceClick: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -58,6 +112,9 @@ fun TrackAttendanceContent(
                             text = "John B. McLure 3rd Yr. BSIT 1A",
                             style = AppTypes.type_Caption,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = studentLabel,
+                            fontSize = 12.sp,
+                            color = Color.Gray
                         )
                     }
                 },
@@ -95,7 +152,7 @@ fun TrackAttendanceContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                AttendanceSummaryCard()
+                AttendanceSummaryCard(attendanceList)
             }
 
             item {
@@ -122,6 +179,11 @@ fun TrackAttendanceContent(
 
             val displayData = attendanceList.ifEmpty { getDummyAttendance() }
             items(displayData) { record ->
+            // 4. List of Subjects
+            if (attendanceList.isEmpty()) {
+                item { EmptyAttendanceMessage(emptyMessage) }
+            }
+            items(attendanceList) { record ->
                 SubjectAttendanceCard(record)
             }
         }
@@ -137,7 +199,17 @@ fun AttendanceSummaryCard() {
             MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0f)
         ),
         radius = 800f
+fun AttendanceSummaryCard(attendanceList: List<SubjectAttendance>) {
+    // Using the exact same premium diagonal gradient from the Academic screen
+    val brush = Brush.linearGradient(
+        colors = listOf(Color(0xFFF9FBE7), Color(0xFFAED581)),
+        start = Offset(0f, 0f),
+        end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
     )
+    val present = attendanceList.sumOf { it.presentDays }
+    val total = attendanceList.sumOf { it.totalDays }
+    val absent = (total - present).coerceAtLeast(0)
+    val percent = if (total > 0) (present * 100 / total) else 0
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -157,6 +229,8 @@ fun AttendanceSummaryCard() {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text("92", fontSize = 64.sp, fontWeight = FontWeight.Light, color = Color.Black)
                     Text("%", style = AppTypes.type_H2, color = Color.Black, modifier = Modifier.padding(bottom = 12.dp))
+                    Text(percent.toString(), fontSize = 64.sp, fontWeight = FontWeight.Light, color = Color.Black)
+                    Text("%", fontSize = 24.sp, fontWeight = FontWeight.Medium, color = Color.Black, modifier = Modifier.padding(bottom = 12.dp))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -165,12 +239,28 @@ fun AttendanceSummaryCard() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    AttendanceStatItem("Present", "45", Color(0xFF2E7D32))
-                    AttendanceStatItem("Absent", "2", Color(0xFFD32F2F))
-                    AttendanceStatItem("Late", "3", Color(0xFFF57C00))
+                    AttendanceStatItem("Present", present.toString(), Color(0xFF2E7D32))
+                    AttendanceStatItem("Absent", absent.toString(), Color(0xFFD32F2F))
+                    AttendanceStatItem("Total", total.toString(), Color(0xFFF57C00))
                 }
             }
         }
+    }
+}
+
+@Composable
+fun EmptyAttendanceMessage(message: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFF6FDE7)
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            fontSize = 14.sp,
+            color = Color(0xFF1B5E20)
+        )
     }
 }
 
@@ -235,6 +325,7 @@ fun SubjectAttendanceCard(record: SubjectAttendance) {
     }
 }
 
+// --- PREVIEW DATA ---
 fun getDummyAttendance(): List<SubjectAttendance> {
     return listOf(
         SubjectAttendance("Math 101", "Mr. John Doe", 28, 30),
