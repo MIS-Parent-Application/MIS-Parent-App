@@ -13,12 +13,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.Child
+import androidx.compose.ui.text.TextStyle
 
 @Composable
 fun SearchBarSection(
@@ -46,11 +52,28 @@ fun SearchBarSection(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = "Search forms or documents",
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
+        var searchQuery by remember { mutableStateOf("") }
+
+        BasicTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            textStyle = TextStyle(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.sp
+            ),
+            modifier = Modifier.weight(1f),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                // This handles the placeholder visibility dynamically
+                if (searchQuery.isEmpty()) {
+                    Text(
+                        text = "Search forms or documents",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontSize = 14.sp
+                    )
+                }
+                innerTextField() // This draws the actual text you type
+            }
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
