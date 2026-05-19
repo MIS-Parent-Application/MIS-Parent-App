@@ -2,17 +2,43 @@ package com.mis.parentapp.features.me.essentials
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,39 +49,88 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
+import com.mis.parentapp.network.ChatMessageDto
+import com.mis.parentapp.network.FacultyContactDto
+import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.network.SendChatMessageRequest
 import com.mis.parentapp.utilities.cards.MessageCard
 import com.mis.parentapp.utilities.cards.MessageData
+import kotlinx.coroutines.launch
+
+private const val ParentChatId = "parent_1"
 
 @Composable
 fun MessagesScreen() {
-    var selectedMessage by remember { mutableStateOf<MessageData?>(null) }
+    var selectedContact by remember { mutableStateOf<FacultyContactDto?>(null) }
+    var contacts by remember { mutableStateOf<List<FacultyContactDto>>(emptyList()) }
+    var lastMessages by remember { mutableStateOf<Map<String, ChatMessageDto>>(emptyMap()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    if (selectedMessage != null) {
+    LaunchedEffect(Unit) {
+        runCatching {
+            val faculty = RetrofitInstance.api.getFacultyContacts()
+            val latest = faculty.associate { contact ->
+                contact.facultyId to RetrofitInstance.api
+                    .getChatHistory(contact.facultyId, ParentChatId)
+                    .lastOrNull()
+            }.filterValues { it != null }.mapValues { it.value!! }
+            faculty to latest
+        }.onSuccess { (faculty, latest) ->
+            contacts = faculty
+            lastMessages = latest
+            errorMessage = null
+        }.onFailure {
+            errorMessage = "Unable to load messages from the server."
+        }
+    }
+
+    if (selectedContact != null) {
         ChatView(
-            message = selectedMessage!!,
-            onBack = { selectedMessage = null }
+            contact = selectedContact!!,
+            onBack = { selectedContact = null }
         )
     } else {
         MessagesList(
-            onMessageClick = { selectedMessage = it }
+            contacts = contacts,
+            lastMessages = lastMessages,
+            errorMessage = errorMessage,
+            onMessageClick = { selectedContact = it }
         )
     }
 }
 
 @Composable
-fun MessagesList(onMessageClick: (MessageData) -> Unit) {
-    val messages = remember { getDummyMessages() }
-
+private fun MessagesList(
+    contacts: List<FacultyContactDto>,
+    lastMessages: Map<String, ChatMessageDto>,
+    errorMessage: String?,
+    onMessageClick: (FacultyContactDto) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        if (contacts.isEmpty()) {
+            Text(
+                text = errorMessage ?: "No faculty conversations yet.",
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(messages) { message ->
+            items(contacts) { contact ->
+                val latest = lastMessages[contact.facultyId]
                 MessageCard(
-                    message = message,
-                    onClick = { onMessageClick(message) }
+                    message = MessageData(
+                        id = contact.facultyId,
+                        senderName = contact.name,
+                        lastMessage = latest?.message ?: "${contact.subject} - ${contact.department}",
+                        timestamp = latest?.created_at?.take(10) ?: "",
+                        imageRes = R.drawable.student_image
+                    ),
+                    onClick = { onMessageClick(contact) }
                 )
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
@@ -68,8 +143,22 @@ fun MessagesList(onMessageClick: (MessageData) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatView(message: MessageData, onBack: () -> Unit) {
+private fun ChatView(contact: FacultyContactDto, onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
     var textState by remember { mutableStateOf("") }
+    var messages by remember { mutableStateOf<List<ChatMessageDto>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(contact.facultyId) {
+        runCatching {
+            RetrofitInstance.api.getChatHistory(contact.facultyId, ParentChatId)
+        }.onSuccess {
+            messages = it
+            errorMessage = null
+        }.onFailure {
+            errorMessage = "Unable to load chat history."
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -77,7 +166,7 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
-                            painter = painterResource(id = message.imageRes),
+                            painter = painterResource(id = R.drawable.student_image),
                             contentDescription = null,
                             modifier = Modifier
                                 .size(36.dp)
@@ -85,7 +174,10 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
                             contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = message.senderName, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Column {
+                            Text(text = contact.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(text = contact.subject, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 },
                 navigationIcon = {
@@ -94,10 +186,10 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Call */ }) {
+                    IconButton(onClick = { }) {
                         Icon(Icons.Default.Call, contentDescription = "Call")
                     }
-                    IconButton(onClick = { /* Menu */ }) {
+                    IconButton(onClick = { }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More")
                     }
                 }
@@ -107,7 +199,27 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
             ChatInputBar(
                 text = textState,
                 onTextChange = { textState = it },
-                onSend = { textState = "" }
+                onSend = {
+                    val outgoing = textState.trim()
+                    if (outgoing.isEmpty()) return@ChatInputBar
+                    scope.launch {
+                        runCatching {
+                            RetrofitInstance.api.sendChatMessage(
+                                SendChatMessageRequest(
+                                    sender_id = ParentChatId,
+                                    receiver_id = contact.facultyId,
+                                    message = outgoing
+                                )
+                            )
+                        }.onSuccess {
+                            messages = messages + it
+                            textState = ""
+                            errorMessage = null
+                        }.onFailure {
+                            errorMessage = "Message was not sent. Please check the server."
+                        }
+                    }
+                }
             )
         }
     ) { padding ->
@@ -117,6 +229,13 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
@@ -124,41 +243,12 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                item {
+                items(messages) { item ->
                     ChatBubble(
-                        content = "(P1LOANSURF10 + P1.00 service fee) from 04/30/2026.\n\nReload now to pay. If unpaid by 05/14/2026, we will collect 1100.00 MB from your next promo purchase. Conversion is P1 = 100.00 MB.",
-                        time = "Friday • 9:23 PM",
-                        isOutgoing = false
+                        content = item.message,
+                        time = item.created_at?.replace("T", " ")?.take(16) ?: "",
+                        isOutgoing = item.sender_id == ParentChatId
                     )
-                }
-                item {
-                    ChatBubble(
-                        content = "Hi! Your loan is now fully paid. We used 1100.00 MB from your data wallet to pay P11.00 for your P1LOANSURF10 loan from 04/30/2026.\n\nYou can borrow from Globe Loans again anytime! For the lowest service fee, use the GlobeOne app.",
-                        time = "9:23 PM",
-                        isOutgoing = false
-                    )
-                }
-            }
-
-            // Quick replies
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf("Okay 👍", "Yes", "Wow", "All right").forEach { reply ->
-                    Surface(
-                        modifier = Modifier.clickable { /* Send reply */ },
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Text(
-                            text = reply,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            fontSize = 14.sp
-                        )
-                    }
                 }
             }
         }
@@ -166,14 +256,11 @@ fun ChatView(message: MessageData, onBack: () -> Unit) {
 }
 
 @Composable
-fun ChatBubble(content: String, time: String, isOutgoing: Boolean) {
+private fun ChatBubble(content: String, time: String, isOutgoing: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = if (isOutgoing) Alignment.End else Alignment.Start
     ) {
-        if (!isOutgoing) {
-            Text(text = time, fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 4.dp))
-        }
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = if (isOutgoing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
@@ -185,14 +272,12 @@ fun ChatBubble(content: String, time: String, isOutgoing: Boolean) {
                 fontSize = 14.sp
             )
         }
-        if (isOutgoing) {
-            Text(text = time, fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
-        }
+        Text(text = time, fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
     }
 }
 
 @Composable
-fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+private fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
     Surface(
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
@@ -203,9 +288,6 @@ fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Uni
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* Add */ }) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
             TextField(
                 value = text,
                 onValueChange = onTextChange,
@@ -216,24 +298,11 @@ fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Uni
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
-                ),
-                trailingIcon = {
-                    Row {
-                        IconButton(onClick = { /* Emoji */ }) { Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji") }
-                        IconButton(onClick = { /* Image */ }) { Icon(Icons.Default.Image, contentDescription = "Image") }
-                    }
-                }
+                )
             )
             IconButton(onClick = onSend) {
-                Icon(Icons.Default.Mic, contentDescription = "Voice")
+                Icon(Icons.Default.Send, contentDescription = "Send")
             }
         }
     }
-}
-
-fun getDummyMessages(): List<MessageData> {
-    return listOf(
-        MessageData("1", "Nathaniel", "Lorem ipsum dolor sit amet consectetur. Auctor platea viverra ...", "4hrs ago", R.drawable.student_image),
-        MessageData("2", "Math 101", "Lorem ipsum dolor sit amet consectetur. Auctor platea viverra ...", "4hrs ago", R.drawable.student_image)
-    )
 }

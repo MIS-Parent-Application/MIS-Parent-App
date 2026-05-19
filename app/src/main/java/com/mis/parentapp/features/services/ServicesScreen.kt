@@ -45,6 +45,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
+import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.features.services.sections.SearchBarSection
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
@@ -114,6 +115,25 @@ fun ServicesScreen(
 
     val selectedStudent = studentVM.selectedStudent
     val otherStudents = studentVM.students.filter { it.id != selectedStudent?.id }
+
+    LaunchedEffect(selectedStudent?.id) {
+        val studentId = selectedStudent?.id ?: return@LaunchedEffect
+        runCatching {
+            RetrofitInstance.api.getStudentPayments(studentId).map {
+                PaymentRecord(
+                    invoiceNumber = it.invoiceNumber,
+                    purchasedItem = it.purchasedItem,
+                    paymentOption = it.paymentOption,
+                    paidDate = it.paidDate,
+                    totalAmount = it.totalAmount,
+                    pdfBreakdown = it.pdfBreakdown
+                )
+            }
+        }.onSuccess {
+            paymentHistory.value = it
+            invoiceCounter.intValue = it.size + 1
+        }
+    }
 
     // Separate sheet states to avoid conflict properties
     val accountSheetState = rememberModalBottomSheetState()

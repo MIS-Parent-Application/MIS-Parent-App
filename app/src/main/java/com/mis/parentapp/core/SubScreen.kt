@@ -32,7 +32,7 @@ import com.mis.parentapp.features.home.menu.RecentActivitiesScreen
 import com.mis.parentapp.features.home.menu.UpcomingEventsScreen
 import com.mis.parentapp.features.student.StudyLoadScreen
 import com.mis.parentapp.features.student.menu.MonitorAcademicScreen
-import com.mis.parentapp.features.student.menu.TrackAttendanceContent
+import com.mis.parentapp.features.student.menu.TrackAttendanceScreen
 import com.mis.parentapp.features.services.menu.DocumentsScreens
 import com.mis.parentapp.features.services.menu.FormsAndRequestScreen
 import com.mis.parentapp.features.services.menu.FAQsScreen
@@ -199,23 +199,8 @@ fun SubScreen(
                 }
                 // ... inside SubScreen.kt
                 composable<MonitorAcademic> {
-                    // 1. Get the current context
-                    val context = androidx.compose.ui.platform.LocalContext.current
-
-                    // 2. Access your AppDatabase and get the DAO
-                    val database = com.mis.parentapp.data.AppDatabase.getDatabase(context)
-                    val dao = database.studentMonitoringDao()
-
-                    // 3. Initialize the StudentViewModel using the Factory
-                    // Ensure you import com.mis.parentapp.features.student.StudentViewModel
-                    // and com.mis.parentapp.features.student.StudentViewModelFactory
-                    val academicVM: com.mis.parentapp.features.student.StudentViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-                        factory = com.mis.parentapp.features.student.StudentViewModel.provideFactory(dao)
-                    )
-
-                    // 4. Pass the VM to your screen
                     MonitorAcademicScreen(
-                        viewModel = academicVM,
+                        studentVM = studentVM,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) {
                                 navController.popBackStack()
@@ -232,8 +217,8 @@ fun SubScreen(
                     )
                 }
                 composable<TrackAttendance> {
-                    TrackAttendanceContent(
-                        attendanceList = emptyList(),
+                    TrackAttendanceScreen(
+                        studentVM = studentVM,
                         onBackClick = { 
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
                         },
