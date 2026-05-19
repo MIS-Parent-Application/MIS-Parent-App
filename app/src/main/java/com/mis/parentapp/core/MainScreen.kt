@@ -345,7 +345,10 @@ fun MainScreen() {
                 }
 
                 composable<Services> {
-                    ServicesScreen(studentVM = studentSharedViewModel)
+                    ServicesScreen(
+                        navController = navController,
+                        studentVM = studentSharedViewModel
+                    )
                 }
                 composable<Me> { 
                     MeScreen(
