@@ -2,6 +2,7 @@ package com.mis.parentapp.features.home.menu
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -197,7 +198,7 @@ fun EventCard(event: EventItem, onClick: () -> Unit) {
     ) {
         Column {
             Image(
-                painter = painterResource(id =  imageResource),
+                painter = painterResource(id = imageResource),
                 contentDescription = "Event banner for ${event.title}",
                 modifier = Modifier
                     .fillMaxWidth()
