@@ -45,6 +45,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
+import com.mis.parentapp.network.CreatePaymentRequest
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.features.services.sections.SearchBarSection
 import com.mis.parentapp.shared.StudentSharedViewModel
@@ -153,8 +154,40 @@ fun ServicesScreen(
         ContributionDuesSelectionScreen(
             onBack = { showPaymentScreen.value = false },
             onPaymentSuccess = { records ->
-                paymentHistory.value += records
-                invoiceCounter.intValue += records.size
+                val studentId = selectedStudent?.id
+                if (studentId == null) {
+                    paymentHistory.value += records
+                    invoiceCounter.intValue += records.size
+                } else {
+                    scope.launch {
+                        val savedRecords = records.map { record ->
+                            runCatching {
+                                RetrofitInstance.api.createStudentPayment(
+                                    studentId,
+                                    CreatePaymentRequest(
+                                        invoiceNumber = record.invoiceNumber,
+                                        purchasedItem = record.purchasedItem,
+                                        paymentOption = record.paymentOption,
+                                        paidDate = record.paidDate,
+                                        totalAmount = record.totalAmount,
+                                        pdfBreakdown = record.pdfBreakdown
+                                    )
+                                ).let {
+                                    PaymentRecord(
+                                        invoiceNumber = it.invoiceNumber,
+                                        purchasedItem = it.purchasedItem,
+                                        paymentOption = it.paymentOption,
+                                        paidDate = it.paidDate,
+                                        totalAmount = it.totalAmount,
+                                        pdfBreakdown = it.pdfBreakdown
+                                    )
+                                }
+                            }.getOrElse { record }
+                        }
+                        paymentHistory.value = savedRecords + paymentHistory.value
+                        invoiceCounter.intValue += savedRecords.size
+                    }
+                }
             },
             currentInvoiceNumber = invoiceCounter.intValue
         )

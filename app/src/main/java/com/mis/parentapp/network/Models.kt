@@ -132,6 +132,16 @@ data class PaymentRecordDto(
     val status: String
 )
 
+data class CreatePaymentRequest(
+    val invoiceNumber: String,
+    val purchasedItem: String,
+    val paymentOption: String,
+    val paidDate: String,
+    val totalAmount: Double,
+    val pdfBreakdown: String,
+    val status: String = "Paid"
+)
+
 data class FacultyContactDto(
     val facultyId: String,
     val name: String,

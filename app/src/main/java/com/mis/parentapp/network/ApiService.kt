@@ -35,6 +35,12 @@ interface ApiService {
     @GET("api/student/{id}/payments")
     suspend fun getStudentPayments(@Path("id") studentId: Int): List<PaymentRecordDto>
 
+    @POST("api/student/{id}/payments")
+    suspend fun createStudentPayment(
+        @Path("id") studentId: Int,
+        @Body request: CreatePaymentRequest
+    ): PaymentRecordDto
+
     @GET("api/faculty")
     suspend fun getFacultyContacts(): List<FacultyContactDto>
 
