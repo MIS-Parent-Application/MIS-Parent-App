@@ -328,7 +328,16 @@ fun MainScreen() {
                         studentVM = studentSharedViewModel
                     )
                 }
-                composable<Me> { MeScreen(navController = navController) }
+                composable<Me> { 
+                    MeScreen(
+                        navController = navController,
+                        onSignOut = {
+                            navController.navigate(SignIn(R.drawable.bgpic)) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    ) 
+                }
                 composable<Home> {
                     HomeScreen(
                         studentVM = studentSharedViewModel,

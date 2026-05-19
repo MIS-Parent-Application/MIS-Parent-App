@@ -34,7 +34,11 @@ import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @Composable
-fun MeScreen(modifier: Modifier = Modifier, navController: NavController? = null) {
+fun MeScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController? = null,
+    onSignOut: () -> Unit = {}
+) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -129,7 +133,7 @@ fun MeScreen(modifier: Modifier = Modifier, navController: NavController? = null
                         "Preferences" -> navController?.navigate(Preference)
                         "Data safety" -> navController?.navigate(DataSafety)
                         "Edit profile" -> navController?.navigate(EditProfile)
-                        "Sign out" -> { /* Handle sign out */ }
+                        "Sign out" -> onSignOut()
                     }
                 })
             }
