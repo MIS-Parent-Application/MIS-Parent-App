@@ -1,4 +1,4 @@
-package com.mis.parentapp.features.home
+package com.mis.parentapp.features.home.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,8 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
+import com.mis.parentapp.features.home.EventsViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 //data class EventItem(
@@ -75,10 +74,14 @@ fun UpcomingEventsScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
             },
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.background
         ) { paddingValues ->
             Column(modifier = Modifier.padding(paddingValues)) {
 
@@ -123,12 +126,12 @@ fun EventFilterRow(selectedFilter: String, onFilterSelected: (String) -> Unit) {
             Surface(
                 modifier = Modifier.clickable { onFilterSelected(filter) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) ColorsDefaultTheme.color_Primary_green else Color(0xFFF1F8E9)
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
                     text = filter,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = if (isSelected) Color.White else ColorsDefaultTheme.color_Primary_green,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
                     style = AppTypes.type_M3_label_small
                 )
             }
@@ -137,9 +140,9 @@ fun EventFilterRow(selectedFilter: String, onFilterSelected: (String) -> Unit) {
 }
 
 @Composable
-fun EventSection(title: String, events: List<com.mis.parentapp.data.EventItem>, onEventClick: (EventItem) -> Unit) {
+fun EventSection(title: String, events: List<EventItem>, onEventClick: (EventItem) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(text = title, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Color.Black)
+        Text(text = title, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
         
         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             items(events) { event ->
@@ -151,39 +154,42 @@ fun EventSection(title: String, events: List<com.mis.parentapp.data.EventItem>, 
 
 
 @Composable
-fun EventCard(event: com.mis.parentapp.data.EventItem, onClick: () -> Unit) {
+fun EventCard(event: EventItem, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(200.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9).copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
-                    .background(Color(0xFFFFA726)) // Orange placeholder
+                    .background(MaterialTheme.colorScheme.tertiaryContainer) // Updated placeholder
             )
             
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = event.title, style = AppTypes.type_Body_Small, fontSize = 14.sp)
+                Text(text = event.title, style = AppTypes.type_Body_Small, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = event.date, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(text = event.date, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Button(
                         onClick = onClick,
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1B4D13)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         modifier = Modifier.height(32.dp)
                     ) {
-                        Text("View", fontSize = 12.sp, color = Color.White)
+                        Text("View", fontSize = 12.sp)
                     }
                 }
             }
@@ -208,10 +214,14 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
                         Icon(Icons.Default.Share, contentDescription = "Share")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -224,12 +234,12 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFFA726)) // Orange placeholder
+                    .background(MaterialTheme.colorScheme.tertiaryContainer)
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            Text(text = event.title, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = Color.Black)
+            Text(text = event.title, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -237,7 +247,7 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
                 text = "Lorem ipsum dolor sit amet consectetur.",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onBackground
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -247,7 +257,7 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
                 style = AppTypes.type_Body_Small,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
             )
         }
     }

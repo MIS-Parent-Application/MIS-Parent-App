@@ -29,7 +29,7 @@ class StudyLoadPdfGenerator {
         student: Child,
         subjects: List<StudyLoadSubject>
     ) {
-        val document = Document(PageSize.A4, 28f, 28f, 28f, 28f)
+        val document = Document(PageSize.A4, 28f, 28f, 36f, 32f)
         PdfWriter.getInstance(document, outputStream)
         document.open()
 
@@ -47,15 +47,16 @@ class StudyLoadPdfGenerator {
 
         val header = PdfPTable(floatArrayOf(1.1f, 5f, 1.8f)).apply {
             widthPercentage = 100f
+            spacingAfter = 10f
         }
         header.addCell(noBorderCell(loadLogo(context), Element.ALIGN_LEFT))
-        header.addCell(noBorderCell(Phrase("COLEGIO DE ALICIA\nAlicia, Isabela\n\nOFFICIAL STUDY LOAD", titleFont), Element.ALIGN_CENTER))
+        header.addCell(noBorderCell(Phrase("COLEGIO DE ALICIA\nAlicia, Bohol\n\nOFFICIAL STUDY LOAD", titleFont), Element.ALIGN_CENTER))
         header.addCell(noBorderCell(Phrase("$semester\n$schoolYear", boldFont), Element.ALIGN_RIGHT))
         document.add(header)
-        document.add(Chunk.NEWLINE)
 
         val info = PdfPTable(floatArrayOf(1.2f, 2.5f, 2.0f, 1.5f)).apply {
             widthPercentage = 100f
+            spacingAfter = 12f
         }
         listOf(
             "ID NO.\n${student.rollNumber}",
@@ -74,6 +75,8 @@ class StudyLoadPdfGenerator {
 
         val table = PdfPTable(floatArrayOf(1.1f, 1.45f, 1.8f, 0.8f, 0.85f, 0.75f, 1.8f)).apply {
             widthPercentage = 100f
+            spacingBefore = 2f
+            spacingAfter = 12f
         }
         listOf("SCHED. NO.", "COURSE NO.", "TIME", "DAYS", "ROOM", "UNITS", "REMARKS").forEach {
             table.addCell(tableCell(it, headerFont, green, Element.ALIGN_CENTER))
@@ -88,7 +91,6 @@ class StudyLoadPdfGenerator {
             table.addCell(tableCell(subject.remarks, normalFont))
         }
         document.add(table)
-        document.add(Chunk.NEWLINE)
 
         val footer = PdfPTable(floatArrayOf(1f, 1f)).apply { widthPercentage = 100f }
         footer.addCell(noBorderCell(Phrase("DATE ENROLLED: $dateEnrolled", boldFont), Element.ALIGN_LEFT))
@@ -119,7 +121,7 @@ class StudyLoadPdfGenerator {
         cell.border = Rectangle.NO_BORDER
         cell.horizontalAlignment = alignment
         cell.verticalAlignment = Element.ALIGN_MIDDLE
-        cell.setPadding(4f)
+        cell.setPadding(6f)
         return cell
     }
 
@@ -133,6 +135,7 @@ class StudyLoadPdfGenerator {
             horizontalAlignment = alignment
             verticalAlignment = Element.ALIGN_MIDDLE
             borderColor = BaseColor(158, 165, 143)
+            minimumHeight = 20f
             setPadding(5f)
             if (background != null) backgroundColor = background
         }

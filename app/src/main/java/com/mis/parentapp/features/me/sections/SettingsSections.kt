@@ -8,14 +8,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,24 +26,24 @@ import com.mis.parentapp.utilities.cards.CategoryCard
 import com.mis.parentapp.utilities.cards.dataclass.Category
 
 @Composable
-fun SettingsSection(){
+fun SettingsSection(onCategoryClick: (String) -> Unit){
     val categories = listOf(
-        Category(title = stringResource(id = R.string.messages_btn_txt), icon = Icons.Filled.ChatBubble),
-        Category(title = stringResource(id = R.string.announcements_btn_txt), icon = Icons.Filled.Campaign),
-        Category(title = stringResource(id = R.string.meetings_btn_txt), icon = Icons.Filled.People),
-        Category(title = stringResource(id = R.string.feedbacks_btn_txt), icon = Icons.Filled.Feedback)
+        Category(title = stringResource(id = R.string.preferences_btn_txt), icon = Icons.Filled.Palette),
+        Category(title = stringResource(id = R.string.data_safety_btn_txt), icon = Icons.Filled.Shield),
+        Category(title = stringResource(id = R.string.edit_profile_btn_txt), icon = Icons.Filled.Person),
+        Category(title = stringResource(id = R.string.sign_out_btn_txt), icon = Icons.Filled.Logout)
     )
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ){
         SettingsSectionTitle()
-        SettingsCategoryGrid(categories = categories)
+        SettingsCategoryGrid(categories = categories, onCategoryClick = onCategoryClick)
     }
 }
 
 @Composable
-fun SettingsCategoryGrid(categories: List<Category>) {
+fun SettingsCategoryGrid(categories: List<Category>, onCategoryClick: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -60,7 +60,7 @@ fun SettingsCategoryGrid(categories: List<Category>) {
                         CategoryCard(
                             category = category,
                             onClick = {
-                                // Handle navigation or filtering here
+                                onCategoryClick(category.title)
                             }
                         )
                     }
@@ -80,9 +80,9 @@ fun SettingsSectionTitle(){
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = stringResource(id = R.string.section_title_essentials),
+            text = stringResource(id = R.string.section_title_settings),
             style = AppTypes.type_H1,
-            color = Color(0xFF1B4D13),
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )

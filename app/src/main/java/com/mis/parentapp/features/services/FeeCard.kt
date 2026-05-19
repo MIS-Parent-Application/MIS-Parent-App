@@ -14,13 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 
 @Composable
 fun FeeCard(
@@ -30,12 +28,12 @@ fun FeeCard(
     date: String,
     onDownload: () -> Unit = {}
 ) {
-    val borderColor = Color(0xFF1B4D13)
+    val borderColor = MaterialTheme.colorScheme.primary
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(ColorsDefaultTheme.color_Surface)
+            .background(MaterialTheme.colorScheme.surface)
             .drawBehind {
                 drawRoundRect(
                     color = borderColor,
@@ -58,26 +56,26 @@ fun FeeCard(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = Color(0xFF1B4D13),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                Text(text = "PAID", style = AppTypes.type_H2, color = Color(0xFF1B4D13), fontWeight = FontWeight.Bold)
+                Text(text = "PAID", style = AppTypes.type_H2, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = "Invoice receipt", style = AppTypes.type_Caption, color = Color.Gray)
-                Text(text = invoice, style = AppTypes.type_Caption, color = Color(0xFF1B4D13))
+                Text(text = "Invoice receipt", style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(text = invoice, style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.primary)
             }
             Icon(
                 imageVector = Icons.Default.Download,
                 contentDescription = "Download",
-                tint = Color(0xFF1B4D13),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .size(24.dp)
                     .clickable { onDownload() }
             )
         }
 
-        HorizontalDivider(color = Color(0xFFE0E0E0))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -93,7 +91,7 @@ fun FeeCard(
 @Composable
 fun InfoColumn(label: String, value: String, alignment: Alignment.Horizontal = Alignment.Start) {
     Column(horizontalAlignment = alignment) {
-        Text(text = label, style = AppTypes.type_Caption, color = Color.Gray)
-        Text(text = value, style = AppTypes.type_Body_Small, color = Color.Black)
+        Text(text = label, style = AppTypes.type_Caption, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(text = value, style = AppTypes.type_Body_Small, color = MaterialTheme.colorScheme.onSurface)
     }
 }

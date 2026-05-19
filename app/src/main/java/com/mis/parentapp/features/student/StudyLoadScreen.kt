@@ -3,6 +3,7 @@ package com.mis.parentapp.features.student
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
@@ -21,7 +22,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -30,7 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
@@ -128,7 +130,8 @@ private fun OfficialStudyLoadDocument(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    var zoom by remember { mutableStateOf(0.86f) }
+    var zoomPercent by remember { mutableFloatStateOf(58f) }
+    val zoom = zoomPercent / 100f
     val semester = subjects.firstOrNull()?.semester ?: "2nd Sem."
     val schoolYear = subjects.firstOrNull()?.schoolYear ?: "S.Y. 2025-2026"
     val dateEnrolled = subjects.firstOrNull()?.dateEnrolled ?: "--"
@@ -140,35 +143,44 @@ private fun OfficialStudyLoadDocument(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         StudyLoadZoomBar(
-            zoom = zoom,
-            onZoomOut = { zoom = (zoom - 0.06f).coerceAtLeast(0.70f) },
-            onZoomIn = { zoom = (zoom + 0.06f).coerceAtMost(1.0f) },
-            onFit = { zoom = 0.86f }
+            zoomPercent = zoomPercent,
+            onZoomChange = { zoomPercent = it }
         )
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
+                .width((720 * zoom).dp)
+                .align(Alignment.CenterHorizontally)
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(720.dp)
+                    .wrapContentHeight()
+                    .graphicsLayer {
+                        scaleX = zoom
+                        scaleY = zoom
+                        transformOrigin = TransformOrigin(0f, 0f)
+                    }
                 .background(Color.White, RoundedCornerShape(8.dp))
                 .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(8.dp))
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box {
-                Image(
-                    painter = painterResource(id = R.drawable.school_logo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(280.dp)
-                        .alpha(0.08f),
-                    contentScale = ContentScale.Fit
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StudyLoadHeader(semester = semester, schoolYear = schoolYear, zoom = zoom)
-                    StudentInfoBlock(student = student, zoom = zoom)
-                    StudyLoadTable(subjects = subjects, zoom = zoom)
-                    StudyLoadFooter(subjects = subjects, dateEnrolled = dateEnrolled, zoom = zoom)
+                    .padding(22.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Box {
+                    Image(
+                        painter = painterResource(id = R.drawable.school_logo),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(280.dp)
+                            .alpha(0.08f),
+                        contentScale = ContentScale.Fit
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        StudyLoadHeader(semester = semester, schoolYear = schoolYear)
+                        StudentInfoBlock(student = student)
+                        StudyLoadTable(subjects = subjects)
+                        StudyLoadFooter(subjects = subjects, dateEnrolled = dateEnrolled)
+                    }
                 }
             }
         }
@@ -177,49 +189,44 @@ private fun OfficialStudyLoadDocument(
 
 @Composable
 private fun StudyLoadZoomBar(
-    zoom: Float,
-    onZoomOut: () -> Unit,
-    onZoomIn: () -> Unit,
-    onFit: () -> Unit
+    zoomPercent: Float,
+    onZoomChange: (Float) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White, RoundedCornerShape(999.dp))
-            .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(999.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
-        Text(
-            text = "Document size",
-            color = ColorsDefaultTheme.color_Primary_green_container,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onZoomOut, contentPadding = PaddingValues(horizontal = 10.dp)) {
-                Text("-", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "${(zoom * 100).toInt()}%",
-                color = Color.DarkGray,
-                fontSize = 12.sp,
-                modifier = Modifier.width(44.dp),
-                textAlign = TextAlign.Center
+                text = "Zoom",
+                color = ColorsDefaultTheme.color_Primary_green_container,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
             )
-            TextButton(onClick = onZoomIn, contentPadding = PaddingValues(horizontal = 10.dp)) {
-                Text("+", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            }
-            TextButton(onClick = onFit, contentPadding = PaddingValues(horizontal = 10.dp)) {
-                Text("Fit", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
+            Text("${zoomPercent.toInt()}%", color = Color.DarkGray, fontSize = 12.sp)
         }
+        Slider(
+            value = zoomPercent,
+            onValueChange = onZoomChange,
+            valueRange = 1f..100f,
+            steps = 98,
+            colors = SliderDefaults.colors(
+                thumbColor = ColorsDefaultTheme.color_Primary_green_container,
+                activeTrackColor = ColorsDefaultTheme.color_Primary_green_container
+            )
+        )
     }
 }
 
 @Composable
-private fun StudyLoadHeader(semester: String, schoolYear: String, zoom: Float) {
+private fun StudyLoadHeader(semester: String, schoolYear: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -227,7 +234,7 @@ private fun StudyLoadHeader(semester: String, schoolYear: String, zoom: Float) {
         Image(
             painter = painterResource(id = R.drawable.school_logo),
             contentDescription = "Colegio De Alicia logo",
-            modifier = Modifier.size((72 * zoom).dp),
+            modifier = Modifier.size(72.dp),
             contentScale = ContentScale.Fit
         )
         Column(
@@ -237,20 +244,20 @@ private fun StudyLoadHeader(semester: String, schoolYear: String, zoom: Float) {
             Text(
                 text = "COLEGIO DE ALICIA",
                 color = ColorsDefaultTheme.color_Primary_green_container,
-                fontSize = scaledSp(25f, zoom),
+                fontSize = 25.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Alicia, Isabela",
+                text = "Alicia, Bohol",
                 color = Color.DarkGray,
-                fontSize = scaledSp(12f, zoom),
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "OFFICIAL STUDY LOAD",
                 color = Color.Black,
-                fontSize = scaledSp(15f, zoom),
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 10.dp)
             )
@@ -260,15 +267,15 @@ private fun StudyLoadHeader(semester: String, schoolYear: String, zoom: Float) {
                 text = "$semester $schoolYear",
                 color = ColorsDefaultTheme.color_Primary_green_container,
                 fontWeight = FontWeight.Bold,
-                fontSize = scaledSp(13f, zoom)
+                fontSize = 13.sp
             )
-            Text(text = "View only", color = Color.Gray, fontSize = scaledSp(10f, zoom))
+            Text(text = "View only", color = Color.Gray, fontSize = 10.sp)
         }
     }
 }
 
 @Composable
-private fun StudentInfoBlock(student: Child, zoom: Float) {
+private fun StudentInfoBlock(student: Child) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -276,21 +283,21 @@ private fun StudentInfoBlock(student: Child, zoom: Float) {
             .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        StudyLoadInfo(label = "ID NO.", value = student.rollNumber, zoom = zoom, modifier = Modifier.weight(0.9f))
-        StudyLoadInfo(label = "STUDENT", value = student.name.uppercase(), zoom = zoom, modifier = Modifier.weight(1.45f))
-        StudyLoadInfo(label = "PROGRAM", value = student.course.uppercase(), zoom = zoom, modifier = Modifier.weight(1.25f))
-        StudyLoadInfo(label = "SECTION", value = student.section.uppercase(), zoom = zoom, modifier = Modifier.weight(1f))
+        StudyLoadInfo(label = "ID NO.", value = student.rollNumber, modifier = Modifier.weight(0.9f))
+        StudyLoadInfo(label = "STUDENT", value = student.name.uppercase(), modifier = Modifier.weight(1.45f))
+        StudyLoadInfo(label = "PROGRAM", value = student.course.uppercase(), modifier = Modifier.weight(1.25f))
+        StudyLoadInfo(label = "SECTION", value = student.section.uppercase(), modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun StudyLoadInfo(label: String, value: String, zoom: Float, modifier: Modifier = Modifier) {
+private fun StudyLoadInfo(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        Text(text = label, color = Color.Gray, fontSize = scaledSp(8.5f, zoom), fontWeight = FontWeight.Bold)
+        Text(text = label, color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         Text(
             text = value,
             color = Color.Black,
-            fontSize = scaledSp(10f, zoom),
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -299,12 +306,11 @@ private fun StudyLoadInfo(label: String, value: String, zoom: Float, modifier: M
 }
 
 @Composable
-private fun StudyLoadTable(subjects: List<StudyLoadSubject>, zoom: Float) {
+private fun StudyLoadTable(subjects: List<StudyLoadSubject>) {
     Column(modifier = Modifier.fillMaxWidth()) {
         StudyLoadTableRow(
             values = listOf("SCHED. NO.", "COURSE NO.", "TIME", "DAYS", "ROOM", "UNITS", "REMARKS"),
-            isHeader = true,
-            zoom = zoom
+            isHeader = true
         )
         subjects.forEach { subject ->
             StudyLoadTableRow(
@@ -316,16 +322,15 @@ private fun StudyLoadTable(subjects: List<StudyLoadSubject>, zoom: Float) {
                     subject.room,
                     subject.units.toString(),
                     subject.remarks
-                ),
-                zoom = zoom
+                )
             )
         }
     }
 }
 
 @Composable
-private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false, zoom: Float) {
-    val weights = listOf(0.95f, 1.15f, 1.45f, 0.7f, 0.85f, 0.65f, 1.15f)
+private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
+    val widths = listOf(76.dp, 104.dp, 132.dp, 58.dp, 68.dp, 52.dp, 128.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -338,45 +343,43 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false, z
                 color = if (isHeader) Color.White else Color.Black,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
-                fontSize = if (isHeader) scaledSp(7.4f, zoom) else scaledSp(8.2f, zoom),
+                fontSize = if (isHeader) 9.sp else 10.sp,
                 textAlign = if (index in listOf(3, 4, 5)) TextAlign.Center else TextAlign.Start,
                 maxLines = if (isHeader) 1 else 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .weight(weights[index])
-                    .heightIn(min = (27 * zoom).dp)
+                    .width(widths[index])
+                    .heightIn(min = 30.dp)
                     .border(0.5.dp, Color(0xFF9EA58F))
-                    .padding(horizontal = 3.dp, vertical = (7 * zoom).dp)
+                    .padding(horizontal = 6.dp, vertical = 8.dp)
             )
         }
     }
 }
 
 @Composable
-private fun StudyLoadFooter(subjects: List<StudyLoadSubject>, dateEnrolled: String, zoom: Float) {
+private fun StudyLoadFooter(subjects: List<StudyLoadSubject>, dateEnrolled: String) {
     val totalUnits = subjects.sumOf { it.units }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         HorizontalDivider(color = Color(0xFF1B4D13), thickness = 1.dp)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("DATE ENROLLED: $dateEnrolled", fontSize = scaledSp(10f, zoom), fontWeight = FontWeight.Bold)
-            Text("TOTAL: $totalUnits", fontSize = scaledSp(10f, zoom), fontWeight = FontWeight.Bold)
+            Text("DATE ENROLLED: $dateEnrolled", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("TOTAL: $totalUnits", fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
-        Text("LEGEND: (W) = Withdrawn     ** = Dissolved Subject", fontSize = scaledSp(9f, zoom), fontFamily = FontFamily.Monospace)
+        Text("LEGEND: (W) = Withdrawn     ** = Dissolved Subject", fontSize = 10.sp, fontFamily = FontFamily.Monospace)
         Text(
             text = "This official study load is generated from Colegio De Alicia parent portal records.",
-            fontSize = scaledSp(9f, zoom),
+            fontSize = 10.sp,
             color = Color.DarkGray
         )
         Text(
             text = "Generated copy is for parent/student viewing and verification purposes.",
             color = ColorsDefaultTheme.color_Primary_green_container,
             fontWeight = FontWeight.Bold,
-            fontSize = scaledSp(9f, zoom)
+            fontSize = 10.sp
         )
     }
 }
-
-private fun scaledSp(base: Float, zoom: Float): TextUnit = (base * zoom).sp
 
 @SuppressLint("NewApi")
 private fun exportStudyLoadPdf(context: Context, student: Child, subjects: List<StudyLoadSubject>) {
@@ -401,9 +404,22 @@ private fun exportStudyLoadPdf(context: Context, student: Child, subjects: List<
         contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
         resolver.update(uri, contentValues, null, null)
         Toast.makeText(context, "Study load downloaded", Toast.LENGTH_LONG).show()
+        openPdf(context, uri)
     } catch (e: Exception) {
         e.printStackTrace()
         Toast.makeText(context, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+    }
+}
+
+private fun openPdf(context: Context, uri: android.net.Uri) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/pdf")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    try {
+        context.startActivity(Intent.createChooser(intent, "Open study load"))
+    } catch (_: Exception) {
+        Toast.makeText(context, "Downloaded. No PDF viewer found on this device.", Toast.LENGTH_LONG).show()
     }
 }
 

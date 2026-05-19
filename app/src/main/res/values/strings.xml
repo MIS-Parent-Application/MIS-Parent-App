@@ -32,7 +32,7 @@
     <string name="preferences_btn_txt">Preferences</string>
     <string name="data_safety_btn_txt">Data safety</string>
     <string name="edit_profile_btn_txt">Edit profile</string>
-    <string name="sign_out_btn_txy">Sign out</string>
+    <string name="sign_out_btn_txt">Sign out</string>
 
     <!-- Me module feature label strings -->
     <string name="messages_ft_txt">Messages</string>

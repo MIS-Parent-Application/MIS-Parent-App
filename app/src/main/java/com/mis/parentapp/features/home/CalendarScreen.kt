@@ -294,7 +294,7 @@ private fun EventChip(event: CalendarEventDto, colors: CalendarColors, onClick: 
         Box(
             modifier = Modifier
                 .size(5.dp)
-                .background(ColorsDefaultTheme.color_Yellow, CircleShape)
+                .background(Color(0xFFF6D44B), CircleShape)
         )
         Text(
             text = event.title,
