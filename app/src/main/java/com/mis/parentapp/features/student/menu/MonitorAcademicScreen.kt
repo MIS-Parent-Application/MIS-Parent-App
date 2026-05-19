@@ -33,6 +33,7 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.ParentAppTheme
+import androidx.compose.ui.draw.drawBehind
 
 // --- 1. THE WRAPPER (Integrated with Teammate's API Logic) ---
 @Composable
@@ -339,33 +340,45 @@ fun CustomAlertCard(
 
 @Composable
 fun GradientGradeCard(grade: CourseGrade) {
-    // Restored the Offset and huge radius so the glowing effect works perfectly!
-    val greenRadialBrush = Brush.radialGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.primary.copy(alpha = 0f)
-        ),
-        radius = 1500f,
-        center = Offset(0f, 0f)
-    )
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp), // 1. Fixed height to guarantee uniformity!
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(
             modifier = Modifier
-                .background(Color(0xFFE8F5E9)) // Restored Dark Mode contrast background
-                .background(greenRadialBrush)
+                .fillMaxSize() // Force the box to respect the 200.dp height
+                .background(Color(0xFFE8F5E9))
+                .drawBehind {
+                    val brush = Brush.radialGradient(
+                        colors = listOf(
+                            primaryColor,
+                            primaryColor.copy(alpha = 0f)
+                        ),
+                        radius = size.width,
+                        center = Offset(size.width / 2f, size.height)
+                    )
+                    drawRect(brush)
+                }
                 .padding(20.dp)
         ) {
-            Column {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                    Column {
-                        Text(grade.subjectName, style = AppTypes.type_H2, color = Color(0xFF1B5E20))
+            // Force the Column to take up the full card height
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                        // Added maxLines to ensure crazy long subject names don't break the UI
+                        Text(grade.subjectName, style = AppTypes.type_H2, color = Color(0xFF1B5E20), maxLines = 3, overflow = TextOverflow.Ellipsis)
                         Text("Mr. John Doe\nInstructor", style = AppTypes.type_Caption, color = Color(0xFF2E7D32), lineHeight = 16.sp)
                     }
+
                     Box(
                         modifier = Modifier
                             .background(Color(0xFF4CAF50), RoundedCornerShape(12.dp))
@@ -376,7 +389,8 @@ fun GradientGradeCard(grade: CourseGrade) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                // 2. The flexible spacer! This acts as a spring, pushing the grade to the bottom.
+                Spacer(modifier = Modifier.weight(1f))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                     Text(
@@ -384,7 +398,7 @@ fun GradientGradeCard(grade: CourseGrade) {
                         fontSize = 56.sp,
                         fontWeight = FontWeight.Light,
                         color = Color(0xFF1B5E20),
-                        modifier = Modifier.padding(bottom = 4.dp) // Stops the text clipping!
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Box(
                         modifier = Modifier
