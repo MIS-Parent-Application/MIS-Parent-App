@@ -796,25 +796,28 @@ app.get('/api/notifications', asyncHandler(async (req, res) => {
 }));
 
 // FIX: Updated the map payload mapping step to include imageUrl field property output
+// school-wide events, no need to narrow down with student id
 app.get('/api/calendar', asyncHandler(async (req, res) => {
-    const studentId = req.query.studentId ? Number(req.query.studentId) : null;
     const rows = await all(
-        `SELECT * FROM calendar_events
-         WHERE student_id IS NULL OR student_id = ?
-         ORDER BY date, time`,
-        [studentId]
+        `SELECT id, title, category, date, time, description, event_type, status, image_url 
+         FROM calendar_events 
+         ORDER BY date ASC`
     );
-    res.json(rows.map(item => ({
+
+    // Map database snake_case columns safely to your Retrofit camelCase expectations
+    const events = rows.map(item => ({
         id: item.id,
-        studentId: item.student_id,
         title: item.title,
         category: item.category,
         date: item.date,
-        time: item.time,
+        time: item.time || "",
         description: item.description,
-        status: item.status,
-        imageUrl: item.image_url
-    })));
+        eventType: item.event_type,
+        status: item.status || "Normal",
+        imageUrl: item.image_url || "event1.jpg"
+    }));
+
+    res.json(events);
 }));
 
 app.get('/api/announcements', asyncHandler(async (req, res) => {

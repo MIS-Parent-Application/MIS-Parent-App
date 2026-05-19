@@ -67,7 +67,6 @@ fun NotificationScreen(
                 it.type.name.equals(selectedFilter, ignoreCase = true) ||
                 it.category.equals(selectedFilter, ignoreCase = true)
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -109,6 +108,29 @@ fun NotificationScreen(
                 ) {
                     val newOnes = filteredNotifications.filter { it.isNew }
                     val earlierOnes = filteredNotifications.filter { !it.isNew }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                NotificationFilterRow(
+                    selectedFilter = selectedFilter,
+                    onFilterClick = { selectedFilter = it }
+                )
+            }
+            // Retained screen-specific context menu action
+            IconButton(
+                onClick = { /* Menu */ },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+            }
+        }
 
                     if (newOnes.isNotEmpty()) {
                         item { Text("New", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp)) }
