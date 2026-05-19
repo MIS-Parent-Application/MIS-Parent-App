@@ -407,19 +407,27 @@ fun ContributionDuesSelectionScreen(
                 Button(
                     onClick = {
 
-                        if (selectedPayment == "GCash") {
+                        when (selectedPayment) {
 
-                            showQrDialog = true
+                            "Cash" -> {
 
-                        } else {
+                                showCashDialog = true
+                            }
 
-                            completePayment(
-                                items = items,
-                                quantities = quantities,
-                                selectedPayment = selectedPayment,
-                                currentInvoiceNumber = currentInvoiceNumber,
-                                onPaymentSuccess = onPaymentSuccess
-                            )
+                            "GCash" -> {
+
+                                showQrDialog = true
+                            }
+
+                            "Card" -> {
+
+                                showCardDialog = true
+                            }
+
+                            "Bank Transfer" -> {
+
+                                showBankDialog = true
+                            }
                         }
                     },
                     enabled = totalItems > 0,
@@ -668,7 +676,7 @@ fun ContributionDuesSelectionScreen(
         )
     }
 
-// BANK TRANSFER DIALOG
+    // BANK TRANSFER DIALOG
     if (showBankDialog) {
 
         AlertDialog(
@@ -735,8 +743,6 @@ fun ContributionDuesSelectionScreen(
             }
         )
     }
-
-
 }
 
 @Composable
@@ -818,15 +824,12 @@ fun completePayment(
     currentInvoiceNumber: Int,
     onPaymentSuccess: (List<PaymentRecord>) -> Unit
 ) {
-
     val records = mutableListOf<PaymentRecord>()
-
     val currentDate =
         SimpleDateFormat(
             "MM-dd-yy | h:mm a",
             Locale.getDefault()
         ).format(Date())
-
     val currentMonthYear =
         SimpleDateFormat(
             "MMyyyy",
@@ -834,13 +837,10 @@ fun completePayment(
         ).format(Date())
 
     val purchasedItems = mutableListOf<String>()
-
     val pdfBreakdown = StringBuilder()
-
     var combinedTotalAmount = 0.0
 
     items.forEachIndexed { index, item ->
-
         val qty = quantities[index]
 
         if (qty > 0) {
@@ -848,6 +848,7 @@ fun completePayment(
             purchasedItems.add(item.name)
 
             if (pdfBreakdown.isNotEmpty()) {
+
                 pdfBreakdown.append("\n")
             }
 
@@ -878,16 +879,15 @@ fun completePayment(
                 pdfBreakdown = pdfBreakdown.toString()
             )
         )
-
         onPaymentSuccess(records)
     }
 }
 
 // PRICE FORMATTER
 fun Double.formatPrice(): String {
-
     return if (this % 1 == 0.0) {
         "${this.toInt()}.00"
+
     } else {
         String.format("%.2f", this)
     }
