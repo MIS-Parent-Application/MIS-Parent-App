@@ -196,8 +196,8 @@ fun MainScreen(
 
     val menuItems = when {
         currentDestination?.hasRoute(Home::class) == true -> listOf(
-            MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents); showBottomSheet = false },
-            MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities); showBottomSheet = false }
+            MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents()); showBottomSheet = false },
+            MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities()); showBottomSheet = false }
         )
         currentDestination?.hasRoute(Student::class) == true -> listOf(
             MenuItem("Monitor Academic", "Check academic progress.", Icons.Filled.School) { navController.navigate(MonitorAcademic); showBottomSheet = false },
@@ -385,16 +385,18 @@ fun MainScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable<UpcomingEvents> {
+                composable<UpcomingEvents> { backStackEntry ->
+                    val args = backStackEntry.toRoute<UpcomingEvents>()
                     SubScreen(
-                        startDestination = UpcomingEvents,
+                        startDestination = args,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable<RecentActivities> {
+                composable<RecentActivities> { backStackEntry ->
+                    val args = backStackEntry.toRoute<RecentActivities>()
                     SubScreen(
-                        startDestination = RecentActivities,
+                        startDestination = args,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )

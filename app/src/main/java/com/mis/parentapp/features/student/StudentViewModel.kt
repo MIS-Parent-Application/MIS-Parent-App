@@ -2,6 +2,8 @@ package com.mis.parentapp.features.student
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import com.mis.parentapp.data.CourseGrade
 import com.mis.parentapp.data.StudentMonitoringDao
@@ -45,10 +47,9 @@ class StudentViewModel(private val dao: StudentMonitoringDao) : ViewModel() {
    // }
 
     companion object {
-        fun provideFactory(dao: StudentMonitoringDao): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return StudentViewModel(dao) as T
+        fun provideFactory(dao: StudentMonitoringDao): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                StudentViewModel(dao)
             }
         }
     }

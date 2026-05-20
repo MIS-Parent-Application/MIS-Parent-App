@@ -143,6 +143,18 @@ fun SubScreen(
     var academicDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var academicDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
+    var eventDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var eventDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val isEventDetailOpen = currentDestination?.hasRoute(UpcomingEvents::class) == true && eventDetailBackAction != null
+
+    var recentDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var recentDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val isRecentDetailOpen = currentDestination?.hasRoute(RecentActivities::class) == true && recentDetailBackAction != null
+
+    val isAnyDetailOpen = isEventDetailOpen || isRecentDetailOpen
+
     val isStudentMenu = currentDestination?.hasRoute(MonitorAcademic::class) == true ||
             currentDestination?.hasRoute(TrackAttendance::class) == true
     val isAcademicDetailOpen = currentDestination?.hasRoute(MonitorAcademic::class) == true &&
@@ -238,7 +250,12 @@ fun SubScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            if (navController.previousBackStackEntry != null) {
+                            // Check details stack sequentially
+                            if (isEventDetailOpen) {
+                                eventDetailBackAction?.invoke()
+                            } else if (isRecentDetailOpen) {
+                                recentDetailBackAction?.invoke()
+                            } else if (navController.previousBackStackEntry != null) {
                                 navController.popBackStack()
                             } else {
                                 onBack()
@@ -249,6 +266,21 @@ fun SubScreen(
                                 contentDescription = "Back",
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
+                        }
+                    },
+                    actions = {
+                        // Show share button conditionally if any detail screen layout context is alive
+                        if (isAnyDetailOpen) {
+                            IconButton(onClick = {
+                                if (isEventDetailOpen) eventDetailShareAction?.invoke()
+                                else recentDetailShareAction?.invoke()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share item details",
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -296,17 +328,31 @@ fun SubScreen(
                         }
                     )
                 }
-                composable<UpcomingEvents> {
+                composable<UpcomingEvents> { backStackEntry ->
+                    val routeArgs = backStackEntry.toRoute<UpcomingEvents>()
+
                     UpcomingEventsScreen(
+                        autoSelectEventId = routeArgs.autoSelectEventId,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        },
+                        onDetailTopBarChange = { isDetailOpen, detailBackAction, detailShareAction ->
+                            eventDetailBackAction = if (isDetailOpen) detailBackAction else null
+                            eventDetailShareAction = if (isDetailOpen) detailShareAction else null
                         }
                     )
                 }
-                composable<RecentActivities> {
+                composable<RecentActivities> { backStackEntry ->
+                    val routeArgs = backStackEntry.toRoute<RecentActivities>()
+
                     RecentActivitiesScreen(
+                        autoSelectEventId = routeArgs.autoSelectEventId,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        },
+                        onDetailTopBarChange = { isDetailOpen, detailBackAction, detailShareAction ->
+                            recentDetailBackAction = if (isDetailOpen) detailBackAction else null
+                            recentDetailShareAction = if (isDetailOpen) detailShareAction else null
                         }
                     )
                 }

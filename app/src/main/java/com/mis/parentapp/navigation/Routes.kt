@@ -19,10 +19,14 @@ object DebugMenu
 object Notification
 
 @Serializable
-object UpcomingEvents
+data class UpcomingEvents(
+    val autoSelectEventId: Int? = null // Change from object to data class with default null value
+)
 
 @Serializable
-object RecentActivities
+data class RecentActivities(
+    val autoSelectEventId: Int? = null // Accepts an optional event ID parameter
+)
 
 @Serializable
 object Analytics
