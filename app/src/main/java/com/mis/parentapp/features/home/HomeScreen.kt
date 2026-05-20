@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -65,6 +66,7 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -127,15 +129,20 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
+    val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM?.updateStudents(dashboard.children)
+            studentVM?.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
             dashboardError = null
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
         }
+    }
+
+    LaunchedEffect(selectedBackendStudentId) {
+        eventViewModel.refreshData(selectedBackendStudentId)
     }
 
     val students = remember(studentVM?.students) {
@@ -197,6 +204,7 @@ fun Body(
                     items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
+                            profileImageUrl = studentWrapper.profileImageUrl,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
                             onClick = {
                                 studentVM?.students
@@ -215,7 +223,8 @@ fun Body(
                 val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
                 StudentPresenceHeader(
                     student = studentWithSchedules.student,
-                    isInClass = schedulePair.first != null
+                    profileImageUrl = studentWithSchedules.profileImageUrl,
+                    isInClass = schedulePair.first.schedule != null
                 )
             }
         }
@@ -266,10 +275,17 @@ fun Body(
     }
 }
 
-// ... Rest of the private functions and helper composables remain exactly the same ...
 private data class HomeStudent(
     val student: StudentEntity,
-    val schedules: List<SubjectScheduleEntity>
+    val schedules: List<SubjectScheduleEntity>,
+    val profileImageUrl: String?,
+    val backgroundImageUrl: String?
+)
+
+data class HomeScheduleDisplay(
+    val schedule: SubjectScheduleEntity?,
+    val statusLabel: String,
+    val dateLabel: String
 )
 
 private fun Child.toHomeStudent(): HomeStudent {
@@ -285,11 +301,13 @@ private fun Child.toHomeStudent(): HomeStudent {
             attendanceScore = attendanceValue / 100.0,
             gpa = gpa,
             pendingPayment = pendingPayments.toDouble(),
-            notificationCount = 0,
+            notificationCount = notificationCount,
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
         ),
-        schedules = schedules.map { it.toScheduleEntity(studentId) }
+        schedules = schedules.map { it.toScheduleEntity(studentId) },
+        profileImageUrl = profileImageUrl,
+        backgroundImageUrl = backgroundImageUrl
     )
 }
 
@@ -306,6 +324,7 @@ private fun ClassSchedule.toScheduleEntity(studentId: String): SubjectScheduleEn
 @Composable
 fun StudentSelectorItem(
     student: StudentEntity,
+    profileImageUrl: String? = null,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -326,8 +345,9 @@ fun StudentSelectorItem(
                 .background(if (isSelected) highlightColor.copy(alpha = 0.2f) else Color.Transparent)
                 .padding(3.dp)
         ) {
-            Image(
-                painter = painterResource(id = student.profileImageRes),
+            RemoteImage(
+                url = profileImageUrl,
+                fallbackRes = student.profileImageRes,
                 contentDescription = student.name,
                 modifier = Modifier
                     .fillMaxSize()
@@ -361,7 +381,11 @@ fun StudentPresenceHeader(student: StudentEntity) {
 }
 
 @Composable
-fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
+fun StudentPresenceHeader(
+    student: StudentEntity,
+    profileImageUrl: String? = null,
+    isInClass: Boolean
+) {
     val highlightColor = if (isInClass) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -412,8 +436,9 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
                     .border(width = 3.dp, color = highlightColor, shape = CircleShape)
                     .padding(4.dp)
             ) {
-                Image(
-                    painter = painterResource(id = student.profileImageRes),
+                RemoteImage(
+                    url = profileImageUrl,
+                    fallbackRes = student.profileImageRes,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
@@ -446,7 +471,7 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
 }
 
 @Composable
-fun ScheduleSection(now: SubjectScheduleEntity?, next: SubjectScheduleEntity?) {
+fun ScheduleSection(now: HomeScheduleDisplay, next: HomeScheduleDisplay) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
@@ -454,8 +479,9 @@ fun ScheduleSection(now: SubjectScheduleEntity?, next: SubjectScheduleEntity?) {
         ) {
             item {
                 ScheduleCard(
-                    schedule = now,
-                    status = "Now",
+                    schedule = now.schedule,
+                    status = now.statusLabel,
+                    date = now.dateLabel,
                     fallbackSubject = "No class",
                     fallbackRoom = "-",
                     fallbackTime = "No class now",
@@ -464,8 +490,9 @@ fun ScheduleSection(now: SubjectScheduleEntity?, next: SubjectScheduleEntity?) {
             }
             item {
                 ScheduleCard(
-                    schedule = next,
-                    status = "Up Next",
+                    schedule = next.schedule,
+                    status = next.statusLabel,
+                    date = next.dateLabel,
                     fallbackSubject = "VACANT",
                     fallbackRoom = "-",
                     fallbackTime = "No next class",
@@ -480,6 +507,7 @@ fun ScheduleSection(now: SubjectScheduleEntity?, next: SubjectScheduleEntity?) {
 fun ScheduleCard(
     schedule: SubjectScheduleEntity?,
     status: String,
+    date: String,
     fallbackSubject: String,
     fallbackRoom: String,
     fallbackTime: String,
@@ -508,12 +536,19 @@ fun ScheduleCard(
                 modifier = Modifier.requiredSize(24.dp),
                 tint = primaryText
             )
-            Text(
-                text = status,
-                style = AppTypes.type_Caption,
-                fontWeight = FontWeight.Bold,
-                color = primaryText
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = status,
+                    style = AppTypes.type_Caption,
+                    fontWeight = FontWeight.Bold,
+                    color = primaryText
+                )
+                Text(
+                    text = date,
+                    style = AppTypes.type_Caption.copy(fontSize = 10.sp),
+                    color = secondaryText
+                )
+            }
         }
 
         Column(
@@ -550,12 +585,16 @@ fun ScheduleCard(
 
 private fun resolveHomeSchedulePair(
     schedules: List<SubjectScheduleEntity>
-): Pair<SubjectScheduleEntity?, SubjectScheduleEntity?> {
+): Pair<HomeScheduleDisplay, HomeScheduleDisplay> {
     val calendar = Calendar.getInstance()
-    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val todayName = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
     val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+
+    val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+    val todayDateStr = dateFormatter.format(calendar.time)
+
     val todaySchedules = schedules
-        .filter { it.day.equals(today, ignoreCase = true) }
+        .filter { it.day.equals(todayName, ignoreCase = true) }
         .sortedBy { startMinutesFromRange(it.time) }
 
     val current = todaySchedules.firstOrNull {
@@ -563,10 +602,43 @@ private fun resolveHomeSchedulePair(
         val end = endMinutesFromRange(it.time)
         nowMinutes in start until end
     }
-    val next = todaySchedules.firstOrNull { startMinutesFromRange(it.time) > nowMinutes }
-        ?: schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) }).firstOrNull()
 
-    return current to next
+    val currentDisplay = HomeScheduleDisplay(
+        schedule = current,
+        statusLabel = "Now",
+        dateLabel = todayDateStr
+    )
+
+    var nextSchedule: SubjectScheduleEntity? = todaySchedules.firstOrNull { startMinutesFromRange(it.time) > nowMinutes }
+    var nextStatus = "Up Next"
+    var nextDate = todayDateStr
+
+    if (nextSchedule == null && schedules.isNotEmpty()) {
+        val todayIdx = dayOrder(todayName)
+        val sortedAll = schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) })
+
+        nextSchedule = sortedAll.firstOrNull { dayOrder(it.day) > todayIdx }
+            ?: sortedAll.firstOrNull()
+
+        if (nextSchedule != null) {
+            nextStatus = nextSchedule.day
+            val targetIdx = dayOrder(nextSchedule.day)
+            var daysToAdd = targetIdx - todayIdx
+            if (daysToAdd <= 0) daysToAdd += 7
+
+            val nextCal = Calendar.getInstance()
+            nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
+            nextDate = dateFormatter.format(nextCal.time)
+        }
+    }
+
+    val nextDisplay = HomeScheduleDisplay(
+        schedule = nextSchedule,
+        statusLabel = nextStatus,
+        dateLabel = nextDate
+    )
+
+    return currentDisplay to nextDisplay
 }
 
 private fun resolveCurrentClass(schedules: List<ClassSchedule>): ClassSchedule? {
@@ -634,7 +706,11 @@ fun EventHorizontalSection(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(events) { event ->
-                    EventCard(event = event, onClick = { onEventClick(event) })
+                    EventCard(
+                        event = event,
+                        modifier = Modifier.width(200.dp),
+                        onClick = { onEventClick(event) }
+                    )
                 }
             }
         }

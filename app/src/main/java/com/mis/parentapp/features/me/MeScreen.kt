@@ -20,8 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,10 +46,11 @@ fun MeScreen(
     navController: NavController? = null,
     authViewModel: AuthViewModel,
     userProfileViewModel: UserProfileViewModel = viewModel(),
-    onSignOutClick: () -> Unit,
-    onInfoClick: () -> Unit  // 👈 ADDED THIS PARAMETER
+    onSignOutClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val headerHeight = (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -55,14 +58,14 @@ fun MeScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp), // Spacing between items
+            contentPadding = PaddingValues(bottom = 24.dp) // Extra bottom padding
         ) {
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp)
+                        .height(headerHeight)
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
                     if (userProfileViewModel.profileBitmap != null) {
@@ -108,7 +111,7 @@ fun MeScreen(
                             .background(Color.Black.copy(alpha = 0.25f))
                     )
 
-                    // NAME + DETAILS + PROFILE
+                    // NAME + DETAILS + PROFILE (Match StudentScreen Layout)
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -117,21 +120,27 @@ fun MeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        // TEXT
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 userProfileViewModel.fullName,
                                 color = Color.White,
                                 fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = if (userProfileViewModel.isPrimaryGuardian) "Primary Guardian" else "Parent",
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
+                        // VERIFIED BADGE
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -149,7 +158,9 @@ fun MeScreen(
                                 "Verified Account",
                                 color = Color.White,
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -182,3 +193,11 @@ fun MeScreen(
         }
     }
 }
+
+//@Preview(showBackground = true, widthDp = 360)
+//@Composable
+//private fun MeScreenPreview() {
+//    ParentAppTheme {
+//        MeScreen()
+//    }
+//}

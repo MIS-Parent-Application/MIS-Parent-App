@@ -39,8 +39,16 @@ data class Child(
     val attendance: String,
     val gpa: Double,
     val pendingPayments: Int,
+    val notificationCount: Int = 0,
+    val profileImageUrl: String? = null,
+    val backgroundImageUrl: String? = null,
     val schedules: List<ClassSchedule> = emptyList(),
     val studyLoad: List<StudyLoadSubject> = emptyList()
+)
+
+data class StudentPhotoUpdateRequest(
+    val profileImageUrl: String? = null,
+    val backgroundImageUrl: String? = null
 )
 
 data class ClassSchedule(
@@ -76,7 +84,8 @@ data class NotificationDto(
     val type: String,
     val time: String,
     val category: String,
-    val isNew: Boolean
+    val isNew: Boolean,
+    val imageUrl: String? = null
 )
 
 data class CalendarEventDto(

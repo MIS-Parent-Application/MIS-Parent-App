@@ -12,7 +12,7 @@ object RetrofitInstance {
     //then run adb reverse tcp:3000 tcp:3000 in terminal
     //private const val BASE_URL = "http://10.0.2.2:3000/"
 
-    private val okHttpClient: OkHttpClient by lazy{
+    private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val originalRequest = chain.request()

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
+import com.mis.parentapp.utilities.images.RemoteImage
 
 enum class NotificationType {
     EVENT, ACTIVITY, ATTENDANCE, MESSAGE, REMINDER, EMERGENCY
@@ -35,6 +36,7 @@ data class NotificationData(
     val timeAgo: String,
     val isNew: Boolean,
     val imageRes: Int? = null,
+    val imageUrl: String? = null,
     val gradientColors: List<Color>? = null
 )
 
@@ -59,7 +61,17 @@ fun NotificationCard(
             verticalAlignment = Alignment.Top
         ) {
             // Profile Image or Gradient Icon
-            if (notification.imageRes != null) {
+            if (notification.imageUrl != null) {
+                RemoteImage(
+                    url = notification.imageUrl,
+                    fallbackRes = notification.imageRes ?: R.drawable.event1,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else if (notification.imageRes != null) {
                 Image(
                     painter = painterResource(id = notification.imageRes),
                     contentDescription = null,

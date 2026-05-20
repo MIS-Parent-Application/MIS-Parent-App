@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen // <-- 1. ADD THIS IMPORT
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -23,6 +24,7 @@ import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.PasswordSignIn
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.shared.AppSettingsViewModel
 import com.mis.parentapp.shared.ThemeMode
@@ -30,6 +32,9 @@ import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        installSplashScreen() // <-- 2. ADD THIS LINE EXACTLY HERE
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -53,6 +58,14 @@ fun AppNavigation() {
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
+
+    LaunchedEffect(Unit) {
+        if (authViewModel.isUserLoggedIn()) {
+            navController.navigate(MainContainer) {
+                popUpTo(OnBoarding) { inclusive = true }
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {

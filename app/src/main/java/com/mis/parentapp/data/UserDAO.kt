@@ -26,6 +26,12 @@ interface UserDAO {
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getCurrentUser(): UserEntity?
 
+    @Query("UPDATE users SET lastLoginTime = :time WHERE username = :username")
+    suspend fun updateLoginTime(username: String, time: Long)
+
+    @Query("DELETE FROM users")
+    suspend fun clearUsers()
+
     @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
     fun getUserFlow(username: String): kotlinx.coroutines.flow.Flow<UserEntity?>
 }
