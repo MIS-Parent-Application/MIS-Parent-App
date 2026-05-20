@@ -3,6 +3,7 @@ package com.mis.parentapp.network
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -25,6 +26,12 @@ interface ApiService {
 
     @GET("api/student/{id}/studyload")
     suspend fun getStudyLoad(@Path("id") studentId: Int): List<StudyLoadSubject>
+
+    @PATCH("api/student/{id}/photos")
+    suspend fun updateStudentPhotos(
+        @Path("id") studentId: Int,
+        @Body request: StudentPhotoUpdateRequest
+    ): Child
 
     @GET("api/student/{id}/grades")
     suspend fun getStudentGrades(@Path("id") studentId: Int): List<GradeDto>

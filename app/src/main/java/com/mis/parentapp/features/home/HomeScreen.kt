@@ -65,6 +65,7 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -127,6 +128,7 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
+    val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
@@ -136,6 +138,10 @@ fun Body(
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
         }
+    }
+
+    LaunchedEffect(selectedBackendStudentId) {
+        eventViewModel.refreshData(selectedBackendStudentId)
     }
 
     val students = remember(studentVM?.students) {
@@ -197,6 +203,7 @@ fun Body(
                     items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
+                            profileImageUrl = studentWrapper.profileImageUrl,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
                             onClick = {
                                 studentVM?.students
@@ -215,6 +222,7 @@ fun Body(
                 val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
                 StudentPresenceHeader(
                     student = studentWithSchedules.student,
+                    profileImageUrl = studentWithSchedules.profileImageUrl,
                     isInClass = schedulePair.first != null
                 )
             }
@@ -269,7 +277,9 @@ fun Body(
 // ... Rest of the private functions and helper composables remain exactly the same ...
 private data class HomeStudent(
     val student: StudentEntity,
-    val schedules: List<SubjectScheduleEntity>
+    val schedules: List<SubjectScheduleEntity>,
+    val profileImageUrl: String?,
+    val backgroundImageUrl: String?
 )
 
 private fun Child.toHomeStudent(): HomeStudent {
@@ -289,7 +299,9 @@ private fun Child.toHomeStudent(): HomeStudent {
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
         ),
-        schedules = schedules.map { it.toScheduleEntity(studentId) }
+        schedules = schedules.map { it.toScheduleEntity(studentId) },
+        profileImageUrl = profileImageUrl,
+        backgroundImageUrl = backgroundImageUrl
     )
 }
 
@@ -306,6 +318,7 @@ private fun ClassSchedule.toScheduleEntity(studentId: String): SubjectScheduleEn
 @Composable
 fun StudentSelectorItem(
     student: StudentEntity,
+    profileImageUrl: String? = null,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -326,8 +339,9 @@ fun StudentSelectorItem(
                 .background(if (isSelected) highlightColor.copy(alpha = 0.2f) else Color.Transparent)
                 .padding(3.dp)
         ) {
-            Image(
-                painter = painterResource(id = student.profileImageRes),
+            RemoteImage(
+                url = profileImageUrl,
+                fallbackRes = student.profileImageRes,
                 contentDescription = student.name,
                 modifier = Modifier
                     .fillMaxSize()
@@ -361,7 +375,11 @@ fun StudentPresenceHeader(student: StudentEntity) {
 }
 
 @Composable
-fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
+fun StudentPresenceHeader(
+    student: StudentEntity,
+    profileImageUrl: String? = null,
+    isInClass: Boolean
+) {
     val highlightColor = if (isInClass) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -412,8 +430,9 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
                     .border(width = 3.dp, color = highlightColor, shape = CircleShape)
                     .padding(4.dp)
             ) {
-                Image(
-                    painter = painterResource(id = student.profileImageRes),
+                RemoteImage(
+                    url = profileImageUrl,
+                    fallbackRes = student.profileImageRes,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()

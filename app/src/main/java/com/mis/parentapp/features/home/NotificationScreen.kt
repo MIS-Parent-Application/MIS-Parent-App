@@ -51,6 +51,7 @@ fun NotificationScreen(
                         category = dto.type.replaceFirstChar { it.uppercase() },
                         timeAgo = dto.time,
                         isNew = dto.isNew,
+                        imageUrl = dto.imageUrl,
                         gradientColors = if (dto.type.lowercase() == "event") listOf(Color(0xFFFFA726), Color(0xFFFF7043)) else null
                     )
                 }
@@ -62,10 +63,12 @@ fun NotificationScreen(
     }
 
     val filteredNotifications = notifications.filter {
+        val normalizedFilter = selectedFilter.removeSuffix("s")
         selectedFilter == "All" ||
                 (selectedFilter == "Unread" && it.isNew) ||
-                it.type.name.equals(selectedFilter, ignoreCase = true) ||
-                it.category.equals(selectedFilter, ignoreCase = true)
+                it.type.name.equals(normalizedFilter, ignoreCase = true) ||
+                it.category.equals(selectedFilter, ignoreCase = true) ||
+                it.category.equals(normalizedFilter, ignoreCase = true)
     }
 
     Column(
