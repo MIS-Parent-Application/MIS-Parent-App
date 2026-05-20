@@ -109,6 +109,25 @@ data class GradeDto(
     val term: String
 )
 
+data class AcademicPerformanceDto(
+    val id: Int,
+    val studentId: Int,
+    val type: String,
+    val title: String,
+    val subject: String,
+    val teacher: String,
+    val summary: String,
+    val details: String,
+    val criteria: String,
+    val imageUrl: String?,
+    val score: String?,
+    val status: String,
+    val assignedDate: String,
+    val dueDate: String,
+    val timeAgo: String,
+    val isPositive: Boolean
+)
+
 data class AttendanceDto(
     val id: Int,
     val studentId: Int,
