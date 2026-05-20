@@ -26,6 +26,9 @@ interface UserDAO {
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getCurrentUser(): UserEntity?
 
+    @Query("UPDATE users SET lastLoginTime = :time WHERE username = :username")
+    suspend fun updateLoginTime(username: String, time: Long)
+
     @Query("DELETE FROM users")
     suspend fun clearUsers()
 

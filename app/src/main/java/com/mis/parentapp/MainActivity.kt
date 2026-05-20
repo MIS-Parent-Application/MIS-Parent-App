@@ -23,6 +23,7 @@ import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.PasswordSignIn
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.shared.AppSettingsViewModel
 import com.mis.parentapp.shared.ThemeMode
@@ -53,6 +54,14 @@ fun AppNavigation() {
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
+
+    LaunchedEffect(Unit) {
+        if (authViewModel.isUserLoggedIn()) {
+            navController.navigate(MainContainer) {
+                popUpTo(OnBoarding) { inclusive = true }
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {
