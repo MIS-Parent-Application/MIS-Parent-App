@@ -71,7 +71,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.toRoute
 import com.mis.parentapp.navigation.Chat
-import com.mis.parentapp.features.me.essentials.ChatView
 import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Calendar

@@ -20,4 +20,8 @@ class UserRepository(private val userDao: UserDAO) {
             Result.failure(e)
         }
     }
+
+    suspend fun signOut() = withContext(Dispatchers.IO) {
+        userDao.clearUsers()
+    }
 }
