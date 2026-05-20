@@ -1,31 +1,62 @@
 package com.mis.parentapp.core
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.Composable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -43,35 +74,54 @@ import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
-import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.features.student.StudentScreen
-import com.mis.parentapp.navigation.*
+import com.mis.parentapp.navigation.Calendar
+import com.mis.parentapp.navigation.DebugMenu
+import com.mis.parentapp.navigation.Documents
+import com.mis.parentapp.navigation.FAQs
+import com.mis.parentapp.navigation.FormsAndRequest
+import com.mis.parentapp.navigation.Home
+import com.mis.parentapp.navigation.Me
+import com.mis.parentapp.navigation.MonitorAcademic
+import com.mis.parentapp.navigation.Notification
+import com.mis.parentapp.navigation.PasswordSignIn
+import com.mis.parentapp.navigation.PaymentOptions
+import com.mis.parentapp.navigation.RecentActivities
+import com.mis.parentapp.navigation.SignIn
+import com.mis.parentapp.navigation.Student
+import com.mis.parentapp.navigation.StudyLoad
+import com.mis.parentapp.navigation.TrackAttendance
+import com.mis.parentapp.navigation.UpcomingEvents
+import com.mis.parentapp.navigation.Announcements
+import com.mis.parentapp.navigation.Feedbacks
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
+import com.mis.parentapp.navigation.DataSafety
+import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.Preference
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.draw.clip
+import com.mis.parentapp.navigation.Chat
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.utilities.modals.GenericMenuModal
 import com.mis.parentapp.utilities.modals.MenuItem
 
-data class BottomTab(
-    val label: String,
-    val route: Any,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun MainScreen(
-    windowSizeClass: WindowSizeClass,
     onSignOut: () -> Unit
 ) {
     val navController = rememberNavController()
-    val isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
-    val isMedium = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Medium
-    val useNavRail = isExpanded || isMedium
-
     val studentSharedViewModel: StudentSharedViewModel = viewModel()
-    val userProfileViewModel: UserProfileViewModel = viewModel()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -165,11 +215,11 @@ fun MainScreen(
                 ChatInputBar(
                     text = chatViewModel.chatTextState,
                     onTextChange = { chatViewModel.chatTextState = it },
-                    onSend = { 
+                    onSend = {
                         chatArgs?.let { chatViewModel.sendMessage(it.id) }
                     }
                 )
-            } else if (showBottomBar && !useNavRail) {
+            } else if (showBottomBar) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.background
                 ) {
@@ -225,302 +275,240 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
-        Row(modifier = Modifier.fillMaxSize()) {
-            if (showBottomBar && useNavRail) {
-                NavigationRail(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    header = {
-                        Image(
-                            painter = painterResource(id = R.drawable.school_logo),
-                            contentDescription = "School Logo",
-                            modifier = Modifier.size(48.dp).padding(vertical = 8.dp)
-                        )
-                    }
-                ) {
-                    bottomTabs.forEach { tab ->
-                        val selected = currentDestination?.hierarchy?.any {
-                            it.hasRoute(tab.route::class)
-                        } == true || when (tab.route) {
-                            Home -> currentDestination?.hasRoute(Notification::class) == true ||
-                                    currentDestination?.hasRoute(Calendar::class) == true ||
-                                    currentDestination?.hasRoute(UpcomingEvents::class) == true ||
-                                    currentDestination?.hasRoute(RecentActivities::class) == true
-                            Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
-                                    currentDestination?.hasRoute(TrackAttendance::class) == true ||
-                                    currentDestination?.hasRoute(StudyLoad::class) == true
-                            Me -> currentDestination?.hasRoute(Announcements::class) == true ||
-                                    currentDestination?.hasRoute(Feedbacks::class) == true ||
-                                    currentDestination?.hasRoute(Meeting::class) == true ||
-                                    currentDestination?.hasRoute(Messages::class) == true ||
-                                    currentDestination?.hasRoute(Chat::class) == true ||
-                                    currentDestination?.hasRoute(DataSafety::class) == true ||
-                                    currentDestination?.hasRoute(EditProfile::class) == true ||
-                                    currentDestination?.hasRoute(Preference::class) == true
-                            else -> false
-                        }
-                        NavigationRailItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                    contentDescription = tab.label
-                                )
-                            },
-                            label = { Text(tab.label) }
-                        )
-                    }
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                NavHost(
-                    navController = navController,
-                    startDestination = Home,
-                    modifier = Modifier.padding(
-                        top = if (isSolidTopBar) innerPadding.calculateTopPadding() else 0.dp,
-                        bottom = if (useNavRail) 0.dp else innerPadding.calculateBottomPadding()
-                    ),
-                    enterTransition = {
-                        fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Left,
-                            animationSpec = tween(300)
-                        )
-                    },
-                    exitTransition = {
-                        fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Left,
-                            animationSpec = tween(300)
-                        )
-                    },
-                    popEnterTransition = {
-                        fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Right,
-                            animationSpec = tween(300)
-                        )
-                    },
-                    popExitTransition = {
-                        fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Right,
-                            animationSpec = tween(300)
-                        )
-                    }
-                ) {
-                    composable<DebugMenu> {
-                        DebugMenuScreen(
-                            onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
-                        )
-                    }
-
-                    composable<SignIn> { backStackEntry ->
-                        val args = backStackEntry.toRoute<SignIn>()
-                        UsernameSignInScreen(
-                            backgroundResId = args.backgroundResId,
-                            onBack = { navController.popBackStack() },
-                            onNavigateToPassword = { email ->
-                                navController.navigate(PasswordSignIn(args.backgroundResId, email))
-                            }
-                        )
-                    }
-
-                    composable<PasswordSignIn> { backStackEntry ->
-                        val args = backStackEntry.toRoute<PasswordSignIn>()
-                        PasswordSignInScreen(
-                            username = args.email,
-                            backgroundResId = args.backgroundResId,
-                            viewModel = authViewModel,
-                            onBack = { navController.popBackStack() },
-                            onSignInSuccess = {
-                                navController.navigate(Home) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            }
-                        )
-                    }
-
-                    composable<Me> {
-                        MeScreen(
-                            navController = navController,
-                            authViewModel = authViewModel,
-                            userProfileViewModel = userProfileViewModel,
-                            onSignOutClick = onSignOut
-                        )
-                    }
-                    composable<Home> {
-                        HomeScreen(
-                            studentVM = studentSharedViewModel,
-                            mainNavController = navController
-                        )
-                    }
-                    composable<Student> {
-                        StudentScreen(
-                            studentVM = studentSharedViewModel,
-                            dao = dao,
-                            onStudyLoadClick = { navController.navigate(StudyLoad) }
-                        )
-                    }
-                    composable<Notification> {
-                        SubScreen(
-                            startDestination = Notification,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<Calendar> {
-                        SubScreen(
-                            startDestination = Calendar,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<StudyLoad> {
-                        SubScreen(
-                            startDestination = StudyLoad,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<UpcomingEvents> {
-                        SubScreen(
-                            startDestination = UpcomingEvents,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<RecentActivities> {
-                        SubScreen(
-                            startDestination = RecentActivities,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<MonitorAcademic> {
-                        SubScreen(
-                            startDestination = MonitorAcademic,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<TrackAttendance> {
-                        SubScreen(
-                            startDestination = TrackAttendance,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<Documents> {
-                        SubScreen(
-                            startDestination = Documents,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<FormsAndRequest> {
-                        SubScreen(
-                            startDestination = FormsAndRequest,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<FAQs> {
-                        SubScreen(
-                            startDestination = FAQs,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<PaymentOptions> {
-                        SubScreen(
-                            startDestination = PaymentOptions,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<Announcements> {
-                        SubScreen(
-                            startDestination = Announcements,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<Feedbacks> {
-                        SubScreen(
-                            startDestination = Feedbacks,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<Meeting> {
-                        SubScreen(
-                            startDestination = Meeting,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<Messages> {
-                        SubScreen(
-                            startDestination = Messages,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() },
-                            onNavigate = { route: Any -> navController.navigate(route) }
-                        )
-                    }
-                    composable<Chat> { backStackEntry ->
-                        val args = backStackEntry.toRoute<Chat>()
-                        SubScreen(
-                            startDestination = args,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() },
-                            chatViewModel = chatViewModel
-                        )
-                    }
-                    composable<DataSafety> {
-                        SubScreen(
-                            startDestination = DataSafety,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<EditProfile> {
-                        SubScreen(
-                            startDestination = EditProfile,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() },
-                            userProfileViewModel = userProfileViewModel
-                        )
-                    }
-                    composable<Preference> {
-                        SubScreen(
-                            startDestination = Preference,
-                            studentVM = studentSharedViewModel,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                }
-
-                if (showSharedTopBar) {
-                    MainTopBar(
-                        onMenuClick = { showBottomSheet = true },
-                        onNotificationClick = { navController.navigate(Notification) },
-                        onCalendarClick = { navController.navigate(Calendar) },
-                        iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                        menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                        backgroundColor = topBarBackgroundColor,
-                        isMeScreen = currentDestination?.hasRoute(Me::class) == true
+        Box(modifier = Modifier.fillMaxSize()) {
+            NavHost(
+                navController = navController,
+                startDestination = Home,
+                modifier = Modifier.padding(
+                    top = if (isSolidTopBar) innerPadding.calculateTopPadding() else 0.dp,
+                    bottom = innerPadding.calculateBottomPadding()
+                ),
+                enterTransition = {
+                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(300)
+                    )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
+                    )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(300)
                     )
                 }
+            ) {
+                composable<DebugMenu> {
+                    DebugMenuScreen(
+                        onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
+                    )
+                }
+
+                composable<SignIn> { backStackEntry ->
+                    val args = backStackEntry.toRoute<SignIn>()
+                    UsernameSignInScreen(
+                        backgroundResId = args.backgroundResId,
+                        onBack = { navController.popBackStack() },
+                        onNavigateToPassword = { email ->
+                            navController.navigate(PasswordSignIn(args.backgroundResId, email))
+                        }
+                    )
+                }
+
+                composable<PasswordSignIn> { backStackEntry ->
+                    val args = backStackEntry.toRoute<PasswordSignIn>()
+                    PasswordSignInScreen(
+                        username = args.email,
+                        backgroundResId = args.backgroundResId,
+                        viewModel = authViewModel,
+                        onBack = { navController.popBackStack() },
+                        onSignInSuccess = {
+                            navController.navigate(Home) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
+
+                composable<Me> {
+                    MeScreen(
+                        navController = navController,
+                        authViewModel = authViewModel,
+                        onSignOutClick = onSignOut
+                    )
+                }
+                composable<Home> {
+                    HomeScreen(
+                        studentVM = studentSharedViewModel,
+                        mainNavController = navController
+                    )
+                }
+                composable<Student> {
+                    StudentScreen(
+                        studentVM = studentSharedViewModel,
+                        dao = dao,
+                        onStudyLoadClick = { navController.navigate(StudyLoad) }
+                    )
+                }
+                composable<Notification> {
+                    SubScreen(
+                        startDestination = Notification,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Calendar> {
+                    SubScreen(
+                        startDestination = Calendar,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<StudyLoad> {
+                    SubScreen(
+                        startDestination = StudyLoad,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<UpcomingEvents> {
+                    SubScreen(
+                        startDestination = UpcomingEvents,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<RecentActivities> {
+                    SubScreen(
+                        startDestination = RecentActivities,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<MonitorAcademic> {
+                    SubScreen(
+                        startDestination = MonitorAcademic,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<TrackAttendance> {
+                    SubScreen(
+                        startDestination = TrackAttendance,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Documents> {
+                    SubScreen(
+                        startDestination = Documents,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<FormsAndRequest> {
+                    SubScreen(
+                        startDestination = FormsAndRequest,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<FAQs> {
+                    SubScreen(
+                        startDestination = FAQs,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<PaymentOptions> {
+                    SubScreen(
+                        startDestination = PaymentOptions,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Announcements> {
+                    SubScreen(
+                        startDestination = Announcements,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Feedbacks> {
+                    SubScreen(
+                        startDestination = Feedbacks,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Meeting> {
+                    SubScreen(
+                        startDestination = Meeting,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Messages> {
+                    SubScreen(
+                        startDestination = Messages,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() },
+                        onNavigate = { route: Any -> navController.navigate(route) }
+                    )
+                }
+                composable<Chat> { backStackEntry ->
+                    val args = backStackEntry.toRoute<Chat>()
+                    SubScreen(
+                        startDestination = args,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() },
+                        chatViewModel = chatViewModel
+                    )
+                }
+                composable<DataSafety> {
+                    SubScreen(
+                        startDestination = DataSafety,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<EditProfile> {
+                    SubScreen(
+                        startDestination = EditProfile,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable<Preference> {
+                    SubScreen(
+                        startDestination = Preference,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            if (showSharedTopBar) {
+                MainTopBar(
+                    onMenuClick = { showBottomSheet = true },
+                    onNotificationClick = { navController.navigate(Notification) },
+                    onCalendarClick = { navController.navigate(Calendar) },
+                    iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
+                    menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
+                    backgroundColor = topBarBackgroundColor,
+                    isMeScreen = currentDestination?.hasRoute(Me::class) == true
+                )
             }
         }
 
@@ -586,6 +574,13 @@ fun MainTopBar(
         }
     }
 }
+
+data class BottomTab(
+    val label: String,
+    val route: Any,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+)
 
 @Composable
 fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {

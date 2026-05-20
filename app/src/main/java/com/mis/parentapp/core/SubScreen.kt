@@ -15,12 +15,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,6 +58,7 @@ import com.mis.parentapp.features.me.settings.DataSafetyScreen
 import com.mis.parentapp.features.me.settings.EditProfileScreen
 import com.mis.parentapp.features.me.settings.PreferenceScreen
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -136,9 +140,29 @@ fun SubScreen(
 
     val selectedStudent = studentVM.selectedStudent
     val studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected"
+    var academicDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var academicDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val isStudentMenu = currentDestination?.hasRoute(MonitorAcademic::class) == true ||
             currentDestination?.hasRoute(TrackAttendance::class) == true
+    val isAcademicDetailOpen = currentDestination?.hasRoute(MonitorAcademic::class) == true &&
+            academicDetailBackAction != null
+    val isDarkTheme = isSystemInDarkTheme()
+    val studentTopBarContainer = if (isDarkTheme) {
+        androidx.compose.ui.graphics.Color(0xFF122D14)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val studentTopBarTitleColor = if (isDarkTheme) {
+        androidx.compose.ui.graphics.Color(0xFFF3FFE9)
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    val studentTopBarSubtitleColor = if (isDarkTheme) {
+        androidx.compose.ui.graphics.Color(0xFFC7EFBF)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Scaffold(
         topBar = {
@@ -152,18 +176,20 @@ fun SubScreen(
                             Text(
                                 text = title,
                                 style = AppTypes.type_H2,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = studentTopBarTitleColor
                             )
                             Text(
                                 text = studentLabel,
                                 style = AppTypes.type_Caption,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = studentTopBarSubtitleColor
                             )
                         }
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            if (navController.previousBackStackEntry != null) {
+                            if (isAcademicDetailOpen) {
+                                academicDetailBackAction?.invoke()
+                            } else if (navController.previousBackStackEntry != null) {
                                 navController.popBackStack()
                             } else {
                                 onBack()
@@ -172,22 +198,24 @@ fun SubScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
+                                tint = studentTopBarTitleColor
                             )
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* TODO: Menu action */ }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                        if (isAcademicDetailOpen) {
+                            IconButton(onClick = { academicDetailShareAction?.invoke() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share performance task",
+                                    tint = studentTopBarTitleColor
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                        containerColor = studentTopBarContainer,
+                        scrolledContainerColor = studentTopBarContainer
                     )
                 )
             } else {
@@ -310,6 +338,10 @@ fun SubScreen(
                             } else {
                                 onBack()
                             }
+                        },
+                        onDetailTopBarChange = { isDetailOpen, detailBackAction, detailShareAction ->
+                            academicDetailBackAction = if (isDetailOpen) detailBackAction else null
+                            academicDetailShareAction = if (isDetailOpen) detailShareAction else null
                         }
                     )
                 }
