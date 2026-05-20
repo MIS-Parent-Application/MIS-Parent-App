@@ -22,11 +22,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
@@ -79,6 +79,7 @@ import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.UserRepository
+import com.mis.parentapp.features.me.AboutScreen
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
@@ -86,6 +87,7 @@ import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.navigation.About
 import com.mis.parentapp.navigation.Announcements
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.Chat
@@ -182,10 +184,8 @@ fun MainScreen(
     }) && !isExpanded
 
     val isChatScreen = currentDestination?.hasRoute(Chat::class) == true
-
     val useWhiteIcons = currentDestination?.hasRoute(Student::class) == true ||
             currentDestination?.hasRoute(Me::class) == true
-
     val isSolidTopBar = currentDestination?.hasRoute(Home::class) == true
 
     val topBarBackgroundColor by animateColorAsState(
@@ -207,7 +207,7 @@ fun MainScreen(
             MenuItem("Track Attendance", "Daily presence records.", Icons.Filled.Settings) { navController.navigate(TrackAttendance); showBottomSheet = false }
         )
         currentDestination?.hasRoute(Me::class) == true -> listOf(
-            MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { showBottomSheet = false }
+            MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { navController.navigate(About); showBottomSheet = false }
         )
         else -> emptyList()
     }
@@ -713,7 +713,7 @@ fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Uni
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Icon(Icons.Default.Send, contentDescription = "Send")
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
             }
         }
     }

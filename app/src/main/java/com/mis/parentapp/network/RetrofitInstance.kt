@@ -10,14 +10,7 @@ object RetrofitInstance {
 
     //if using phone via usb
     //then run adb reverse tcp:3000 tcp:3000 in terminal
-    const val BASE_URL = "http://127.0.0.1:3000/"
-
-    fun resolveMediaUrl(url: String?): String? {
-        val cleanUrl = url?.trim().orEmpty()
-        if (cleanUrl.isBlank()) return null
-        if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) return cleanUrl
-        return BASE_URL.trimEnd('/') + "/" + cleanUrl.trimStart('/')
-    }
+    //private const val BASE_URL = "http://10.0.2.2:3000/"
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
