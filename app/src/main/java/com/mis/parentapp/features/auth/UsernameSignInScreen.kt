@@ -31,7 +31,7 @@ fun UsernameSignInScreen(
     onNavigateToPassword: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -115,8 +115,8 @@ fun UsernameSignInScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TextField(
-                    value = email,
-                    onValueChange = { email = it },
+                    value = username,
+                    onValueChange = { username = it },
                     placeholder = { Text(stringResource(id = R.string.username_hint), color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -161,10 +161,10 @@ fun UsernameSignInScreen(
 
                     Button(
                         onClick = {
-                            if (email.isNotEmpty()) {
-                                onNavigateToPassword(email)
+                            if (username.isNotEmpty()) {
+                                onNavigateToPassword(username)
                             } else {
-                                android.widget.Toast.makeText(context, "Please enter your email", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, "Please enter your username", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier
