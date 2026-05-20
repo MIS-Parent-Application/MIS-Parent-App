@@ -15,15 +15,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-data class AnnouncementData(
-    val id: String,
-    val title: String,
-    val content: String,
-    val isNew: Boolean,
-    val category: String, // School-wide or College
-    val colors: List<Color> = listOf(Color(0xFFFFA726), Color(0xFFFF7043))
-)
-
 @Composable
 fun AnnouncementCard(
     announcement: AnnouncementData,

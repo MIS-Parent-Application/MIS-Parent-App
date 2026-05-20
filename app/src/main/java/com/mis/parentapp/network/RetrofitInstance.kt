@@ -10,7 +10,7 @@ object RetrofitInstance {
 
     //if using phone via usb
     //then run adb reverse tcp:3000 tcp:3000 in terminal
-    private const val BASE_URL = "http://127.0.0.1:3000/"
+    private const val BASE_URL = "http://192.168.101.72:3000/"
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()

@@ -1,57 +1,66 @@
 package com.mis.parentapp.core
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.runtime.Composable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -69,33 +78,32 @@ import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
-import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.navigation.Announcements
 import com.mis.parentapp.navigation.Calendar
+import com.mis.parentapp.navigation.Chat
+import com.mis.parentapp.navigation.DataSafety
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Documents
+import com.mis.parentapp.navigation.EditProfile
 import com.mis.parentapp.navigation.FAQs
+import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.FormsAndRequest
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.MonitorAcademic
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.navigation.PaymentOptions
+import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.navigation.RecentActivities
-import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.navigation.StudyLoad
 import com.mis.parentapp.navigation.TrackAttendance
 import com.mis.parentapp.navigation.UpcomingEvents
-import com.mis.parentapp.navigation.Announcements
-import com.mis.parentapp.navigation.Feedbacks
-import com.mis.parentapp.navigation.Meeting
-import com.mis.parentapp.navigation.Messages
-import com.mis.parentapp.navigation.DataSafety
-import com.mis.parentapp.navigation.EditProfile
-import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.utilities.modals.GenericMenuModal
 import com.mis.parentapp.utilities.modals.MenuItem
@@ -111,6 +119,17 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    // Get the ChatViewModel scoped to the Chat route if it exists in the backstack
+    val isChatInBackstack = currentDestination?.hierarchy?.any { it.hasRoute(Chat::class) } == true
+    val chatViewModel: ChatViewModel = if (isChatInBackstack) {
+        val chatEntry = remember(navBackStackEntry) {
+            navController.getBackStackEntry(Chat::class)
+        }
+        viewModel(chatEntry)
+    } else {
+        viewModel()
+    }
+
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -118,11 +137,11 @@ fun MainScreen(
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
+    val userProfileViewModel: com.mis.parentapp.features.me.UserProfileViewModel = viewModel()
 
     val bottomTabs = listOf(
         BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
         BottomTab("Student", Student, Icons.Filled.School, Icons.Outlined.School),
-        BottomTab("Services", Services, Icons.Filled.Settings, Icons.Outlined.Settings),
         BottomTab("Me", Me, Icons.Filled.Person, Icons.Outlined.Person)
     )
 
@@ -143,6 +162,7 @@ fun MainScreen(
             currentDestination?.hasRoute(Feedbacks::class) == true ||
             currentDestination?.hasRoute(Meeting::class) == true ||
             currentDestination?.hasRoute(Messages::class) == true ||
+            currentDestination?.hasRoute(Chat::class) == true ||
             currentDestination?.hasRoute(DataSafety::class) == true ||
             currentDestination?.hasRoute(EditProfile::class) == true ||
             currentDestination?.hasRoute(Preference::class) == true
@@ -151,11 +171,12 @@ fun MainScreen(
         currentDestination?.hasRoute(tab.route::class) == true
     }
 
+    val isChatScreen = currentDestination?.hasRoute(Chat::class) == true
+
     val useWhiteIcons = currentDestination?.hasRoute(Student::class) == true ||
             currentDestination?.hasRoute(Me::class) == true
 
-    val isSolidTopBar = currentDestination?.hasRoute(Home::class) == true ||
-            currentDestination?.hasRoute(Services::class) == true
+    val isSolidTopBar = currentDestination?.hasRoute(Home::class) == true
 
     val topBarBackgroundColor by animateColorAsState(
         targetValue = if (isSolidTopBar) MaterialTheme.colorScheme.background else Color.Transparent,
@@ -168,18 +189,12 @@ fun MainScreen(
 
     val menuItems = when {
         currentDestination?.hasRoute(Home::class) == true -> listOf(
-            MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents); showBottomSheet = false },
-            MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities); showBottomSheet = false }
+            MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents()); showBottomSheet = false },
+            MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities()); showBottomSheet = false }
         )
         currentDestination?.hasRoute(Student::class) == true -> listOf(
             MenuItem("Monitor Academic", "Check academic progress.", Icons.Filled.School) { navController.navigate(MonitorAcademic); showBottomSheet = false },
             MenuItem("Track Attendance", "Daily presence records.", Icons.Filled.Settings) { navController.navigate(TrackAttendance); showBottomSheet = false }
-        )
-        currentDestination?.hasRoute(Services::class) == true -> listOf(
-            MenuItem("Form and Request", "Submit online forms.", Icons.Filled.Settings) { navController.navigate(FormsAndRequest); showBottomSheet = false },
-            MenuItem("Payment options", "View available payment methods.", Icons.Filled.Settings) { navController.navigate(PaymentOptions); showBottomSheet = false },
-            MenuItem("Documents", "Access school files.", Icons.Filled.Settings) { navController.navigate(Documents); showBottomSheet = false },
-            MenuItem("FAQs", "Frequently asked questions.", Icons.Filled.Settings) { navController.navigate(FAQs); showBottomSheet = false }
         )
         currentDestination?.hasRoute(Me::class) == true -> listOf(
             MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { showBottomSheet = false }
@@ -190,7 +205,16 @@ fun MainScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            if (showBottomBar) {
+            if (isChatScreen) {
+                val chatArgs = navBackStackEntry?.toRoute<Chat>()
+                ChatInputBar(
+                    text = chatViewModel.chatTextState,
+                    onTextChange = { chatViewModel.chatTextState = it },
+                    onSend = {
+                        chatArgs?.let { chatViewModel.sendMessage(it.id) }
+                    }
+                )
+            } else if (showBottomBar) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.background
                 ) {
@@ -205,14 +229,11 @@ fun MainScreen(
                             Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
                                     currentDestination?.hasRoute(TrackAttendance::class) == true ||
                                     currentDestination?.hasRoute(StudyLoad::class) == true
-                            Services -> currentDestination?.hasRoute(FormsAndRequest::class) == true ||
-                                    currentDestination?.hasRoute(PaymentOptions::class) == true ||
-                                    currentDestination?.hasRoute(Documents::class) == true ||
-                                    currentDestination?.hasRoute(FAQs::class) == true
                             Me -> currentDestination?.hasRoute(Announcements::class) == true ||
                                     currentDestination?.hasRoute(Feedbacks::class) == true ||
                                     currentDestination?.hasRoute(Meeting::class) == true ||
                                     currentDestination?.hasRoute(Messages::class) == true ||
+                                    currentDestination?.hasRoute(Chat::class) == true ||
                                     currentDestination?.hasRoute(DataSafety::class) == true ||
                                     currentDestination?.hasRoute(EditProfile::class) == true ||
                                     currentDestination?.hasRoute(Preference::class) == true
@@ -315,16 +336,11 @@ fun MainScreen(
                     )
                 }
 
-                composable<Services> {
-                    ServicesScreen(
-                        navController = navController,
-                        studentVM = studentSharedViewModel
-                    )
-                }
                 composable<Me> {
                     MeScreen(
                         navController = navController,
                         authViewModel = authViewModel,
+                        userProfileViewModel = userProfileViewModel,
                         onSignOutClick = onSignOut
                     )
                 }
@@ -362,16 +378,18 @@ fun MainScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable<UpcomingEvents> {
+                composable<UpcomingEvents> { backStackEntry ->
+                    val args = backStackEntry.toRoute<UpcomingEvents>()
                     SubScreen(
-                        startDestination = UpcomingEvents,
+                        startDestination = args,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable<RecentActivities> {
+                composable<RecentActivities> { backStackEntry ->
+                    val args = backStackEntry.toRoute<RecentActivities>()
                     SubScreen(
-                        startDestination = RecentActivities,
+                        startDestination = args,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
@@ -443,21 +461,33 @@ fun MainScreen(
                     SubScreen(
                         startDestination = Messages,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onNavigate = { route: Any -> navController.navigate(route) }
+                    )
+                }
+                composable<Chat> { backStackEntry ->
+                    val args = backStackEntry.toRoute<Chat>()
+                    SubScreen(
+                        startDestination = args,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() },
+                        chatViewModel = chatViewModel
                     )
                 }
                 composable<DataSafety> {
                     SubScreen(
                         startDestination = DataSafety,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        userProfileViewModel = userProfileViewModel
                     )
                 }
                 composable<EditProfile> {
                     SubScreen(
                         startDestination = EditProfile,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        userProfileViewModel = userProfileViewModel
                     )
                 }
                 composable<Preference> {
@@ -551,3 +581,45 @@ data class BottomTab(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 )
+
+@Composable
+fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+    Surface(
+        tonalElevation = 2.dp,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = text,
+                onValueChange = onTextChange,
+                placeholder = { Text("Text message") },
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(24.dp)),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = onSend,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(Icons.Default.Send, contentDescription = "Send")
+            }
+        }
+    }
+}

@@ -70,8 +70,8 @@ fun AnnouncementsScreen() {
                         .weight(1f)
                         .clickable { selectedTab = tab },
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isSelected) Color(0xFF1B3D13) else Color(0xFFF6FDE7),
-                    contentColor = if (isSelected) Color.White else Color.Black
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                 ) {
                     Box(modifier = Modifier.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                         Text(text = tab, fontSize = 14.sp, fontWeight = FontWeight.Bold)

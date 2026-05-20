@@ -19,14 +19,37 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.R
+import com.mis.parentapp.features.me.UserProfileViewModel
 
 @Composable
-fun EditProfileScreen() {
-    var name by remember { mutableStateOf("Nathaniel B. McClure") }
-    var email by remember { mutableStateOf("nathaniel.mcclure@example.com") }
-    var phone by remember { mutableStateOf("+63 912 345 6789") }
+fun EditProfileScreen(
+    userProfileViewModel: UserProfileViewModel = viewModel(),
+    onSaveSuccess: () -> Unit = {}
+) {
+    var name by remember { mutableStateOf(userProfileViewModel.fullName) }
+    var email by remember { mutableStateOf(userProfileViewModel.email) }
+    var phone by remember { mutableStateOf(userProfileViewModel.phoneNumber) }
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let {
+            val inputStream = context.contentResolver.openInputStream(it)
+            userProfileViewModel.updateProfileImage(inputStream, it)
+        }
+    }
+
+    // Update local state when ViewModel data is loaded
+    LaunchedEffect(userProfileViewModel.fullName) { name = userProfileViewModel.fullName }
+    LaunchedEffect(userProfileViewModel.email) { email = userProfileViewModel.email }
+    LaunchedEffect(userProfileViewModel.phoneNumber) { phone = userProfileViewModel.phoneNumber }
 
     Column(
         modifier = Modifier
@@ -36,20 +59,34 @@ fun EditProfileScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.BottomEnd) {
-            Image(
-                painter = painterResource(id = R.drawable.parent_pic),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            if (userProfileViewModel.profileBitmap != null) {
+                Image(
+                    bitmap = userProfileViewModel.profileBitmap!!,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = userProfileViewModel.profileImageRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Surface(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .clickable { /* Change photo */ },
+                    .clickable { 
+                        launcher.launch("image/*")
+                    },
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -61,10 +98,12 @@ fun EditProfileScreen() {
 
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = { /* name = it */ },
             label = { Text("Full Name") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            readOnly = true,
+            enabled = false
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -90,7 +129,10 @@ fun EditProfileScreen() {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { /* Save changes */ },
+            onClick = { 
+                userProfileViewModel.updateProfile(name, email, phone)
+                onSaveSuccess()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),

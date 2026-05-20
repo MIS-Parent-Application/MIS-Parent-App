@@ -36,7 +36,7 @@ fun UsernameSignInScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(id = backgroundResId),
+            painter = painterResource(id = if (backgroundResId != 0) backgroundResId else R.drawable.bg_one_sign_screen),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop

@@ -7,6 +7,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mis.parentapp.R
 import com.mis.parentapp.features.auth.AuthViewModel
@@ -37,8 +43,10 @@ fun MeScreen(
     modifier: Modifier = Modifier,
     navController: NavController? = null,
     authViewModel: AuthViewModel,
+    userProfileViewModel: UserProfileViewModel = viewModel(),
     onSignOutClick: () -> Unit
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -56,19 +64,35 @@ fun MeScreen(
                         .height(380.dp) // Match StudentScreen height
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
-                    Image(
-                        painter = painterResource(id = R.drawable.parent_pic),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(
-                                RoundedCornerShape(
-                                    bottomStart = 32.dp,
-                                    bottomEnd = 32.dp
+                    if (userProfileViewModel.profileBitmap != null) {
+                        Image(
+                            bitmap = userProfileViewModel.profileBitmap!!,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(
+                                    RoundedCornerShape(
+                                        bottomStart = 32.dp,
+                                        bottomEnd = 32.dp
+                                    )
                                 )
-                            )
-                    )
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = userProfileViewModel.profileImageRes),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(
+                                    RoundedCornerShape(
+                                        bottomStart = 32.dp,
+                                        bottomEnd = 32.dp
+                                    )
+                                )
+                        )
+                    }
 
                     // DARK OVERLAY
                     Box(
@@ -95,25 +119,40 @@ fun MeScreen(
                         // TEXT
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                "Nathaniel B. McClure",
+                                userProfileViewModel.fullName,
                                 color = Color.White,
-                                fontSize = 18.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text("Parent Account", color = Color.White)
-                            Text("ID number: 123456789", color = Color.White)
+                            Text(
+                                text = if (userProfileViewModel.isPrimaryGuardian) "Primary Guardian" else "Parent",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
 
-                        // CIRCLE PROFILE IMAGE
-                        Image(
-                            painter = painterResource(id = R.drawable.parent_pic),
-                            contentDescription = null,
+                        // VERIFIED BADGE
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color.White, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
+                                .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color(0xFF38B02D),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                "Verified Account",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }

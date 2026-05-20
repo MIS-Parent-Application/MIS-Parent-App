@@ -19,10 +19,14 @@ object DebugMenu
 object Notification
 
 @Serializable
-object UpcomingEvents
+data class UpcomingEvents(
+    val autoSelectEventId: Int? = null // Change from object to data class with default null value
+)
 
 @Serializable
-object RecentActivities
+data class RecentActivities(
+    val autoSelectEventId: Int? = null // Accepts an optional event ID parameter
+)
 
 @Serializable
 object Analytics
@@ -56,6 +60,7 @@ object PaymentOptions
 @Serializable object Feedbacks
 @Serializable object Meeting
 @Serializable object Messages
+@Serializable data class Chat(val id: String, val senderName: String, val imageRes: Int)
 
 // Me Settings
 @Serializable object DataSafety

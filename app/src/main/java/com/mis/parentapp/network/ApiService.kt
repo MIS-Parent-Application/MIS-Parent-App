@@ -29,6 +29,9 @@ interface ApiService {
     @GET("api/student/{id}/grades")
     suspend fun getStudentGrades(@Path("id") studentId: Int): List<GradeDto>
 
+    @GET("api/student/{id}/academic-performance")
+    suspend fun getAcademicPerformance(@Path("id") studentId: Int): List<AcademicPerformanceDto>
+
     @GET("api/student/{id}/attendance")
     suspend fun getStudentAttendance(@Path("id") studentId: Int): List<AttendanceDto>
 

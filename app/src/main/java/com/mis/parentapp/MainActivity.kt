@@ -22,6 +22,10 @@ import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.PasswordSignIn
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mis.parentapp.shared.AppSettingsViewModel
+import com.mis.parentapp.shared.ThemeMode
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +33,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ParentAppTheme {
+            val settingsViewModel: AppSettingsViewModel = viewModel()
+            val darkTheme = when (settingsViewModel.themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+            ParentAppTheme(darkTheme = darkTheme) {
                 AppNavigation()
             }
         }

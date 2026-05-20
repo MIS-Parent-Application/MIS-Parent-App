@@ -25,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -361,11 +362,12 @@ private fun ChatBubble(content: String, time: String, isOutgoing: Boolean) {
 private fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
     Surface(
         tonalElevation = 2.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -378,10 +380,19 @@ private fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: (
                     .clip(RoundedCornerShape(24.dp)),
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             )
-            IconButton(onClick = onSend) {
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = onSend,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
                 Icon(Icons.Default.Send, contentDescription = "Send")
             }
         }

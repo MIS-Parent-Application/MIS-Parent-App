@@ -77,108 +77,54 @@ fun TrackAttendanceScreen(
 
     TrackAttendanceContent(
         attendanceList = attendanceList,
-        studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected",
-        emptyMessage = errorMessage ?: "No official attendance records yet.",
-        onBackClick = onBackClick
+        emptyMessage = errorMessage ?: "No official attendance records yet."
     )
 }
 
 // --- 2. THE UI CONTENT ---
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrackAttendanceContent(
     attendanceList: List<SubjectAttendance>,
-    studentLabel: String,
-    emptyMessage: String,
-    onBackClick: () -> Unit
+    emptyMessage: String
 ) {
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "Attendance",
-                            style = AppTypes.type_H2,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = studentLabel,
-                            style = AppTypes.type_Caption,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* TODO: Menu action */ }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                // Updated to topAppBarColors to clear the deprecation warning!
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            AttendanceSummaryCard(attendanceList)
+        }
+
+        item {
+            // We are borrowing CustomAlertCard from MonitorAcademicScreen.kt now!
+            CustomAlertCard(
+                title = "Recent Absence",
+                description = "Unexcused absence recorded.",
+                trailingText = "Programming 2",
+                trailingSubText = "Oct 12",
+                icon = Icons.Default.Info,
+                iconBackgroundColor = MaterialTheme.colorScheme.error,
+                containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
+                contentColor = MaterialTheme.colorScheme.onBackground
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                AttendanceSummaryCard(attendanceList)
-            }
+        }
 
-            item {
-                // We are borrowing CustomAlertCard from MonitorAcademicScreen.kt now!
-                CustomAlertCard(
-                    title = "Recent Absence",
-                    description = "Unexcused absence recorded.",
-                    trailingText = "Programming 2",
-                    trailingSubText = "Oct 12",
-                    icon = Icons.Default.Info,
-                    iconBackgroundColor = MaterialTheme.colorScheme.error,
-                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
-                    contentColor = MaterialTheme.colorScheme.onBackground
-                )
-            }
+        item {
+            Text(
+                text = "Subject Breakdown",
+                style = AppTypes.type_H2.copy(fontSize = 18.sp),
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+        }
 
-            item {
-                Text(
-                    text = "Subject Breakdown",
-                    style = AppTypes.type_H2.copy(fontSize = 18.sp),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-                )
-            }
-
-            if (attendanceList.isEmpty()) {
-                item { EmptyAttendanceMessage(emptyMessage) }
-            } else {
-                items(attendanceList) { record ->
-                    SubjectAttendanceCard(record)
-                }
+        if (attendanceList.isEmpty()) {
+            item { EmptyAttendanceMessage(emptyMessage) }
+        } else {
+            items(attendanceList) { record ->
+                SubjectAttendanceCard(record)
             }
         }
     }
@@ -329,9 +275,7 @@ fun TrackAttendancePreview() {
     ParentAppTheme {
         TrackAttendanceContent(
             attendanceList = getDummyAttendance(),
-            studentLabel = "John B. McLure - 3rd Yr",
-            emptyMessage = "No attendance yet",
-            onBackClick = {}
+            emptyMessage = "No attendance yet"
         )
     }
 }
