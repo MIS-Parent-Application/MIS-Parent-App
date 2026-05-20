@@ -28,11 +28,11 @@ class EventsViewModel(private val repository: EventRepository) : ViewModel() {
         refreshData()
     }
 
-    fun refreshData() {
+    fun refreshData(studentId: Int? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                repository.refreshEvents()
+                repository.refreshEvents(studentId)
             } catch (e: Exception) {
                 Log.e("EventsViewModel", "Error refreshing events", e)
             } finally {

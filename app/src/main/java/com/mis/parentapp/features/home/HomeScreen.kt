@@ -66,6 +66,7 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -128,6 +129,7 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
+    val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
@@ -137,6 +139,10 @@ fun Body(
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
         }
+    }
+
+    LaunchedEffect(selectedBackendStudentId) {
+        eventViewModel.refreshData(selectedBackendStudentId)
     }
 
     val students = remember(studentVM?.students) {
@@ -198,6 +204,7 @@ fun Body(
                     items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
+                            profileImageUrl = studentWrapper.profileImageUrl,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
                             onClick = {
                                 studentVM?.students
@@ -216,6 +223,7 @@ fun Body(
                 val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
                 StudentPresenceHeader(
                     student = studentWithSchedules.student,
+                    profileImageUrl = studentWithSchedules.profileImageUrl,
                     isInClass = schedulePair.first.schedule != null
                 )
             }
@@ -269,7 +277,9 @@ fun Body(
 
 private data class HomeStudent(
     val student: StudentEntity,
-    val schedules: List<SubjectScheduleEntity>
+    val schedules: List<SubjectScheduleEntity>,
+    val profileImageUrl: String?,
+    val backgroundImageUrl: String?
 )
 
 data class HomeScheduleDisplay(
@@ -295,7 +305,9 @@ private fun Child.toHomeStudent(): HomeStudent {
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
         ),
-        schedules = schedules.map { it.toScheduleEntity(studentId) }
+        schedules = schedules.map { it.toScheduleEntity(studentId) },
+        profileImageUrl = profileImageUrl,
+        backgroundImageUrl = backgroundImageUrl
     )
 }
 
@@ -312,6 +324,7 @@ private fun ClassSchedule.toScheduleEntity(studentId: String): SubjectScheduleEn
 @Composable
 fun StudentSelectorItem(
     student: StudentEntity,
+    profileImageUrl: String? = null,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -332,8 +345,9 @@ fun StudentSelectorItem(
                 .background(if (isSelected) highlightColor.copy(alpha = 0.2f) else Color.Transparent)
                 .padding(3.dp)
         ) {
-            Image(
-                painter = painterResource(id = student.profileImageRes),
+            RemoteImage(
+                url = profileImageUrl,
+                fallbackRes = student.profileImageRes,
                 contentDescription = student.name,
                 modifier = Modifier
                     .fillMaxSize()
@@ -367,7 +381,11 @@ fun StudentPresenceHeader(student: StudentEntity) {
 }
 
 @Composable
-fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
+fun StudentPresenceHeader(
+    student: StudentEntity,
+    profileImageUrl: String? = null,
+    isInClass: Boolean
+) {
     val highlightColor = if (isInClass) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -418,8 +436,9 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
                     .border(width = 3.dp, color = highlightColor, shape = CircleShape)
                     .padding(4.dp)
             ) {
-                Image(
-                    painter = painterResource(id = student.profileImageRes),
+                RemoteImage(
+                    url = profileImageUrl,
+                    fallbackRes = student.profileImageRes,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
@@ -570,7 +589,7 @@ private fun resolveHomeSchedulePair(
     val calendar = Calendar.getInstance()
     val todayName = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
     val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
-    
+
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.US)
     val todayDateStr = dateFormatter.format(calendar.time)
 
@@ -597,16 +616,16 @@ private fun resolveHomeSchedulePair(
     if (nextSchedule == null && schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) })
-        
+
         nextSchedule = sortedAll.firstOrNull { dayOrder(it.day) > todayIdx }
-            ?: sortedAll.firstOrNull() 
-            
+            ?: sortedAll.firstOrNull()
+
         if (nextSchedule != null) {
             nextStatus = nextSchedule.day
             val targetIdx = dayOrder(nextSchedule.day)
             var daysToAdd = targetIdx - todayIdx
             if (daysToAdd <= 0) daysToAdd += 7
-            
+
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)

@@ -14,7 +14,7 @@ class UserRepository(private val userDao: UserDAO) {
 
             val currentTime = System.currentTimeMillis()
             val existingUser = userDao.getCurrentUser()
-            
+
             val user = if (existingUser?.username == username) {
                 userDao.updateLoginTime(username, currentTime)
                 existingUser.copy(lastLoginTime = currentTime)
@@ -23,7 +23,7 @@ class UserRepository(private val userDao: UserDAO) {
                 userDao.registerUser(newUser)
                 newUser
             }
-            
+
             Result.success(user)
 
         } catch (e: Exception) {

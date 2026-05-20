@@ -46,6 +46,7 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -93,8 +94,9 @@ fun StudentScreen(
                         .fillMaxWidth()
                         .height(380.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.bgpic),
+                    RemoteImage(
+                        url = selectedStudent?.backgroundImageUrl,
+                        fallbackRes = R.drawable.bgpic,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -134,8 +136,9 @@ fun StudentScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(students, key = { it.id }) { student ->
-                                Image(
-                                    painter = painterResource(id = R.drawable.student_image),
+                                RemoteImage(
+                                    url = student.profileImageUrl,
+                                    fallbackRes = R.drawable.student_image,
                                     contentDescription = student.name,
                                     modifier = Modifier
                                         .size(48.dp)
