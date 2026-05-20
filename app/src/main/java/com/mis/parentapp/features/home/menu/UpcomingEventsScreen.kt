@@ -1,5 +1,7 @@
 package com.mis.parentapp.features.home.menu
 
+import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -19,23 +21,17 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +44,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,7 +53,6 @@ import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.features.home.EventsViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.ui.theme.ParentAppTheme
 
 @Composable
 fun rememberDrawableIdFromName(imageName: String?): Int {
@@ -67,7 +61,6 @@ fun rememberDrawableIdFromName(imageName: String?): Int {
         if (imageName.isNullOrBlank()) {
             R.drawable.event1 // Default fallback asset if null
         } else {
-            // Strips extension like ".jpg" if present in database string
             val cleanName = imageName.substringBefore(".")
             val resId = context.resources.getIdentifier(cleanName, "drawable", context.packageName)
             if (resId != 0) resId else R.drawable.event1
@@ -78,20 +71,33 @@ fun rememberDrawableIdFromName(imageName: String?): Int {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpcomingEventsScreen(
-    onBackClick: () -> Unit
+    autoSelectEventId: Int? = null,
+    onBackClick: () -> Unit,
+    onDetailTopBarChange: (Boolean, (() -> Unit)?, (() -> Unit)?) -> Unit
 ) {
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val repo = EventRepository(db.eventDao())
+    val eventRepo = remember {
+        EventRepository(AppDatabase.getDatabase(context).eventDao())
+    }
     val viewModel: EventsViewModel = viewModel(
-        factory = EventsViewModel.provideFactory(repo)
+        factory = EventsViewModel.provideFactory(eventRepo)
     )
     val allUpcomingEvents by viewModel.upcomingEvents.collectAsState()
     var selectedFilter by remember { mutableStateOf("All") }
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
 
+    LaunchedEffect(allUpcomingEvents, autoSelectEventId) {
+        if (autoSelectEventId != null && selectedEvent == null && allUpcomingEvents.isNotEmpty()) {
+            val matchingEvent = allUpcomingEvents.find { it.id == autoSelectEventId }
+            if (matchingEvent != null) {
+                selectedEvent = matchingEvent
+            }
+        }
+    }
+
     BackHandler(enabled = selectedEvent != null) {
         selectedEvent = null
+        onDetailTopBarChange(false, null, null)
     }
 
     val filteredEvents = remember(allUpcomingEvents, selectedFilter) {
@@ -101,14 +107,27 @@ fun UpcomingEventsScreen(
 
     val groupedEvents = filteredEvents.groupBy { it.category }
 
-    if (selectedEvent != null) {
-        EventDetailScreen(event = selectedEvent!!, onBackClick = { selectedEvent = null })
-    } else {
-        // FIX: Removed Scaffold and TopAppBar entirely.
-        // SubScreen's Scaffold handles the top framing now.
-        Column(modifier = Modifier.fillMaxSize()) {
+    DisposableEffect(selectedEvent) {
+        if (selectedEvent != null) {
+            onDetailTopBarChange(
+                true,
+                {
+                    selectedEvent = null
+                },
+                { shareEvent(context, selectedEvent!!) }
+            )
+        } else {
+            onDetailTopBarChange(false, null, null)
+        }
+        onDispose {
+            onDetailTopBarChange(false, null, null)
+        }
+    }
 
-            // Keep your filter row at the top of the body
+    if (selectedEvent != null) {
+        EventDetailScreen(event = selectedEvent!!)
+    } else {
+        Column(modifier = Modifier.fillMaxSize()) {
             EventFilterRow(
                 selectedFilter = selectedFilter,
                 onFilterSelected = { selectedFilter = it }
@@ -234,7 +253,7 @@ fun EventCard(event: EventItem, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
+fun EventDetailScreen(event: EventItem) {
     val context = LocalContext.current
 
     val imageResource = remember(event.imageUrl) {
@@ -247,61 +266,53 @@ fun EventDetailScreen(event: EventItem, onBackClick: () -> Unit) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { },
-                actions = {
-                    IconButton(onClick = { /* Handle share */ }) {
-                        Icon(Icons.Default.Share, contentDescription = "Share")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Image(
+            painter = painterResource(id = imageResource),
+            contentDescription = "Event banner",
             modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Image(
-                painter = painterResource(id = imageResource),
-                contentDescription = "Event banner",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentScale = ContentScale.Crop
-            )
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(16.dp)),
+            contentScale = ContentScale.Crop
+        )
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            Text(text = event.title, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = MaterialTheme.colorScheme.onBackground)
+        Text(
+            text = event.title,
+            fontWeight = FontWeight.Bold,
+            fontSize = 28.sp,
+            color = MaterialTheme.colorScheme.onBackground
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = event.description,
-                style = AppTypes.type_Body_Small,
-                fontSize = 16.sp,
-                lineHeight = 24.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-            )
-        }
+        Text(
+            text = event.description,
+            style = AppTypes.type_Body_Small,
+            fontSize = 16.sp,
+            lineHeight = 24.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+        )
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun UpcomingEventsScreenPreview() {
-    ParentAppTheme {
-        UpcomingEventsScreen(onBackClick = {})
+private fun shareEvent(context: Context, event: EventItem) {
+    val shareText = buildString {
+        appendLine(event.title)
+        appendLine("Date: ${event.date}")
+        appendLine()
+        appendLine(event.description)
     }
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, event.title)
+        putExtra(Intent.EXTRA_TEXT, shareText)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share Event"))
 }

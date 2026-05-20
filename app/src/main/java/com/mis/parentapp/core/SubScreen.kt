@@ -1,11 +1,25 @@
 package com.mis.parentapp.core
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,74 +39,62 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.mis.parentapp.features.home.NotificationScreen
 import com.mis.parentapp.features.home.menu.AnalyticsScreen
 import com.mis.parentapp.features.home.menu.RecentActivitiesScreen
 import com.mis.parentapp.features.home.menu.UpcomingEventsScreen
-import com.mis.parentapp.features.student.StudyLoadScreen
-import com.mis.parentapp.features.student.menu.MonitorAcademicScreen
-import com.mis.parentapp.features.student.menu.TrackAttendanceScreen
-import com.mis.parentapp.features.services.menu.DocumentsScreens
-import com.mis.parentapp.features.services.menu.FormsAndRequestScreen
-import com.mis.parentapp.features.services.menu.FAQsScreen
-import com.mis.parentapp.features.services.menu.PaymentOptionsScreen
-import com.mis.parentapp.features.widgets.AcademicCalendarScreen
+import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.features.me.essentials.AnnouncementsScreen
+import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.features.me.essentials.FeedbacksScreen
 import com.mis.parentapp.features.me.essentials.MeetingScreen
-import com.mis.parentapp.features.me.essentials.MessagesScreen
 import com.mis.parentapp.features.me.essentials.MessageScreen
-import com.mis.parentapp.features.me.UserProfileViewModel
+import com.mis.parentapp.features.me.essentials.MessagesScreen
 import com.mis.parentapp.features.me.settings.DataSafetyScreen
 import com.mis.parentapp.features.me.settings.EditProfileScreen
 import com.mis.parentapp.features.me.settings.PreferenceScreen
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.toRoute
-import com.mis.parentapp.navigation.Chat
-import com.mis.parentapp.features.me.essentials.ChatView
-import com.mis.parentapp.features.me.essentials.ChatViewModel
+import com.mis.parentapp.features.services.menu.DocumentsScreens
+import com.mis.parentapp.features.services.menu.FAQsScreen
+import com.mis.parentapp.features.services.menu.FormsAndRequestScreen
+import com.mis.parentapp.features.services.menu.PaymentOptionsScreen
+import com.mis.parentapp.features.student.StudyLoadScreen
+import com.mis.parentapp.features.student.menu.MonitorAcademicScreen
+import com.mis.parentapp.features.student.menu.TrackAttendanceScreen
+import com.mis.parentapp.features.widgets.AcademicCalendarScreen
 import com.mis.parentapp.navigation.Analytics
-import com.mis.parentapp.navigation.Calendar
-import com.mis.parentapp.navigation.Notification
-import com.mis.parentapp.navigation.RecentActivities
-import com.mis.parentapp.navigation.StudyLoad
-import com.mis.parentapp.navigation.UpcomingEvents
-import com.mis.parentapp.navigation.MonitorAcademic
-import com.mis.parentapp.navigation.TrackAttendance
-import com.mis.parentapp.navigation.Documents
-import com.mis.parentapp.navigation.FormsAndRequest
-import com.mis.parentapp.navigation.FAQs
-import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.navigation.Announcements
+import com.mis.parentapp.navigation.Calendar
+import com.mis.parentapp.navigation.Chat
+import com.mis.parentapp.navigation.DataSafety
+import com.mis.parentapp.navigation.Documents
+import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.FAQs
 import com.mis.parentapp.navigation.Feedbacks
+import com.mis.parentapp.navigation.FormsAndRequest
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
-import com.mis.parentapp.navigation.DataSafety
-import com.mis.parentapp.navigation.EditProfile
+import com.mis.parentapp.navigation.MonitorAcademic
+import com.mis.parentapp.navigation.Notification
+import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.navigation.Preference
+import com.mis.parentapp.navigation.RecentActivities
+import com.mis.parentapp.navigation.StudyLoad
+import com.mis.parentapp.navigation.TrackAttendance
+import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 
@@ -106,7 +108,6 @@ fun SubScreen(
     chatViewModel: ChatViewModel? = null,
     userProfileViewModel: UserProfileViewModel? = null
 ) {
-    //
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -143,6 +144,18 @@ fun SubScreen(
     val studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected"
     var academicDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var academicDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    var eventDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var eventDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val isEventDetailOpen = currentDestination?.hasRoute(UpcomingEvents::class) == true && eventDetailBackAction != null
+
+    var recentDetailBackAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var recentDetailShareAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val isRecentDetailOpen = currentDestination?.hasRoute(RecentActivities::class) == true && recentDetailBackAction != null
+
+    val isAnyDetailOpen = isEventDetailOpen || isRecentDetailOpen
 
     val isStudentMenu = currentDestination?.hasRoute(MonitorAcademic::class) == true ||
             currentDestination?.hasRoute(TrackAttendance::class) == true
@@ -239,7 +252,11 @@ fun SubScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            if (navController.previousBackStackEntry != null) {
+                            if (isEventDetailOpen) {
+                                eventDetailBackAction?.invoke()
+                            } else if (isRecentDetailOpen) {
+                                recentDetailBackAction?.invoke()
+                            } else if (navController.previousBackStackEntry != null) {
                                 navController.popBackStack()
                             } else {
                                 onBack()
@@ -250,6 +267,20 @@ fun SubScreen(
                                 contentDescription = "Back",
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
+                        }
+                    },
+                    actions = {
+                        if (isAnyDetailOpen) {
+                            IconButton(onClick = {
+                                if (isEventDetailOpen) eventDetailShareAction?.invoke()
+                                else recentDetailShareAction?.invoke()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share item details",
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -297,17 +328,31 @@ fun SubScreen(
                         }
                     )
                 }
-                composable<UpcomingEvents> {
+                composable<UpcomingEvents> { backStackEntry ->
+                    val routeArgs = backStackEntry.toRoute<UpcomingEvents>()
+
                     UpcomingEventsScreen(
+                        autoSelectEventId = routeArgs.autoSelectEventId,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        },
+                        onDetailTopBarChange = { isDetailOpen, detailBackAction, detailShareAction ->
+                            eventDetailBackAction = if (isDetailOpen) detailBackAction else null
+                            eventDetailShareAction = if (isDetailOpen) detailShareAction else null
                         }
                     )
                 }
-                composable<RecentActivities> {
+                composable<RecentActivities> { backStackEntry ->
+                    val routeArgs = backStackEntry.toRoute<RecentActivities>()
+
                     RecentActivitiesScreen(
+                        autoSelectEventId = routeArgs.autoSelectEventId,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        },
+                        onDetailTopBarChange = { isDetailOpen, detailBackAction, detailShareAction ->
+                            recentDetailBackAction = if (isDetailOpen) detailBackAction else null
+                            recentDetailShareAction = if (isDetailOpen) detailShareAction else null
                         }
                     )
                 }
@@ -330,7 +375,6 @@ fun SubScreen(
                     )
                 }
                 composable<MonitorAcademic> {
-                    // Cleaned up! Now uses your teammate's Retrofit logic via studentVM
                     MonitorAcademicScreen(
                         studentVM = studentVM,
                         onBackClick = {
@@ -347,7 +391,6 @@ fun SubScreen(
                     )
                 }
                 composable<TrackAttendance> {
-                    // Cleaned up! Calls the Screen Wrapper instead of the Content UI
                     TrackAttendanceScreen(
                         studentVM = studentVM,
                         onBackClick = {
@@ -394,7 +437,6 @@ fun SubScreen(
                 }
                 composable<Chat> { 
                     val args = it.toRoute<Chat>()
-                    // Use the shared ViewModel if provided, otherwise fallback to route-scoped
                     val vm: ChatViewModel = chatViewModel ?: viewModel(it)
                     MessageScreen(
                         contactId = args.id,
