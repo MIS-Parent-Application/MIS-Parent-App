@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -94,6 +96,7 @@ fun PasswordSignInScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
                 .padding(24.dp)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -120,26 +123,29 @@ fun PasswordSignInScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(330.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
-            Text(
-                text = stringResource(id = R.string.auth_msg),
-                color = ColorsDefaultTheme.text_color,
-                fontSize = 36.sp,
-                lineHeight = 44.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.auth_msg),
+                    color = ColorsDefaultTheme.text_color,
+                    fontSize = 34.sp,
+                    lineHeight = 40.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(id = R.string.password_sub_msg) + " " + "for $username",
+                    color = ColorsDefaultTheme.text_color.copy(alpha = 0.8f),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Light
+                )
+            }
 
-            Text(
-                text = stringResource(id = R.string.password_sub_msg) + " " + "for $username",
-                color = ColorsDefaultTheme.text_color.copy(alpha = 0.8f),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Light
-            )
-
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -180,7 +186,7 @@ fun PasswordSignInScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(22.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -194,7 +200,7 @@ fun PasswordSignInScreen(
                             val isActiveStep = index <= 2
                             Box(
                                 modifier = Modifier
-                                    .width(40.dp)
+                                    .width(32.dp)
                                     .height(5.dp)
                                     .background(
                                         color = if (isActiveStep) ColorsDefaultTheme.color_Primary_green else Color.White,
@@ -222,8 +228,8 @@ fun PasswordSignInScreen(
                             }
                         },
                         modifier = Modifier
-                            .width(180.dp)
-                            .height(60.dp),
+                            .widthIn(min = 132.dp, max = 180.dp)
+                            .height(56.dp),
                         shape = RoundedCornerShape(26.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = ColorsDefaultTheme.color_Primary_green
