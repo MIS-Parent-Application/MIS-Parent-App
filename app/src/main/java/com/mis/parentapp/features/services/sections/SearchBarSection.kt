@@ -34,14 +34,46 @@ import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.Child
 import androidx.compose.ui.text.TextStyle
+import androidx.navigation.NavController
 
 @Composable
 fun SearchBarSection(
     selectedStudent: Child?,
+    navController: NavController,
     onProfileClick: () -> Unit,
     onQrClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Navigation actions based on search
+    fun handleSearchNavigation(query: String) {
+
+        when {
+
+            query.contains("document", ignoreCase = true) -> {
+                navController.navigate("DocumentScreen")
+            }
+
+            query.contains("faq", ignoreCase = true) ||
+                    query.contains("faqs", ignoreCase = true) ||
+                    query.contains("question", ignoreCase = true) -> {
+                navController.navigate("FAQsScreen")
+            }
+
+            query.contains("form", ignoreCase = true) ||
+                    query.contains("request", ignoreCase = true) -> {
+                navController.navigate("FormsAndRequestScreen")
+            }
+
+            query.contains("payment", ignoreCase = true) ||
+                    query.contains("option", ignoreCase = true) -> {
+                navController.navigate("PaymentOptionScreen")
+            }
+        }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -52,11 +84,16 @@ fun SearchBarSection(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        var searchQuery by remember { mutableStateOf("") }
 
+        // Search Field
         BasicTextField(
             value = searchQuery,
-            onValueChange = { searchQuery = it },
+            onValueChange = {
+                searchQuery = it
+
+                // Automatically navigate when keywords are typed
+                handleSearchNavigation(it)
+            },
             textStyle = TextStyle(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 14.sp
@@ -64,7 +101,8 @@ fun SearchBarSection(
             modifier = Modifier.weight(1f),
             singleLine = true,
             decorationBox = { innerTextField ->
-                // This handles the placeholder visibility dynamically
+
+                // Placeholder
                 if (searchQuery.isEmpty()) {
                     Text(
                         text = "Search forms or documents",
@@ -72,11 +110,17 @@ fun SearchBarSection(
                         fontSize = 14.sp
                     )
                 }
-                innerTextField() // This draws the actual text you type
+
+                innerTextField()
             }
         )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
             // Profile Picture
             Image(
                 painter = painterResource(id = R.drawable.student_image),

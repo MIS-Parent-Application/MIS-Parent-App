@@ -12,7 +12,9 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.6",
+    "crypto": "^1.0.1",
     "express": "^5.2.1",
+    "nodemailer": "^8.0.7",
     "sqlite3": "^5.1.7"
   }
 }

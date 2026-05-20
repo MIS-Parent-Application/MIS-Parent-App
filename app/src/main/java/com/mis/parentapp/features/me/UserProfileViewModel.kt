@@ -13,12 +13,14 @@ import androidx.lifecycle.viewModelScope
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.network.RetrofitInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.InputStream
 
 class UserProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val userDao = AppDatabase.getDatabase(application).userDao()
-
+    private val apiService = RetrofitInstance.api
     var fullName by mutableStateOf("Nathaniel B. McClure")
     var email by mutableStateOf("nathaniel.mcclure@example.com")
     var phoneNumber by mutableStateOf("+63 912 345 6789")
@@ -31,6 +33,77 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     // Data Safety states
     var twoFactorEnabled by mutableStateOf(false)
     var loginAlertsEnabled by mutableStateOf(false)
+
+    private val _twoFAState = MutableStateFlow<TwoFAState>(TwoFAState.Idle)
+    val twoFAState: StateFlow<TwoFAState> = _twoFAState
+
+    sealed class TwoFAState {
+        object Idle : TwoFAState()
+        object SendingCode : TwoFAState()
+        object CodeSent : TwoFAState()
+        object Verifying : TwoFAState()
+        object Success : TwoFAState()
+        data class Error(val message: String) : TwoFAState()
+    }
+
+    fun sendTwoFACode(userId: String, email: String) {
+        viewModelScope.launch {
+            _twoFAState.value = TwoFAState.SendingCode
+            try {
+                val response = apiService.send2FACode(mapOf("userId" to userId, "email" to email))
+                if (response.isSuccessful) {
+                    _twoFAState.value = TwoFAState.CodeSent
+                } else {
+                    _twoFAState.value = TwoFAState.Error("Failed to send code")
+                }
+            } catch (e: Exception) {
+                _twoFAState.value = TwoFAState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun verifyAndToggleTwoFA(userId: String, code: String, enable: Boolean) {
+        viewModelScope.launch {
+            _twoFAState.value = TwoFAState.Verifying
+            try {
+                val verifyResponse = apiService.verify2FACode(
+                    mapOf(
+                        "userId" to userId,
+                        "code" to code
+                    )
+                )
+                if (verifyResponse.isSuccessful) {
+                    // Code verified, now toggle 2FA
+                    val toggleResponse = apiService.toggle2FA(
+                        mapOf(
+                            "userId" to userId,
+                            "enable" to enable
+                        )
+                    )
+                    if (toggleResponse.isSuccessful) {
+                        // Update UI switch state
+                        twoFactorEnabled = enable
+                        _twoFAState.value = TwoFAState.Success
+                    } else {
+                        _twoFAState.value =
+                            TwoFAState.Error("Failed to update 2FA")
+                    }
+
+                } else {
+                    _twoFAState.value =
+                        TwoFAState.Error("Invalid or expired code")
+                }
+            } catch (e: Exception) {
+                _twoFAState.value =
+                    TwoFAState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun reset2FAState() {
+        _twoFAState.value = TwoFAState.Idle
+    }
+//
 
     init {
         loadProfileData()
