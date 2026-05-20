@@ -267,7 +267,6 @@ fun Body(
     }
 }
 
-// ... Rest of the private functions and helper composables remain exactly the same ...
 private data class HomeStudent(
     val student: StudentEntity,
     val schedules: List<SubjectScheduleEntity>
