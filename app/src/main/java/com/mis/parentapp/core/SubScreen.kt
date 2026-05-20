@@ -50,6 +50,7 @@ import com.mis.parentapp.features.me.essentials.FeedbacksScreen
 import com.mis.parentapp.features.me.essentials.MeetingScreen
 import com.mis.parentapp.features.me.essentials.MessagesScreen
 import com.mis.parentapp.features.me.essentials.MessageScreen
+import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.features.me.settings.DataSafetyScreen
 import com.mis.parentapp.features.me.settings.EditProfileScreen
 import com.mis.parentapp.features.me.settings.PreferenceScreen
@@ -97,7 +98,8 @@ fun SubScreen(
     studentVM: StudentSharedViewModel,
     onBack: () -> Unit,
     onNavigate: ((Any) -> Unit)? = null,
-    chatViewModel: ChatViewModel? = null
+    chatViewModel: ChatViewModel? = null,
+    userProfileViewModel: UserProfileViewModel? = null
 ) {
     //
     val navController = rememberNavController()
@@ -378,7 +380,16 @@ fun SubScreen(
                     DataSafetyScreen()
                 }
                 composable<EditProfile> {
-                    EditProfileScreen()
+                    EditProfileScreen(
+                        userProfileViewModel = userProfileViewModel ?: viewModel(),
+                        onSaveSuccess = {
+                            if (navController.previousBackStackEntry != null) {
+                                navController.popBackStack()
+                            } else {
+                                onBack()
+                            }
+                        }
+                    )
                 }
                 composable<Preference> {
                     PreferenceScreen()

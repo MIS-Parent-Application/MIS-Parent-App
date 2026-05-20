@@ -23,6 +23,12 @@ class AppSettingsViewModel(application: Application) : AndroidViewModel(applicat
     var privacyEnabled by mutableStateOf(prefs.getBoolean("privacy_enabled", false))
         private set
 
+    var twoFactorEnabled by mutableStateOf(prefs.getBoolean("2fa_enabled", false))
+        private set
+
+    var loginAlertsEnabled by mutableStateOf(prefs.getBoolean("login_alerts_enabled", true))
+        private set
+
     fun setTheme(mode: ThemeMode) {
         themeMode = mode
         prefs.edit().putString("theme_mode", mode.name).apply()
@@ -36,5 +42,15 @@ class AppSettingsViewModel(application: Application) : AndroidViewModel(applicat
     fun setPrivacy(enabled: Boolean) {
         privacyEnabled = enabled
         prefs.edit().putBoolean("privacy_enabled", enabled).apply()
+    }
+
+    fun setTwoFactor(enabled: Boolean) {
+        twoFactorEnabled = enabled
+        prefs.edit().putBoolean("2fa_enabled", enabled).apply()
+    }
+
+    fun setLoginAlerts(enabled: Boolean) {
+        loginAlertsEnabled = enabled
+        prefs.edit().putBoolean("login_alerts_enabled", enabled).apply()
     }
 }

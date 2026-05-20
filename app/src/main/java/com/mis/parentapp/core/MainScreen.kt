@@ -74,6 +74,7 @@ import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
+import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.DebugMenu
@@ -122,6 +123,7 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     val studentSharedViewModel: StudentSharedViewModel = viewModel()
+    val userProfileViewModel: UserProfileViewModel = viewModel()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -345,6 +347,7 @@ fun MainScreen(
                     MeScreen(
                         navController = navController,
                         authViewModel = authViewModel,
+                        userProfileViewModel = userProfileViewModel,
                         onSignOutClick = onSignOut
                     )
                 }
@@ -487,7 +490,8 @@ fun MainScreen(
                     SubScreen(
                         startDestination = EditProfile,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        userProfileViewModel = userProfileViewModel
                     )
                 }
                 composable<Preference> {

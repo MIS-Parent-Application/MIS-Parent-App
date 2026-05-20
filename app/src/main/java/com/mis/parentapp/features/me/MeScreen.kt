@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
@@ -44,6 +46,7 @@ fun MeScreen(
     userProfileViewModel: UserProfileViewModel = viewModel(),
     onSignOutClick: () -> Unit
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -61,19 +64,35 @@ fun MeScreen(
                         .height(380.dp) // Match StudentScreen height
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
-                    Image(
-                        painter = painterResource(id = userProfileViewModel.profileImageRes),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(
-                                RoundedCornerShape(
-                                    bottomStart = 32.dp,
-                                    bottomEnd = 32.dp
+                    if (userProfileViewModel.profileBitmap != null) {
+                        Image(
+                            bitmap = userProfileViewModel.profileBitmap!!,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(
+                                    RoundedCornerShape(
+                                        bottomStart = 32.dp,
+                                        bottomEnd = 32.dp
+                                    )
                                 )
-                            )
-                    )
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = userProfileViewModel.profileImageRes),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(
+                                    RoundedCornerShape(
+                                        bottomStart = 32.dp,
+                                        bottomEnd = 32.dp
+                                    )
+                                )
+                        )
+                    }
 
                     // DARK OVERLAY
                     Box(
@@ -104,6 +123,12 @@ fun MeScreen(
                                 color = Color.White,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (userProfileViewModel.isPrimaryGuardian) "Primary Guardian" else "Parent",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
 
