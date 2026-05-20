@@ -1,5 +1,6 @@
 package com.mis.parentapp.core
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -43,6 +49,7 @@ import com.mis.parentapp.features.me.essentials.AnnouncementsScreen
 import com.mis.parentapp.features.me.essentials.FeedbacksScreen
 import com.mis.parentapp.features.me.essentials.MeetingScreen
 import com.mis.parentapp.features.me.essentials.MessagesScreen
+import com.mis.parentapp.features.me.essentials.MessageScreen
 import com.mis.parentapp.features.me.settings.DataSafetyScreen
 import com.mis.parentapp.features.me.settings.EditProfileScreen
 import com.mis.parentapp.features.me.settings.PreferenceScreen
@@ -56,10 +63,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.toRoute
 import com.mis.parentapp.navigation.Chat
 import com.mis.parentapp.features.me.essentials.ChatView
-import com.mis.parentapp.features.me.essentials.MessagesScreen
+import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.Notification
@@ -88,7 +96,8 @@ fun SubScreen(
     startDestination: Any,
     studentVM: StudentSharedViewModel,
     onBack: () -> Unit,
-    onNavigate: ((Any) -> Unit)? = null
+    onNavigate: ((Any) -> Unit)? = null,
+    chatViewModel: ChatViewModel? = null
 ) {
     //
     val navController = rememberNavController()
@@ -123,45 +132,101 @@ fun SubScreen(
         navBackStackEntry?.toRoute<Chat>()
     } else null
 
+    val selectedStudent = studentVM.selectedStudent
+    val studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected"
+
+    val isStudentMenu = currentDestination?.hasRoute(MonitorAcademic::class) == true ||
+            currentDestination?.hasRoute(TrackAttendance::class) == true
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (chatArgs != null) {
-                            Image(
-                                painter = painterResource(id = chatArgs.imageRes),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
+            if (isStudentMenu) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = title,
+                                style = AppTypes.type_H2,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = studentLabel,
+                                style = AppTypes.type_Caption,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        Text(text = title, style = AppTypes.type_H1, fontSize = 20.sp)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (navController.previousBackStackEntry != null) {
-                            navController.popBackStack()
-                        } else {
-                            onBack()
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            if (navController.previousBackStackEntry != null) {
+                                navController.popBackStack()
+                            } else {
+                                onBack()
+                            }
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    },
+                    actions = {
+                        IconButton(onClick = { /* TODO: Menu action */ }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-            )
+            } else {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (chatArgs != null && chatArgs.imageRes != 0) {
+                                Image(
+                                    painter = painterResource(id = chatArgs.imageRes),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
+                            Text(text = title, style = AppTypes.type_H1, fontSize = 20.sp)
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            if (navController.previousBackStackEntry != null) {
+                                navController.popBackStack()
+                            } else {
+                                onBack()
+                            }
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -283,7 +348,7 @@ fun SubScreen(
                 composable<Messages> {
                     MessagesScreen(
                         onMessageClick = { message ->
-                            val route = Chat(message.senderName, message.imageRes ?: 0)
+                            val route = Chat(message.id, message.senderName, message.imageRes ?: 0)
                             if (onNavigate != null) {
                                 onNavigate(route)
                             } else {
@@ -293,7 +358,21 @@ fun SubScreen(
                     )
                 }
                 composable<Chat> { 
-                    ChatView()
+                    val args = it.toRoute<Chat>()
+                    // Use the shared ViewModel if provided, otherwise fallback to route-scoped
+                    val vm: ChatViewModel = chatViewModel ?: viewModel(it)
+                    MessageScreen(
+                        contactId = args.id,
+                        senderName = args.senderName,
+                        onBack = {
+                            if (navController.previousBackStackEntry != null) {
+                                navController.popBackStack()
+                            } else {
+                                onBack()
+                            }
+                        },
+                        viewModel = vm
+                    )
                 }
                 composable<DataSafety> {
                     DataSafetyScreen()

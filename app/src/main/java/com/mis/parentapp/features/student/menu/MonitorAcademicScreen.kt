@@ -66,86 +66,31 @@ fun MonitorAcademicScreen(
 
     MonitorAcademicContent(
         grades = grades,
-        studentLabel = selectedStudent?.let { "${it.name} - ${it.section}" } ?: "No student selected",
-        emptyMessage = errorMessage ?: "No official grade records yet.",
-        onBackClick = onBackClick
+        emptyMessage = errorMessage ?: "No official grade records yet."
     )
 }
 
 // --- 2. THE UI CONTENT ---
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonitorAcademicContent(
     grades: List<CourseGrade>,
-    studentLabel: String,
-    emptyMessage: String,
-    onBackClick: () -> Unit
+    emptyMessage: String
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "Academic",
-                            style = AppTypes.type_H2,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        // Repaired the duplicated text parameters here!
-                        Text(
-                            text = studentLabel,
-                            style = AppTypes.type_Caption,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* TODO: Menu action */ }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            CustomTabRow(
-                selectedTabIndex = selectedTab,
-                onTabSelected = { selectedTab = it },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        CustomTabRow(
+            selectedTabIndex = selectedTab,
+            onTabSelected = { selectedTab = it },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
 
-            when (selectedTab) {
-                0 -> AllTabContent(grades, emptyMessage)
-                1 -> GradesTabContent(grades, emptyMessage)
-                2 -> PerformanceTabContent()
-            }
+        when (selectedTab) {
+            0 -> AllTabContent(grades, emptyMessage)
+            1 -> GradesTabContent(grades, emptyMessage)
+            2 -> PerformanceTabContent()
         }
     }
 }
@@ -470,9 +415,7 @@ fun MonitorAcademicPreview() {
     ParentAppTheme {
         MonitorAcademicContent(
             grades = getDummyGrades(),
-            studentLabel = "Test Student - 3rd Yr",
-            emptyMessage = "No grades yet",
-            onBackClick = {}
+            emptyMessage = "No grades yet"
         )
     }
 }

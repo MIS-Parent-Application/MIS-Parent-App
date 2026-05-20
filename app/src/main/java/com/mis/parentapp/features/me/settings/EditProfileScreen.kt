@@ -20,13 +20,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.R
+import com.mis.parentapp.features.me.UserProfileViewModel
 
 @Composable
-fun EditProfileScreen() {
-    var name by remember { mutableStateOf("Nathaniel B. McClure") }
-    var email by remember { mutableStateOf("nathaniel.mcclure@example.com") }
-    var phone by remember { mutableStateOf("+63 912 345 6789") }
+fun EditProfileScreen(
+    userProfileViewModel: UserProfileViewModel = viewModel()
+) {
+    var name by remember { mutableStateOf(userProfileViewModel.fullName) }
+    var email by remember { mutableStateOf(userProfileViewModel.email) }
+    var phone by remember { mutableStateOf(userProfileViewModel.phoneNumber) }
 
     Column(
         modifier = Modifier
@@ -37,7 +41,7 @@ fun EditProfileScreen() {
     ) {
         Box(contentAlignment = Alignment.BottomEnd) {
             Image(
-                painter = painterResource(id = R.drawable.parent_pic),
+                painter = painterResource(id = userProfileViewModel.profileImageRes),
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp)
@@ -49,7 +53,12 @@ fun EditProfileScreen() {
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .clickable { /* Change photo */ },
+                    .clickable { 
+                        // Simplified profile pic toggle for demo
+                        val nextRes = if (userProfileViewModel.profileImageRes == R.drawable.parent_pic) 
+                            R.drawable.student_image else R.drawable.parent_pic
+                        userProfileViewModel.updateProfileImage(nextRes)
+                    },
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -90,7 +99,9 @@ fun EditProfileScreen() {
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { /* Save changes */ },
+            onClick = { 
+                userProfileViewModel.updateProfile(name, email, phone)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),

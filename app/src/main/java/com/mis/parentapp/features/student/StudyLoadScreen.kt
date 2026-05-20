@@ -71,7 +71,7 @@ fun StudyLoadScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7FAEF))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         if (selectedStudent != null && subjects.isNotEmpty()) {
             Row(
@@ -86,7 +86,7 @@ fun StudyLoadScreen(
                     Icon(
                         Icons.Default.Download,
                         contentDescription = "Download study load",
-                        tint = ColorsDefaultTheme.color_Primary_green_container
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -97,12 +97,12 @@ fun StudyLoadScreen(
                 isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 errorMessage != null && subjects.isEmpty() -> Text(
                     text = errorMessage ?: "",
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.align(Alignment.Center)
                 )
                 selectedStudent == null -> Text(
                     text = "Select a student to view study load.",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.align(Alignment.Center)
                 )
                 else -> OfficialStudyLoadDocument(
@@ -136,8 +136,8 @@ private fun OfficialStudyLoadDocument(
             modifier = Modifier
                 .width(720.dp)
                 .wrapContentHeight()
-                .background(Color.White, RoundedCornerShape(8.dp))
-                .border(1.dp, Color(0xFFE4E9D4), RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
                 .padding(22.dp)
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -181,20 +181,20 @@ private fun StudyLoadHeader(semester: String, schoolYear: String) {
         ) {
             Text(
                 text = "COLEGIO DE ALICIA",
-                color = ColorsDefaultTheme.color_Primary_green_container,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "Alicia, Bohol",
-                color = Color.DarkGray,
+                color = MaterialTheme.colorScheme.outline,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "OFFICIAL STUDY LOAD",
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 10.dp)
@@ -203,11 +203,11 @@ private fun StudyLoadHeader(semester: String, schoolYear: String) {
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "$semester $schoolYear",
-                color = ColorsDefaultTheme.color_Primary_green_container,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
-            Text(text = "View only", color = Color.Gray, fontSize = 10.sp)
+            Text(text = "View only", color = MaterialTheme.colorScheme.outline, fontSize = 10.sp)
         }
     }
 }
@@ -217,7 +217,7 @@ private fun StudentInfoBlock(student: Child) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF6FDE7), RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -231,10 +231,10 @@ private fun StudentInfoBlock(student: Child) {
 @Composable
 private fun StudyLoadInfo(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        Text(text = label, color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+        Text(text = label, color = MaterialTheme.colorScheme.outline, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         Text(
             text = value,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 2,
@@ -272,13 +272,13 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, Color(0xFF9EA58F))
-            .background(if (isHeader) ColorsDefaultTheme.color_Primary_green_container else Color.White)
+            .border(0.5.dp, MaterialTheme.colorScheme.outline)
+            .background(if (isHeader) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
     ) {
         values.forEachIndexed { index, value ->
             Text(
                 text = value,
-                color = if (isHeader) Color.White else Color.Black,
+                color = if (isHeader) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
                 fontSize = if (isHeader) 9.sp else 10.sp,
@@ -288,7 +288,7 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
                 modifier = Modifier
                     .width(widths[index])
                     .heightIn(min = 30.dp)
-                    .border(0.5.dp, Color(0xFF9EA58F))
+                    .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     .padding(horizontal = 6.dp, vertical = 8.dp)
             )
         }
@@ -299,7 +299,7 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
 private fun StudyLoadFooter(subjects: List<StudyLoadSubject>, dateEnrolled: String) {
     val totalUnits = subjects.sumOf { it.units }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        HorizontalDivider(color = Color(0xFF1B4D13), thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.primary, thickness = 1.dp)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("DATE ENROLLED: $dateEnrolled", fontSize = 11.sp, fontWeight = FontWeight.Bold)
             Text("TOTAL: $totalUnits", fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -308,11 +308,11 @@ private fun StudyLoadFooter(subjects: List<StudyLoadSubject>, dateEnrolled: Stri
         Text(
             text = "This official study load is generated from Colegio De Alicia parent portal records.",
             fontSize = 10.sp,
-            color = Color.DarkGray
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
         Text(
             text = "Generated copy is for parent/student viewing and verification purposes.",
-            color = ColorsDefaultTheme.color_Primary_green_container,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp
         )

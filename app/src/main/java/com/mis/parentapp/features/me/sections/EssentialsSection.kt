@@ -30,7 +30,6 @@ fun YourEssentialsSection(onCategoryClick: (String) -> Unit){
     val categories = listOf(
         Category(title = stringResource(id = R.string.messages_btn_txt), icon = Icons.Filled.ChatBubble),
         Category(title = stringResource(id = R.string.announcements_btn_txt), icon = Icons.Filled.Campaign),
-        Category(title = stringResource(id = R.string.meetings_btn_txt), icon = Icons.Filled.People),
         Category(title = stringResource(id = R.string.feedbacks_btn_txt), icon = Icons.Filled.Feedback)
     )
     Column(

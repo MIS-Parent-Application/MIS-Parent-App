@@ -45,7 +45,7 @@ fun MessageCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp), // More rounded corners as in screenshot
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFD9D9D9) // Light gray as in screenshot
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Row(
@@ -92,13 +92,13 @@ fun MessageCard(
                         text = message.senderName,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = message.timestamp,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -106,7 +106,7 @@ fun MessageCard(
                     text = message.lastMessage,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

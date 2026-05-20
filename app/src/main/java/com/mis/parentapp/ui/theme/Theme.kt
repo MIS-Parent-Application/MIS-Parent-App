@@ -52,28 +52,14 @@ private val LightColorScheme = lightColorScheme(
 )
 
 object ColorsDefaultTheme {
-    // These will now dynamically resolve based on the current theme when used in Composables
-    // Note: For objects like this to be truly dynamic, they should be accessed within a Composable context
-    // or we can keep them as fixed constants if that's the intended "Default" behavior.
-    // Given the previous implementation used fixed Colors, I will update them to the new Light brand colors 
-    // as the "Default", but the app should ideally use MaterialTheme.colorScheme directly.
+    val color_Primary_green: Color @Composable get() = MaterialTheme.colorScheme.primary
+    val color_Primary_green_container: Color @Composable get() = MaterialTheme.colorScheme.primaryContainer
     
-    val color_Primary_green = Color(0xFF267D1E)
-    val color_Primary_green_container = Color(0xFF215C18)
-    //val color_Primary_on_green = Color(0xFFFFFFFF)
-    
-    //val color_Yellow = Color(0xFFDEF731)
-    val color_On_yellow = Color(0xFF1C1B1F)
-
-    //val color_Error = Color(0xFFB3261E)
-
-    val color_Surface = Color(0xFFF6FDE7)
-    val color_On_surface = Color(0xFF1C1B1F)
-    //val color_Outline = Color(0xFF79747E)
-
-    val text_color = Color(0xFFFFFFFF)
-
-    val color_Surface_on_surface = color_On_surface
+    val color_On_yellow: Color @Composable get() = MaterialTheme.colorScheme.onSurface
+    val color_Surface: Color @Composable get() = MaterialTheme.colorScheme.surface
+    val color_On_surface: Color @Composable get() = MaterialTheme.colorScheme.onSurface
+    val text_color: Color @Composable get() = Color.White
+    val color_Surface_on_surface: Color @Composable get() = MaterialTheme.colorScheme.onSurface
 }
 
 object AppTypes {

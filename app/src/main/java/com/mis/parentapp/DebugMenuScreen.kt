@@ -34,7 +34,7 @@ fun DebugMenuScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         Button(
-            onClick = { onNavigateToSignIn(0) }, // Passing 0 as default backgroundResId
+            onClick = { onNavigateToSignIn(com.mis.parentapp.R.drawable.bg_one_sign_screen) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Go to Sign In")

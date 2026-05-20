@@ -6,17 +6,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
@@ -27,6 +31,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -69,7 +74,6 @@ import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
-import com.mis.parentapp.features.services.ServicesScreen
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.DebugMenu
@@ -83,7 +87,6 @@ import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.navigation.RecentActivities
-import com.mis.parentapp.navigation.Services
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.navigation.StudyLoad
@@ -96,7 +99,18 @@ import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.DataSafety
 import com.mis.parentapp.navigation.EditProfile
 import com.mis.parentapp.navigation.Preference
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.draw.clip
+import com.mis.parentapp.navigation.Chat
 import com.mis.parentapp.shared.StudentSharedViewModel
+import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.utilities.modals.GenericMenuModal
 import com.mis.parentapp.utilities.modals.MenuItem
 
@@ -111,6 +125,17 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    // Get the ChatViewModel scoped to the Chat route if it exists in the backstack
+    val isChatInBackstack = currentDestination?.hierarchy?.any { it.hasRoute(Chat::class) } == true
+    val chatViewModel: ChatViewModel = if (isChatInBackstack) {
+        val chatEntry = remember(navBackStackEntry) {
+            navController.getBackStackEntry(Chat::class)
+        }
+        viewModel(chatEntry)
+    } else {
+        viewModel()
+    }
+
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -122,7 +147,6 @@ fun MainScreen(
     val bottomTabs = listOf(
         BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
         BottomTab("Student", Student, Icons.Filled.School, Icons.Outlined.School),
-        BottomTab("Services", Services, Icons.Filled.Settings, Icons.Outlined.Settings),
         BottomTab("Me", Me, Icons.Filled.Person, Icons.Outlined.Person)
     )
 
@@ -143,6 +167,7 @@ fun MainScreen(
             currentDestination?.hasRoute(Feedbacks::class) == true ||
             currentDestination?.hasRoute(Meeting::class) == true ||
             currentDestination?.hasRoute(Messages::class) == true ||
+            currentDestination?.hasRoute(Chat::class) == true ||
             currentDestination?.hasRoute(DataSafety::class) == true ||
             currentDestination?.hasRoute(EditProfile::class) == true ||
             currentDestination?.hasRoute(Preference::class) == true
@@ -151,11 +176,12 @@ fun MainScreen(
         currentDestination?.hasRoute(tab.route::class) == true
     }
 
+    val isChatScreen = currentDestination?.hasRoute(Chat::class) == true
+
     val useWhiteIcons = currentDestination?.hasRoute(Student::class) == true ||
             currentDestination?.hasRoute(Me::class) == true
 
-    val isSolidTopBar = currentDestination?.hasRoute(Home::class) == true ||
-            currentDestination?.hasRoute(Services::class) == true
+    val isSolidTopBar = currentDestination?.hasRoute(Home::class) == true
 
     val topBarBackgroundColor by animateColorAsState(
         targetValue = if (isSolidTopBar) MaterialTheme.colorScheme.background else Color.Transparent,
@@ -175,12 +201,6 @@ fun MainScreen(
             MenuItem("Monitor Academic", "Check academic progress.", Icons.Filled.School) { navController.navigate(MonitorAcademic); showBottomSheet = false },
             MenuItem("Track Attendance", "Daily presence records.", Icons.Filled.Settings) { navController.navigate(TrackAttendance); showBottomSheet = false }
         )
-        currentDestination?.hasRoute(Services::class) == true -> listOf(
-            MenuItem("Form and Request", "Submit online forms.", Icons.Filled.Settings) { navController.navigate(FormsAndRequest); showBottomSheet = false },
-            MenuItem("Payment options", "View available payment methods.", Icons.Filled.Settings) { navController.navigate(PaymentOptions); showBottomSheet = false },
-            MenuItem("Documents", "Access school files.", Icons.Filled.Settings) { navController.navigate(Documents); showBottomSheet = false },
-            MenuItem("FAQs", "Frequently asked questions.", Icons.Filled.Settings) { navController.navigate(FAQs); showBottomSheet = false }
-        )
         currentDestination?.hasRoute(Me::class) == true -> listOf(
             MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { showBottomSheet = false }
         )
@@ -190,7 +210,16 @@ fun MainScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            if (showBottomBar) {
+            if (isChatScreen) {
+                val chatArgs = navBackStackEntry?.toRoute<Chat>()
+                ChatInputBar(
+                    text = chatViewModel.chatTextState,
+                    onTextChange = { chatViewModel.chatTextState = it },
+                    onSend = { 
+                        chatArgs?.let { chatViewModel.sendMessage(it.id) }
+                    }
+                )
+            } else if (showBottomBar) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.background
                 ) {
@@ -205,14 +234,11 @@ fun MainScreen(
                             Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
                                     currentDestination?.hasRoute(TrackAttendance::class) == true ||
                                     currentDestination?.hasRoute(StudyLoad::class) == true
-                            Services -> currentDestination?.hasRoute(FormsAndRequest::class) == true ||
-                                    currentDestination?.hasRoute(PaymentOptions::class) == true ||
-                                    currentDestination?.hasRoute(Documents::class) == true ||
-                                    currentDestination?.hasRoute(FAQs::class) == true
                             Me -> currentDestination?.hasRoute(Announcements::class) == true ||
                                     currentDestination?.hasRoute(Feedbacks::class) == true ||
                                     currentDestination?.hasRoute(Meeting::class) == true ||
                                     currentDestination?.hasRoute(Messages::class) == true ||
+                                    currentDestination?.hasRoute(Chat::class) == true ||
                                     currentDestination?.hasRoute(DataSafety::class) == true ||
                                     currentDestination?.hasRoute(EditProfile::class) == true ||
                                     currentDestination?.hasRoute(Preference::class) == true
@@ -315,12 +341,6 @@ fun MainScreen(
                     )
                 }
 
-                composable<Services> {
-                    ServicesScreen(
-                        navController = navController,
-                        studentVM = studentSharedViewModel
-                    )
-                }
                 composable<Me> {
                     MeScreen(
                         navController = navController,
@@ -443,7 +463,17 @@ fun MainScreen(
                     SubScreen(
                         startDestination = Messages,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onNavigate = { route: Any -> navController.navigate(route) }
+                    )
+                }
+                composable<Chat> { backStackEntry ->
+                    val args = backStackEntry.toRoute<Chat>()
+                    SubScreen(
+                        startDestination = args,
+                        studentVM = studentSharedViewModel,
+                        onBack = { navController.popBackStack() },
+                        chatViewModel = chatViewModel
                     )
                 }
                 composable<DataSafety> {
@@ -551,3 +581,45 @@ data class BottomTab(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 )
+
+@Composable
+fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Unit) {
+    Surface(
+        tonalElevation = 2.dp,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = text,
+                onValueChange = onTextChange,
+                placeholder = { Text("Text message") },
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(24.dp)),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = onSend,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(Icons.Default.Send, contentDescription = "Send")
+            }
+        }
+    }
+}
