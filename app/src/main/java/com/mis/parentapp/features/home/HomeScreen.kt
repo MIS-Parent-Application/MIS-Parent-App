@@ -2,6 +2,7 @@ package com.mis.parentapp.features.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,26 +57,17 @@ import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
 import com.mis.parentapp.data.SubjectScheduleEntity
+import com.mis.parentapp.features.home.menu.EventCard
+import com.mis.parentapp.navigation.RecentActivities
+import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
-import com.mis.parentapp.navigation.RecentActivities
-import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.runtime.rememberCoroutineScope
-import com.mis.parentapp.data.StudentWithSchedules
-import com.mis.parentapp.data.StudentsRepo
-import com.mis.parentapp.data.UserRepository
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
-import com.mis.parentapp.features.home.menu.EventCard
-import com.mis.parentapp.features.home.menu.EventDetailScreen
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.border
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
