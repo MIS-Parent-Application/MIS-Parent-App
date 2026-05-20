@@ -117,8 +117,8 @@ fun Body(
     studentVM: StudentSharedViewModel? = null,
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
-    onUpcomingEventClick: (EventItem) -> Unit, // Renamed parameter
-    onRecentEventClick: (EventItem) -> Unit    // Added parameter
+    onUpcomingEventClick: (EventItem) -> Unit,
+    onRecentEventClick: (EventItem) -> Unit
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)

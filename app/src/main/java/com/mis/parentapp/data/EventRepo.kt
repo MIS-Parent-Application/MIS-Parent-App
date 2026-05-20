@@ -2,7 +2,6 @@ package com.mis.parentapp.data
 
 class EventRepository(private val eventDao: EventDao) {
 
-    // These look at the DB (which was filled by your SQL seed)
     fun getRecentEvents() = eventDao.getEventsByType("RECENT")
     fun getUpcomingEvents() = eventDao.getEventsByType("UPCOMING")
 

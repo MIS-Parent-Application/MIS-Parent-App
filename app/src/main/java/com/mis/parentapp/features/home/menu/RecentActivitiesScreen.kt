@@ -85,7 +85,6 @@ fun RecentActivitiesScreen(
 
     val groupedEvents = filteredEvents.groupBy { it.category }
 
-    // 2. Side-effect to communicate with SubScreen TopBar
     DisposableEffect(selectedEvent) {
         if (selectedEvent != null) {
             onDetailTopBarChange(
@@ -133,7 +132,6 @@ fun RecentActivitiesScreen(
     }
 }
 
-// ... RecentFilterRow function stays exactly the same ...
 @Composable
 fun RecentFilterRow(
     selectedFilter: String,

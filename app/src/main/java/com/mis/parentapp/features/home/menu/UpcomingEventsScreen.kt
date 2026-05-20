@@ -61,7 +61,6 @@ fun rememberDrawableIdFromName(imageName: String?): Int {
         if (imageName.isNullOrBlank()) {
             R.drawable.event1 // Default fallback asset if null
         } else {
-            // Strips extension like ".jpg" if present in database string
             val cleanName = imageName.substringBefore(".")
             val resId = context.resources.getIdentifier(cleanName, "drawable", context.packageName)
             if (resId != 0) resId else R.drawable.event1
@@ -72,7 +71,7 @@ fun rememberDrawableIdFromName(imageName: String?): Int {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpcomingEventsScreen(
-    autoSelectEventId: Int? = null, // 1. Add the new parameter here
+    autoSelectEventId: Int? = null,
     onBackClick: () -> Unit,
     onDetailTopBarChange: (Boolean, (() -> Unit)?, (() -> Unit)?) -> Unit
 ) {
@@ -87,7 +86,6 @@ fun UpcomingEventsScreen(
     var selectedFilter by remember { mutableStateOf("All") }
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
 
-    // 2. Automatically trigger the detail panel if an ID parameter is received from the Home Screen
     LaunchedEffect(allUpcomingEvents, autoSelectEventId) {
         if (autoSelectEventId != null && selectedEvent == null && allUpcomingEvents.isNotEmpty()) {
             val matchingEvent = allUpcomingEvents.find { it.id == autoSelectEventId }
@@ -109,7 +107,6 @@ fun UpcomingEventsScreen(
 
     val groupedEvents = filteredEvents.groupBy { it.category }
 
-    // 3. Side-effect to communicate with SubScreen TopBar
     DisposableEffect(selectedEvent) {
         if (selectedEvent != null) {
             onDetailTopBarChange(
@@ -319,11 +316,3 @@ private fun shareEvent(context: Context, event: EventItem) {
     }
     context.startActivity(Intent.createChooser(intent, "Share Event"))
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun UpcomingEventsScreenPreview() {
-//    ParentAppTheme {
-//        UpcomingEventsScreen(onBackClick = {})
-//    }
-//}

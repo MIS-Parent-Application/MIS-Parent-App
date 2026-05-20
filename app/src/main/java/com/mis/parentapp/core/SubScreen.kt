@@ -102,7 +102,6 @@ fun SubScreen(
     chatViewModel: ChatViewModel? = null,
     userProfileViewModel: UserProfileViewModel? = null
 ) {
-    //
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -247,7 +246,6 @@ fun SubScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = {
-                            // Check details stack sequentially
                             if (isEventDetailOpen) {
                                 eventDetailBackAction?.invoke()
                             } else if (isRecentDetailOpen) {
@@ -266,7 +264,6 @@ fun SubScreen(
                         }
                     },
                     actions = {
-                        // Show share button conditionally if any detail screen layout context is alive
                         if (isAnyDetailOpen) {
                             IconButton(onClick = {
                                 if (isEventDetailOpen) eventDetailShareAction?.invoke()
@@ -372,7 +369,6 @@ fun SubScreen(
                     )
                 }
                 composable<MonitorAcademic> {
-                    // Cleaned up! Now uses your teammate's Retrofit logic via studentVM
                     MonitorAcademicScreen(
                         studentVM = studentVM,
                         onBackClick = {
@@ -389,7 +385,6 @@ fun SubScreen(
                     )
                 }
                 composable<TrackAttendance> {
-                    // Cleaned up! Calls the Screen Wrapper instead of the Content UI
                     TrackAttendanceScreen(
                         studentVM = studentVM,
                         onBackClick = {
@@ -436,7 +431,6 @@ fun SubScreen(
                 }
                 composable<Chat> { 
                     val args = it.toRoute<Chat>()
-                    // Use the shared ViewModel if provided, otherwise fallback to route-scoped
                     val vm: ChatViewModel = chatViewModel ?: viewModel(it)
                     MessageScreen(
                         contactId = args.id,
