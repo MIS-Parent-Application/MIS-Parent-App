@@ -132,7 +132,7 @@ fun Body(
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM?.updateStudents(dashboard.children)
+            studentVM?.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
             dashboardError = null
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
@@ -291,7 +291,7 @@ private fun Child.toHomeStudent(): HomeStudent {
             attendanceScore = attendanceValue / 100.0,
             gpa = gpa,
             pendingPayment = pendingPayments.toDouble(),
-            notificationCount = 0,
+            notificationCount = notificationCount,
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
         ),

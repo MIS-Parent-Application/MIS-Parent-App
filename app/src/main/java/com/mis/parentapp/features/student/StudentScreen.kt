@@ -69,7 +69,7 @@ fun StudentScreen(
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM.updateStudents(dashboard.children)
+            studentVM.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
         } catch (_: Exception) {
             errorMessage = "Unable to load student data."
         }

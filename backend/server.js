@@ -8,6 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'mis_parent_app.db');
 
@@ -584,6 +585,7 @@ function mapStudent(row, schedules = [], studyLoad = []) {
         attendance: row.attendance,
         gpa: row.gpa,
         pendingPayments: row.pending_payments,
+        notificationCount: row.notificationCount || 0,
         schedules,
         studyLoad
     };
@@ -760,13 +762,19 @@ async function buildDashboard(parentId = 1) {
     const parent = await getParent(parentId);
     if (!parent) return null;
 
+    const schoolUnread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND student_id IS NULL');
     const children = [];
     for (const childId of parent.children) {
         const child = await getStudent(childId);
-        if (child) children.push(child);
+        if (child) {
+            const childUnread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND student_id = ?', [childId]);
+            child.notificationCount = childUnread.count + schoolUnread.count;
+            children.push(child);
+        }
     }
 
-    const unread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1');
+    const childIds = parent.children.length > 0 ? parent.children.join(',') : '0';
+    const totalUnread = await get(`SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND (student_id IS NULL OR student_id IN (${childIds}))`);
     const upcomingEvents = await all(
         'SELECT title, date FROM calendar_events ORDER BY date LIMIT 3'
     );
@@ -774,7 +782,7 @@ async function buildDashboard(parentId = 1) {
     return {
         parent,
         children,
-        unreadAnnouncements: unread.count,
+        unreadAnnouncements: totalUnread.count,
         upcomingEvents: upcomingEvents.map(event => `${event.title} - ${event.date}`)
     };
 }

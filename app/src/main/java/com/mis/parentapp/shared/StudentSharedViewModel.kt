@@ -13,14 +13,39 @@ class StudentSharedViewModel : ViewModel() {
     var selectedStudent by mutableStateOf<Child?>(null)
         private set
 
-    fun updateStudents(children: List<Child>) {
-        students = children
-        if (selectedStudent == null || children.none { it.id == selectedStudent?.id }) {
-            selectedStudent = children.firstOrNull()
+    var unreadAnnouncements by mutableStateOf(0)
+        private set
+
+    private val clearedStudentIds = mutableSetOf<Int>()
+
+    fun updateStudents(children: List<Child>, unread: Int = 0) {
+        students = children.map { child ->
+            if (clearedStudentIds.contains(child.id)) {
+                child.copy(notificationCount = 0)
+            } else {
+                child
+            }
         }
+
+        selectedStudent = selectedStudent?.let { current ->
+            students.find { it.id == current.id }
+        } ?: students.firstOrNull()
+
+        unreadAnnouncements = selectedStudent?.notificationCount ?: unread
     }
 
     fun selectStudent(student: Child) {
         selectedStudent = student
+        unreadAnnouncements = student.notificationCount
+    }
+
+    fun clearNotifications() {
+        val currentId = selectedStudent?.id ?: return
+        clearedStudentIds.add(currentId)
+        students = students.map {
+            if (it.id == currentId) it.copy(notificationCount = 0) else it
+        }
+        selectedStudent = students.find { it.id == currentId }
+        unreadAnnouncements = 0
     }
 }
