@@ -5,14 +5,14 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    //for wifi
-//    private const val BASE_URL = "http://192.168.1.248:3000/"
+    //for Wi-Fi
+    private const val BASE_URL = "http://192.168.1.8:3000/"
 
     //if using phone via usb
     //then run adb reverse tcp:3000 tcp:3000 in terminal
-    private const val BASE_URL = "http://192.168.101.72:3000/"
+    //private const val BASE_URL = "http://10.0.2.2:3000/"
 
-    private val okHttpClient: OkHttpClient by lazy {
+    private val okHttpClient: OkHttpClient by lazy{
         OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val originalRequest = chain.request()

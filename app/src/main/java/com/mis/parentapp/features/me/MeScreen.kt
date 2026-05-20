@@ -44,7 +44,8 @@ fun MeScreen(
     navController: NavController? = null,
     authViewModel: AuthViewModel,
     userProfileViewModel: UserProfileViewModel = viewModel(),
-    onSignOutClick: () -> Unit
+    onSignOutClick: () -> Unit,
+    onInfoClick: () -> Unit  // 👈 ADDED THIS PARAMETER
 ) {
     val context = LocalContext.current
     Box(
@@ -54,14 +55,14 @@ fun MeScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(24.dp), // Spacing between items
-            contentPadding = PaddingValues(bottom = 24.dp) // Extra bottom padding
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp) // Match StudentScreen height
+                        .height(380.dp)
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
                     if (userProfileViewModel.profileBitmap != null) {
@@ -107,7 +108,7 @@ fun MeScreen(
                             .background(Color.Black.copy(alpha = 0.25f))
                     )
 
-                    // NAME + DETAILS + PROFILE (Match StudentScreen Layout)
+                    // NAME + DETAILS + PROFILE
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -116,7 +117,6 @@ fun MeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // TEXT
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 userProfileViewModel.fullName,
@@ -132,7 +132,6 @@ fun MeScreen(
                             )
                         }
 
-                        // VERIFIED BADGE
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -183,11 +182,3 @@ fun MeScreen(
         }
     }
 }
-
-//@Preview(showBackground = true, widthDp = 360)
-//@Composable
-//private fun MeScreenPreview() {
-//    ParentAppTheme {
-//        MeScreen()
-//    }
-//}
