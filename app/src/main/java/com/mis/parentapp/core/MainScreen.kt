@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -16,10 +18,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -59,7 +63,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -503,12 +509,16 @@ fun MainScreen(
             if (showSharedTopBar) {
                 MainTopBar(
                     onMenuClick = { showBottomSheet = true },
-                    onNotificationClick = { navController.navigate(Notification) },
+                    onNotificationClick = {
+                        studentSharedViewModel.clearNotifications()
+                        navController.navigate(Notification)
+                    },
                     onCalendarClick = { navController.navigate(Calendar) },
                     iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                     menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                     backgroundColor = topBarBackgroundColor,
-                    isMeScreen = currentDestination?.hasRoute(Me::class) == true
+                    isMeScreen = currentDestination?.hasRoute(Me::class) == true,
+                    notificationCount = studentSharedViewModel.unreadAnnouncements
                 )
             }
         }
@@ -535,7 +545,8 @@ fun MainTopBar(
     iconTint: Color,
     menuIconTint: Color,
     backgroundColor: Color,
-    isMeScreen: Boolean = false
+    isMeScreen: Boolean = false,
+    notificationCount: Int = 0
 ) {
     Row(
         modifier = Modifier
@@ -556,13 +567,42 @@ fun MainTopBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onNotificationClick) {
-                Image(
-                    painter = painterResource(id = R.drawable.ph_bell),
-                    contentDescription = "Notifications",
-                    modifier = Modifier.size(32.dp),
-                    colorFilter = ColorFilter.tint(iconTint)
-                )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onNotificationClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Box {
+                    Image(
+                        painter = painterResource(id = R.drawable.ph_bell),
+                        contentDescription = "Notifications",
+                        modifier = Modifier.size(32.dp),
+                        colorFilter = ColorFilter.tint(iconTint)
+                    )
+                    if (notificationCount > 0) {
+                        val displayCount = if (notificationCount > 9) "9+" else notificationCount.toString()
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 4.dp, y = 4.dp)
+                                .size(18.dp)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                                .border(2.dp, backgroundColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = displayCount,
+                                color = MaterialTheme.colorScheme.onError,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
+                }
             }
             IconButton(onClick = onMenuClick) {
                 Icon(

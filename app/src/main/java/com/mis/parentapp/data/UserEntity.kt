@@ -11,5 +11,6 @@ data class UserEntity(
     val fullName: String? = null,
     val email: String? = null,
     val phoneNumber: String? = null,
-    val profileImageUri: String? = null
+    val profileImageUri: String? = null,
+    val lastLoginTime: Long = 0L
 )
