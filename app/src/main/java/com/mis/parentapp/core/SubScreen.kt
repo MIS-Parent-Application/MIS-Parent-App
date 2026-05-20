@@ -377,7 +377,9 @@ fun SubScreen(
                     )
                 }
                 composable<DataSafety> {
-                    DataSafetyScreen()
+                    DataSafetyScreen(
+                        userProfileViewModel = userProfileViewModel ?: viewModel()
+                    )
                 }
                 composable<EditProfile> {
                     EditProfileScreen(

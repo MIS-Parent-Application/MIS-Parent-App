@@ -88,7 +88,7 @@ fun UsernameSignInScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(330.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             Text(
                 text = stringResource(id = R.string.auth_msg),

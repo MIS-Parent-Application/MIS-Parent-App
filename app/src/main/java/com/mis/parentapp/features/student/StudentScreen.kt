@@ -77,9 +77,10 @@ fun StudentScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter
     ) {
-        LazyColumn {
+        LazyColumn(modifier = Modifier.widthIn(max = 1200.dp)) {
             item {
                 Box(
                     modifier = Modifier
@@ -158,12 +159,34 @@ fun StudentScreen(
                     if (errorMessage != null) {
                         Text(errorMessage ?: "", color = Color.Red, fontSize = 14.sp)
                     }
-                    AcademicProgramSection(selectedStudent)
-                    ClassScheduleSection(
-                        now = schedulePair?.first,
-                        next = schedulePair?.second,
-                        onStudyLoadClick = onStudyLoadClick
-                    )
+                    
+                    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                    val isWide = configuration.screenWidthDp >= 600
+
+                    if (isWide) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(32.dp)
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                AcademicProgramSection(selectedStudent)
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                ClassScheduleSection(
+                                    now = schedulePair?.first,
+                                    next = schedulePair?.second,
+                                    onStudyLoadClick = onStudyLoadClick
+                                )
+                            }
+                        }
+                    } else {
+                        AcademicProgramSection(selectedStudent)
+                        ClassScheduleSection(
+                            now = schedulePair?.first,
+                            next = schedulePair?.second,
+                            onStudyLoadClick = onStudyLoadClick
+                        )
+                    }
                 }
             }
         }

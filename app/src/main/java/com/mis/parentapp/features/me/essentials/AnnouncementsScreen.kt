@@ -10,46 +10,47 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mis.parentapp.utilities.cards.AnnouncementCard
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.data.EventRepository
+import com.mis.parentapp.features.home.EventsViewModel
+import com.mis.parentapp.features.home.menu.EventCard
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.utilities.cards.AnnouncementData
-import com.mis.parentapp.network.RetrofitInstance
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun AnnouncementsScreen() {
-    var selectedTab by remember { mutableStateOf("School-wide") }
-    var announcements by remember { mutableStateOf<List<AnnouncementData>>(emptyList()) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(context)
+    val repo = EventRepository(db.eventDao())
+    val viewModel: EventsViewModel = viewModel(
+        factory = EventsViewModel.provideFactory(repo)
+    )
+    val upcomingEvents by viewModel.upcomingEvents.collectAsState()
+    val recentEvents by viewModel.recentEvents.collectAsState()
 
-    LaunchedEffect(Unit) {
-        runCatching {
-            RetrofitInstance.api.getAnnouncements().map {
-                AnnouncementData(
-                    id = it.id.toString(),
-                    title = it.title,
-                    content = it.content,
-                    isNew = it.urgent,
-                    category = when (it.category.lowercase()) {
-                        "college" -> "College"
-                        else -> "School-wide"
-                    }
-                )
-            }
-        }.onSuccess {
-            announcements = it
-            errorMessage = null
-        }.onFailure {
-            errorMessage = "Unable to load announcements from the server."
-        }
+    var selectedTab by remember { mutableStateOf("School-wide") }
+
+    val allEvents = upcomingEvents + recentEvents
+    val filteredEvents = allEvents.filter {
+        val cat = it.category.lowercase()
+        if (selectedTab == "College") cat.contains("college")
+        else !cat.contains("college")
     }
 
-    val filteredAnnouncements = announcements.filter { it.category == selectedTab }
-    val newOnes = filteredAnnouncements.filter { it.isNew }
-    val earlierOnes = filteredAnnouncements.filter { !it.isNew }
+    val locale = LocalConfiguration.current.locales[0]
+    val sdf = remember(locale) { SimpleDateFormat("yyyy-MM-dd", locale) }
+    val todayStr = remember(sdf) { sdf.format(Date()) }
+
+    val newOnes = filteredEvents.filter { it.date >= todayStr }
+    val earlierOnes = filteredEvents.filter { it.date < todayStr }
 
     Column(
         modifier = Modifier
@@ -70,8 +71,8 @@ fun AnnouncementsScreen() {
                         .weight(1f)
                         .clickable { selectedTab = tab },
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isSelected) Color(0xFF1B3D13) else Color(0xFFF6FDE7),
-                    contentColor = if (isSelected) Color.White else Color.Black
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
                 ) {
                     Box(modifier = Modifier.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                         Text(text = tab, fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -85,10 +86,10 @@ fun AnnouncementsScreen() {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (filteredAnnouncements.isEmpty()) {
+            if (filteredEvents.isEmpty()) {
                 item {
                     Text(
-                        text = errorMessage ?: "No announcements for $selectedTab.",
+                        text = "No announcements for $selectedTab.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -97,8 +98,8 @@ fun AnnouncementsScreen() {
                 item {
                     Text(text = "New", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 }
-                items(newOnes) { announcement ->
-                    AnnouncementCard(announcement = announcement, onViewClick = { /* View Detail */ })
+                items(newOnes) { event ->
+                    EventCard(event = event, onClick = { /* View Detail */ })
                 }
             }
 
@@ -106,8 +107,8 @@ fun AnnouncementsScreen() {
                 item {
                     Text(text = "Earlier", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
                 }
-                items(earlierOnes) { announcement ->
-                    AnnouncementCard(announcement = announcement, onViewClick = { /* View Detail */ })
+                items(earlierOnes) { event ->
+                    EventCard(event = event, onClick = { /* View Detail */ })
                 }
             }
         }
@@ -119,7 +120,13 @@ fun getDummyAnnouncements(): List<AnnouncementData> {
     return listOf(
         AnnouncementData("1", "Announcement", "Lorem ipsum dolor sit amet consectetur...", true, "School-wide"),
         AnnouncementData("2", "Announcement", "Lorem ipsum dolor sit amet consectetur...", false, "School-wide"),
-        AnnouncementData("3", "College News", "Important update for college students.", true, "College"),
+        AnnouncementData(
+            "3",
+            "College News",
+            "Important update for college students.",
+            true,
+            "College"
+        ),
         AnnouncementData("4", "Announcement", "Earlier news item for school.", false, "School-wide")
     )
 }

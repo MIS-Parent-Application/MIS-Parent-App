@@ -94,6 +94,7 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 profileBitmap = bitmap?.asImageBitmap()
                 
+                // Persistence: save the URI to the database
                 currentUsername?.let {
                     userDao.updateProfileImage(it, uri?.toString())
                 }

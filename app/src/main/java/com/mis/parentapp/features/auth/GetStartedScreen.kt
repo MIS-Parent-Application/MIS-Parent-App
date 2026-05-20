@@ -109,8 +109,8 @@ fun GetStartedScreen(
                 modifier = Modifier.size(85.dp)
             )
 
-            // FIXED SPACE: 366.dp between Logo and Text
-            Spacer(modifier = Modifier.height(366.dp))
+            // Dynamic space instead of fixed 366.dp
+            Spacer(modifier = Modifier.weight(1f))
 
             Text(
                 text = stringResource(id = R.string.get_started_msg),
@@ -128,7 +128,7 @@ fun GetStartedScreen(
                 fontSize = 20.sp
             )
 
-            Spacer(modifier = Modifier.weight(50f)) // Pushes the bottom row down
+            Spacer(modifier = Modifier.height(32.dp)) // Small fixed gap
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

@@ -7,22 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class AnnouncementData(
-    val id: String,
-    val title: String,
-    val content: String,
-    val isNew: Boolean,
-    val category: String, // School-wide or College
-    val colors: List<Color> = listOf(Color(0xFFFFA726), Color(0xFFFF7043))
-)
 
 @Composable
 fun AnnouncementCard(
