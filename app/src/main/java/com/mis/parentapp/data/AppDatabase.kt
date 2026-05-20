@@ -15,7 +15,7 @@ import androidx.room.RoomDatabase
         StudentEntity::class,          // Added
         SubjectScheduleEntity::class   // Added
     ],
-    version = 7, // Incremented
+    version = 10, // Incremented
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

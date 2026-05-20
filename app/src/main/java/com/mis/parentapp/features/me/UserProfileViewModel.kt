@@ -14,6 +14,7 @@ import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.network.RetrofitInstance
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 class UserProfileViewModel(application: Application) : AndroidViewModel(application) {
@@ -59,7 +60,10 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                     if (it.fullName != null) fullName = it.fullName
                     if (it.email != null) email = it.email
                     if (it.phoneNumber != null) phoneNumber = it.phoneNumber
-                    if (it.profileImageUri != null) {
+                    if (it.profileImageBlob != null) {
+                        val bitmap = BitmapFactory.decodeByteArray(it.profileImageBlob, 0, it.profileImageBlob.size)
+                        profileBitmap = bitmap?.asImageBitmap()
+                    } else if (it.profileImageUri != null) {
                         loadBitmapFromUri(Uri.parse(it.profileImageUri))
                     }
                 }
@@ -108,11 +112,12 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     fun updateProfileImage(inputStream: InputStream?, uri: Uri?) {
         viewModelScope.launch {
             try {
-                val bitmap = BitmapFactory.decodeStream(inputStream)
+                val bytes = inputStream?.readBytes()
+                val bitmap = if (bytes != null) BitmapFactory.decodeByteArray(bytes, 0, bytes.size) else null
                 profileBitmap = bitmap?.asImageBitmap()
                 
                 currentUsername?.let {
-                    userDao.updateProfileImage(it, uri?.toString())
+                    userDao.updateProfileImage(it, uri?.toString(), bytes)
                 }
             } catch (e: Exception) {
             }

@@ -161,6 +161,7 @@ async function initDatabase() {
             image_url TEXT
         )
     `);
+    await ensureColumn('calendar_events', 'image_url', "TEXT");
     await run(`
         CREATE TABLE IF NOT EXISTS academic_grades (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

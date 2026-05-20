@@ -4,10 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen // <-- 1. ADD THIS IMPORT
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,27 +22,26 @@ import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.GetStartedScreen
-import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.auth.PasswordSignInScreen
+import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.navigation.MainContainer
 import com.mis.parentapp.navigation.OnBoarding
-import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.PasswordSignIn
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.shared.AppSettingsViewModel
 import com.mis.parentapp.shared.ThemeMode
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        installSplashScreen() // <-- 2. ADD THIS LINE EXACTLY HERE
+        installSplashScreen()
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val windowSizeClass = calculateWindowSizeClass(this)
             val settingsViewModel: AppSettingsViewModel = viewModel()
             val darkTheme = when (settingsViewModel.themeMode) {
                 ThemeMode.LIGHT -> false
@@ -45,14 +49,14 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
             ParentAppTheme(darkTheme = darkTheme) {
-                AppNavigation()
+                AppNavigation(windowSizeClass)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(windowSizeClass: androidx.compose.material3.windowsizeclass.WindowSizeClass) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
@@ -104,6 +108,7 @@ fun AppNavigation() {
 
         composable<MainContainer> {
             MainScreen(
+                windowSizeClass = windowSizeClass,
                 onSignOut = {
                     navController.navigate(OnBoarding) {
                         popUpTo(MainContainer) { inclusive = true }

@@ -5,7 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    //for wifi
+    //for wi-fi
 //private const val BASE_URL = "http://192.168.1.248:3000/"
 
     //if using phone via usb
