@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.text.font.FontWeight
@@ -409,9 +410,7 @@ fun SubScreen(
                     )
                 }
                 composable<DataSafety> {
-                    DataSafetyScreen(
-                        userProfileViewModel = userProfileViewModel ?: viewModel()
-                    )
+                    DataSafetyScreen(userProfileViewModel = userProfileViewModel ?: viewModel())
                 }
                 composable<EditProfile> {
                     EditProfileScreen(

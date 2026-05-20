@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,103 +51,95 @@ fun EditProfileScreen(
     LaunchedEffect(userProfileViewModel.email) { email = userProfileViewModel.email }
     LaunchedEffect(userProfileViewModel.phoneNumber) { phone = userProfileViewModel.phoneNumber }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.TopCenter
+            .background(MaterialTheme.colorScheme.background)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 600.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(contentAlignment = Alignment.BottomEnd) {
-                if (userProfileViewModel.profileBitmap != null) {
-                    Image(
-                        bitmap = userProfileViewModel.profileBitmap!!,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = userProfileViewModel.profileImageRes),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Surface(
+        Box(contentAlignment = Alignment.BottomEnd) {
+            if (userProfileViewModel.profileBitmap != null) {
+                Image(
+                    bitmap = userProfileViewModel.profileBitmap!!,
+                    contentDescription = null,
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(120.dp)
                         .clip(CircleShape)
-                        .clickable { 
-                            launcher.launch("image/*")
-                        },
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp))
-                }
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = userProfileViewModel.profileImageRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { /* name = it */ },
-                label = { Text("Full Name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                readOnly = true,
-                enabled = false
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email Address") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Phone Number") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = { 
-                    userProfileViewModel.updateProfile(name, email, phone)
-                    onSaveSuccess()
-                },
+            Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .clickable { 
+                        launcher.launch("image/*")
+                    },
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Text(text = "Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp))
             }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = { /* name = it */ },
+            label = { Text("Full Name") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            readOnly = true,
+            enabled = false
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email Address") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Phone Number") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = { 
+                userProfileViewModel.updateProfile(name, email, phone)
+                onSaveSuccess()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Text(text = "Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

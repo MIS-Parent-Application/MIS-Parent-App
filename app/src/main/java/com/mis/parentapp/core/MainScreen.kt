@@ -143,6 +143,7 @@ fun MainScreen(
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
+    val userProfileViewModel: com.mis.parentapp.features.me.UserProfileViewModel = viewModel()
 
     val bottomTabs = listOf(
         BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
@@ -345,6 +346,7 @@ fun MainScreen(
                     MeScreen(
                         navController = navController,
                         authViewModel = authViewModel,
+                        userProfileViewModel = userProfileViewModel,
                         onSignOutClick = onSignOut
                     )
                 }
@@ -480,14 +482,16 @@ fun MainScreen(
                     SubScreen(
                         startDestination = DataSafety,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        userProfileViewModel = userProfileViewModel
                     )
                 }
                 composable<EditProfile> {
                     SubScreen(
                         startDestination = EditProfile,
                         studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        userProfileViewModel = userProfileViewModel
                     )
                 }
                 composable<Preference> {

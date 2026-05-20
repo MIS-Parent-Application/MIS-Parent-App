@@ -15,42 +15,40 @@ fun FinancialDashboardScreen(viewModel: FinancialViewModel = viewModel()) {
     val fees by viewModel.fees.collectAsState()
     val totalDue = viewModel.getTotalDue()
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
-        Column(modifier = Modifier.widthIn(max = 600.dp).padding(16.dp).fillMaxSize()) {
-            Text("Financial Dashboard", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+    Column(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+        Text("Financial Dashboard", fontSize = 24.sp, fontWeight = FontWeight.Bold)
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Balance Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Total Balance Due", fontSize = 16.sp)
-                    Text("$${String.format(java.util.Locale.US, "%.2f", totalDue)}", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        // Balance Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Total Balance Due", fontSize = 16.sp)
+                Text("$${String.format(java.util.Locale.US, "%.2f", totalDue)}", fontSize = 32.sp, fontWeight = FontWeight.Bold)
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(
-                        onClick = { viewModel.processPayment(totalDue, "Credit Card") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = totalDue > 0.0
-                    ) {
-                        Text(if (totalDue > 0.0) "Pay Now" else "All Settled")
-                    }
+                Button(
+                    onClick = { viewModel.processPayment(totalDue, "Credit Card") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = totalDue > 0.0
+                ) {
+                    Text(if (totalDue > 0.0) "Pay Now" else "All Settled")
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Text("Fee Breakdown", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Fee Breakdown", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(8.dp))
 
-            // List of Fees
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(fees) { fee ->
-                    FeeItemRow(fee)
-                }
+        // List of Fees
+        LazyColumn {
+            items(fees) { fee ->
+                FeeItemRow(fee)
             }
         }
     }

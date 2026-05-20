@@ -117,7 +117,7 @@ fun PasswordSignInScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(330.dp))
 
             Text(
                 text = stringResource(id = R.string.auth_msg),

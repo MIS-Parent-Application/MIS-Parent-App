@@ -711,9 +711,6 @@ fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
 
 @Composable
 fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifications: String) {
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val isWide = configuration.screenWidthDp >= 600
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -728,31 +725,19 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
             fontWeight = FontWeight.Bold
         )
 
-        if (isWide) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                StatCard("Attendance", attendance, R.drawable.boxicons_calendar_check_filled, Modifier.weight(1f))
-                StatCard("GPA", gpa, R.drawable.material_symbols_owl, Modifier.weight(1f))
-                StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
-                StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                StatCard("Attendance", attendance, R.drawable.boxicons_calendar_check_filled, Modifier.weight(1f))
-                StatCard("GPA", gpa, R.drawable.material_symbols_owl, Modifier.weight(1f))
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
-                StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard("Attendance", attendance, R.drawable.boxicons_calendar_check_filled, Modifier.weight(1f))
+            StatCard("GPA", gpa, R.drawable.material_symbols_owl, Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
+            StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
         }
     }
 }
