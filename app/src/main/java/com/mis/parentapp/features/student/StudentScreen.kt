@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,6 +67,8 @@ fun StudentScreen(
     onStudyLoadClick: () -> Unit = {}
 ) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val configuration = LocalConfiguration.current
+    val isWide = configuration.screenWidthDp >= 600
 
     LaunchedEffect(Unit) {
         try {
@@ -87,12 +90,17 @@ fun StudentScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.TopCenter
     ) {
-        LazyColumn(modifier = Modifier.widthIn(max = 1200.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .widthIn(max = 1200.dp)
+                .fillMaxSize()
+        ) {
             item {
+                val headerHeight = if (isWide) 420.dp else 380.dp
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp)
+                        .height(headerHeight)
                 ) {
                     RemoteImage(
                         url = selectedStudent?.backgroundImageUrl,

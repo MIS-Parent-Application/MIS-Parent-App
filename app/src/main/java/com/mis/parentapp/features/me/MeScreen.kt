@@ -50,14 +50,20 @@ fun MeScreen(
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
-    val headerHeight = (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
+    val isWide = configuration.screenWidthDp >= 600
+    val headerHeight = if (isWide) (configuration.screenHeightDp.dp * 0.5f).coerceIn(300.dp, 500.dp) 
+                       else (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
+    
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter
     ) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .widthIn(max = 1200.dp)
+                .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(24.dp), // Spacing between items
             contentPadding = PaddingValues(bottom = 24.dp) // Extra bottom padding
         ) {
