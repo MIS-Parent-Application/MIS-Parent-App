@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -634,7 +635,11 @@ fun EventHorizontalSection(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(events) { event ->
-                    EventCard(event = event, onClick = { onEventClick(event) })
+                    EventCard(
+                        event = event,
+                        modifier = Modifier.width(200.dp),
+                        onClick = { onEventClick(event) }
+                    )
                 }
             }
         }

@@ -15,10 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -185,16 +182,22 @@ fun EventSection(title: String, events: List<EventItem>, onEventClick: (EventIte
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(text = title, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onBackground)
 
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            items(events) { event ->
-                EventCard(event = event, onClick = { onEventClick(event) })
-            }
+        events.forEach { event ->
+            EventCard(
+                event = event,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onEventClick(event) }
+            )
         }
     }
 }
 
 @Composable
-fun EventCard(event: EventItem, onClick: () -> Unit) {
+fun EventCard(
+    event: EventItem,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     val context = LocalContext.current
 
     val imageResource = remember(event.imageUrl) {
@@ -208,8 +211,7 @@ fun EventCard(event: EventItem, onClick: () -> Unit) {
     }
 
     Card(
-        modifier = Modifier
-            .width(200.dp)
+        modifier = modifier
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
