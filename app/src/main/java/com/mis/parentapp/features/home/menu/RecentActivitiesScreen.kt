@@ -1,5 +1,8 @@
 package com.mis.parentapp.features.home.menu
 
+import android.content.Context
+import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -24,7 +27,9 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentActivitiesScreen(
-    onBackClick: () -> Unit
+    autoSelectEventId: Int? = null,
+    onBackClick: () -> Unit,
+    onDetailTopBarChange: (Boolean, (() -> Unit)?, (() -> Unit)?) -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: EventsViewModel = viewModel(
@@ -35,7 +40,21 @@ fun RecentActivitiesScreen(
 
     val events by viewModel.recentEvents.collectAsState(initial = emptyList())
     val selectedFilter = remember { mutableStateOf("All") }
-    val selectedEvent = remember { mutableStateOf<EventItem?>(null) }
+    var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
+
+    LaunchedEffect(events, autoSelectEventId) {
+        if (autoSelectEventId != null && selectedEvent == null && events.isNotEmpty()) {
+            val matchingEvent = events.find { it.id == autoSelectEventId }
+            if (matchingEvent != null) {
+                selectedEvent = matchingEvent
+            }
+        }
+    }
+
+    BackHandler(enabled = selectedEvent != null) {
+        selectedEvent = null
+        onDetailTopBarChange(false, null, null)
+    }
 
     val filteredEvents = remember(events, selectedFilter.value) {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -65,15 +84,29 @@ fun RecentActivitiesScreen(
     }
 
     val groupedEvents = filteredEvents.groupBy { it.category }
-    if (selectedEvent.value != null) {
-        EventDetailScreen(
-            event = selectedEvent.value!!,
-            onBackClick = { selectedEvent.value = null })
+
+    DisposableEffect(selectedEvent) {
+        if (selectedEvent != null) {
+            onDetailTopBarChange(
+                true,
+                {
+                    selectedEvent = null
+                },
+                { shareActivity(context, selectedEvent!!) }
+            )
+        } else {
+            onDetailTopBarChange(false, null, null)
+        }
+        onDispose {
+            onDetailTopBarChange(false, null, null)
+        }
+    }
+
+    if (selectedEvent != null) {
+        EventDetailScreen(event = selectedEvent!!)
     } else {
-        // FIX: Removed Scaffold and CenterAlignedTopAppBar entirely.
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
             RecentFilterRow(
                 selectedFilter = selectedFilter.value,
@@ -90,7 +123,7 @@ fun RecentActivitiesScreen(
                         EventSection(
                             title = category,
                             events = eventList,
-                            onEventClick = { selectedEvent.value = it }
+                            onEventClick = { selectedEvent = it }
                         )
                     }
                 }
@@ -99,7 +132,6 @@ fun RecentActivitiesScreen(
     }
 }
 
-// ... RecentFilterRow function stays exactly the same ...
 @Composable
 fun RecentFilterRow(
     selectedFilter: String,
@@ -129,4 +161,19 @@ fun RecentFilterRow(
             }
         }
     }
+}
+
+private fun shareActivity(context: Context, event: EventItem) {
+    val shareText = buildString {
+        appendLine("Activity: ${event.title}")
+        appendLine("Date: ${event.date}")
+        appendLine()
+        appendLine(event.description)
+    }
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, event.title)
+        putExtra(Intent.EXTRA_TEXT, shareText)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share Activity"))
 }

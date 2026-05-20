@@ -28,8 +28,25 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     var profileBitmap by mutableStateOf<ImageBitmap?>(null)
     var currentUsername: String? = null
 
+    // Data Safety states
+    var twoFactorEnabled by mutableStateOf(false)
+    var loginAlertsEnabled by mutableStateOf(false)
+
     init {
         loadProfileData()
+    }
+
+    fun toggleTwoFactor(enabled: Boolean) {
+        twoFactorEnabled = enabled
+    }
+
+    fun toggleLoginAlerts(enabled: Boolean) {
+        loginAlertsEnabled = enabled
+    }
+
+    fun requestDataExport() {
+        // Logic for requesting data export
+        // For now, just a mock action
     }
 
     private fun loadProfileData() {

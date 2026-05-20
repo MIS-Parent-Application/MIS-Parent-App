@@ -3,6 +3,8 @@ package com.mis.parentapp.features.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.lifecycle.viewModelScope
 import com.mis.parentapp.data.EventRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,10 +42,9 @@ class EventsViewModel(private val repository: EventRepository) : ViewModel() {
     }
 
     companion object {
-        fun provideFactory(repository: EventRepository): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return EventsViewModel(repository) as T
+        fun provideFactory(repository: EventRepository): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                EventsViewModel(repository)
             }
         }
     }

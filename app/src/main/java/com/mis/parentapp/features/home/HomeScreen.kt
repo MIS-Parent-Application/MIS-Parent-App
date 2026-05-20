@@ -2,6 +2,7 @@ package com.mis.parentapp.features.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,26 +57,17 @@ import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
 import com.mis.parentapp.data.SubjectScheduleEntity
+import com.mis.parentapp.features.home.menu.EventCard
+import com.mis.parentapp.navigation.RecentActivities
+import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
-import com.mis.parentapp.navigation.RecentActivities
-import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.runtime.rememberCoroutineScope
-import com.mis.parentapp.data.StudentWithSchedules
-import com.mis.parentapp.data.StudentsRepo
-import com.mis.parentapp.data.UserRepository
-import com.mis.parentapp.ui.theme.ColorsDefaultTheme
-import com.mis.parentapp.features.home.menu.EventCard
-import com.mis.parentapp.features.home.menu.EventDetailScreen
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.border
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,11 +78,6 @@ fun HomeScreen(
 ) {
     val sheetState = rememberModalBottomSheetState()
     val showSheet = remember { mutableStateOf(false) }
-    val selectedEventForDetail = remember { mutableStateOf<EventItem?>(null) }
-
-    BackHandler(enabled = selectedEventForDetail.value != null) {
-        selectedEventForDetail.value = null
-    }
 
     if (showSheet.value) {
         ModalBottomSheet(
@@ -102,28 +89,26 @@ fun HomeScreen(
                 onItemClick = { route ->
                     showSheet.value = false
                     when (route) {
-                        "Upcoming events" -> mainNavController?.navigate(UpcomingEvents)
-                        "Recent activities" -> mainNavController?.navigate(RecentActivities)
+                        "Upcoming events" -> mainNavController?.navigate(UpcomingEvents())
+                        "Recent activities" -> mainNavController?.navigate(RecentActivities())
                     }
                 }
             )
         }
     }
 
-    if (selectedEventForDetail.value != null) {
-        EventDetailScreen(
-            event = selectedEventForDetail.value!!,
-            onBackClick = { selectedEventForDetail.value = null }
-        )
-    } else {
-        Body(
-            modifier = modifier,
-            studentVM = studentVM,
-            onUpcomingSeeAll = { mainNavController?.navigate(UpcomingEvents) },
-            onRecentSeeAll = { mainNavController?.navigate(RecentActivities) },
-            onEventClick = { event -> selectedEventForDetail.value = event }
-        )
-    }
+    Body(
+        modifier = modifier,
+        studentVM = studentVM,
+        onUpcomingSeeAll = { mainNavController?.navigate(UpcomingEvents()) },
+        onRecentSeeAll = { mainNavController?.navigate(RecentActivities()) },
+        onUpcomingEventClick = { clickedEvent ->
+            mainNavController?.navigate(UpcomingEvents(autoSelectEventId = clickedEvent.id))
+        },
+        onRecentEventClick = { clickedEvent ->
+            mainNavController?.navigate(RecentActivities(autoSelectEventId = clickedEvent.id))
+        }
+    )
 }
 
 @Composable
@@ -132,7 +117,8 @@ fun Body(
     studentVM: StudentSharedViewModel? = null,
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
-    onEventClick: (EventItem) -> Unit
+    onUpcomingEventClick: (EventItem) -> Unit,
+    onRecentEventClick: (EventItem) -> Unit
 ) {
     val context = LocalContext.current
     val db = AppDatabase.getDatabase(context)
@@ -262,7 +248,7 @@ fun Body(
                 title = "Upcoming Events",
                 events = upcomingEvents,
                 onSeeAllClick = onUpcomingSeeAll,
-                onEventClick = onEventClick
+                onEventClick = onUpcomingEventClick // Points to upcoming click sequence handler
             )
         }
 
@@ -272,7 +258,7 @@ fun Body(
                 title = "Recent Activities",
                 events = recentEvents,
                 onSeeAllClick = onRecentSeeAll,
-                onEventClick = onEventClick
+                onEventClick = onRecentEventClick // Points to recent activity click sequence handler
             )
         }
 
@@ -280,6 +266,7 @@ fun Body(
     }
 }
 
+// ... Rest of the private functions and helper composables remain exactly the same ...
 private data class HomeStudent(
     val student: StudentEntity,
     val schedules: List<SubjectScheduleEntity>
@@ -393,7 +380,6 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
             contentAlignment = Alignment.Center,
             modifier = Modifier.height(180.dp).fillMaxWidth()
         ) {
-            // Background Radial Glow "Aura" elements
             Box(
                 modifier = Modifier
                     .offset(x = (-40).dp)
@@ -418,7 +404,6 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
                     )
             )
 
-            // MAIN IMAGE - Updated with identical ring styling as selectors
             Box(
                 modifier = Modifier
                     .requiredSize(116.dp)
