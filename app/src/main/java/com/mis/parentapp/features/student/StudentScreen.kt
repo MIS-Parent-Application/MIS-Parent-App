@@ -46,9 +46,16 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+
+data class StudentScheduleDisplay(
+    val schedule: ClassSchedule?,
+    val statusLabel: String,
+    val dateLabel: String
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +70,7 @@ fun StudentScreen(
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM.updateStudents(dashboard.children)
+            studentVM.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
         } catch (_: Exception) {
             errorMessage = "Unable to load student data."
         }
@@ -87,8 +94,9 @@ fun StudentScreen(
                         .fillMaxWidth()
                         .height(380.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.bgpic),
+                    RemoteImage(
+                        url = selectedStudent?.backgroundImageUrl,
+                        fallbackRes = R.drawable.bgpic,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -128,8 +136,9 @@ fun StudentScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(students, key = { it.id }) { student ->
-                                Image(
-                                    painter = painterResource(id = R.drawable.student_image),
+                                RemoteImage(
+                                    url = student.profileImageUrl,
+                                    fallbackRes = R.drawable.student_image,
                                     contentDescription = student.name,
                                     modifier = Modifier
                                         .size(48.dp)
@@ -228,8 +237,8 @@ fun ProgramItem(icon: ImageVector, text: String) {
 
 @Composable
 fun ClassScheduleSection(
-    now: ClassSchedule?,
-    next: ClassSchedule?,
+    now: StudentScheduleDisplay?,
+    next: StudentScheduleDisplay?,
     onStudyLoadClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -257,8 +266,9 @@ fun ClassScheduleSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             ScheduleCardSmall(
-                status = "Now",
-                schedule = now,
+                status = now?.statusLabel ?: "Now",
+                date = now?.dateLabel ?: "",
+                schedule = now?.schedule,
                 fallbackSubject = "No class",
                 fallbackRoom = "-",
                 fallbackTime = "No class now",
@@ -267,8 +277,9 @@ fun ClassScheduleSection(
                 modifier = Modifier.weight(1f)
             )
             ScheduleCardSmall(
-                status = "Up next",
-                schedule = next,
+                status = next?.statusLabel ?: "Up next",
+                date = next?.dateLabel ?: "",
+                schedule = next?.schedule,
                 fallbackSubject = "VACANT",
                 fallbackRoom = "-",
                 fallbackTime = "No next class",
@@ -283,6 +294,7 @@ fun ClassScheduleSection(
 @Composable
 fun ScheduleCardSmall(
     status: String,
+    date: String,
     schedule: ClassSchedule?,
     fallbackSubject: String,
     fallbackRoom: String,
@@ -310,11 +322,21 @@ fun ScheduleCardSmall(
                 modifier = Modifier.size(28.dp),
                 colorFilter = ColorFilter.tint(if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary)
             )
-            Text(
-                text = status,
-                fontSize = 12.sp,
-                color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.outline
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = status,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+                )
+                if (date.isNotEmpty()) {
+                    Text(
+                        text = date,
+                        fontSize = 10.sp,
+                        color = if (isHighlight) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.outline
+                    )
+                }
+            }
         }
         Text(
             text = schedule?.subject ?: fallbackSubject,
@@ -347,21 +369,58 @@ fun ScheduleCardSmall(
     }
 }
 
-private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<ClassSchedule?, ClassSchedule?> {
+private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentScheduleDisplay, StudentScheduleDisplay> {
     val calendar = Calendar.getInstance()
-    val today = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
+    val todayName = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
     val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+
+    val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+    val todayDateStr = dateFormatter.format(calendar.time)
+
     val todaySchedules = schedules
-        .filter { it.day.equals(today, ignoreCase = true) }
+        .filter { it.day.equals(todayName, ignoreCase = true) }
         .sortedBy { minutesFromTime(it.startTime) }
 
     val current = todaySchedules.firstOrNull {
         nowMinutes in minutesFromTime(it.startTime) until minutesFromTime(it.endTime)
     }
-    val next = todaySchedules.firstOrNull { minutesFromTime(it.startTime) > nowMinutes }
-        ?: schedules.sortedWith(compareBy<ClassSchedule> { dayOrder(it.day) }.thenBy { minutesFromTime(it.startTime) }).firstOrNull()
 
-    return current to next
+    val currentDisplay = StudentScheduleDisplay(
+        schedule = current,
+        statusLabel = "Now",
+        dateLabel = todayDateStr
+    )
+
+    var nextSchedule: ClassSchedule? = todaySchedules.firstOrNull { minutesFromTime(it.startTime) > nowMinutes }
+    var nextStatus = "Up next"
+    var nextDate = todayDateStr
+
+    if (nextSchedule == null && schedules.isNotEmpty()) {
+        val todayIdx = dayOrder(todayName)
+        val sortedAll = schedules.sortedWith(compareBy<ClassSchedule> { dayOrder(it.day) }.thenBy { minutesFromTime(it.startTime) })
+
+        nextSchedule = sortedAll.firstOrNull { dayOrder(it.day) > todayIdx }
+            ?: sortedAll.firstOrNull()
+
+        if (nextSchedule != null) {
+            nextStatus = nextSchedule.day
+            val targetIdx = dayOrder(nextSchedule.day)
+            var daysToAdd = targetIdx - todayIdx
+            if (daysToAdd <= 0) daysToAdd += 7
+
+            val nextCal = Calendar.getInstance()
+            nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
+            nextDate = dateFormatter.format(nextCal.time)
+        }
+    }
+
+    val nextDisplay = StudentScheduleDisplay(
+        schedule = nextSchedule,
+        statusLabel = nextStatus,
+        dateLabel = nextDate
+    )
+
+    return currentDisplay to nextDisplay
 }
 
 private fun minutesFromTime(value: String): Int {

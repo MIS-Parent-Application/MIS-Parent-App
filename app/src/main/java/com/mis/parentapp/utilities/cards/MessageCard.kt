@@ -69,15 +69,31 @@ fun MessageCard(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(message.gradientColors))
-                )
+                        .background(Brush.linearGradient(message.gradientColors)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = message.senderName.initials(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF102414)
+                    )
+                }
             } else {
                 Box(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                )
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = message.senderName.initials(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -90,15 +106,19 @@ fun MessageCard(
                 ) {
                     Text(
                         text = message.senderName,
-                        fontSize = 24.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
                     )
                     Text(
                         text = message.timestamp,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -113,4 +133,13 @@ fun MessageCard(
             }
         }
     }
+}
+
+private fun String.initials(): String {
+    return split(" ")
+        .filter { it.isNotBlank() && !it.contains(".") }
+        .take(2)
+        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+        .joinToString("")
+        .ifBlank { take(1).uppercase() }
 }

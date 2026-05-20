@@ -17,13 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.network.ChatMessageDto
-import com.mis.parentapp.network.FacultyChatRetrofit
-import com.mis.parentapp.network.ParentChatLoginRequest
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
-import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun MessageScreen(
@@ -54,9 +48,9 @@ fun MessageScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (errorMessage != null) {
+        errorMessage?.let { message ->
             Text(
-                text = errorMessage!!,
+                text = message,
                 modifier = Modifier.padding(16.dp),
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 12.sp

@@ -20,8 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,6 +49,8 @@ fun MeScreen(
     onSignOutClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val headerHeight = (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -61,7 +65,7 @@ fun MeScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp) // Match StudentScreen height
+                        .height(headerHeight)
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
                     if (userProfileViewModel.profileBitmap != null) {
@@ -122,13 +126,17 @@ fun MeScreen(
                                 userProfileViewModel.fullName,
                                 color = Color.White,
                                 fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
                                 text = if (userProfileViewModel.isPrimaryGuardian) "Primary Guardian" else "Parent",
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
@@ -150,7 +158,9 @@ fun MeScreen(
                                 "Verified Account",
                                 color = Color.White,
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

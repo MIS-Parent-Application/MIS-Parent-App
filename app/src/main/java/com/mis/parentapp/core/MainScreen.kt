@@ -1,8 +1,15 @@
 package com.mis.parentapp.core
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -11,10 +18,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -23,40 +33,40 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.runtime.Composable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -74,43 +84,34 @@ import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
+import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.navigation.Announcements
 import com.mis.parentapp.navigation.Calendar
+import com.mis.parentapp.navigation.Chat
+import com.mis.parentapp.navigation.DataSafety
 import com.mis.parentapp.navigation.DebugMenu
 import com.mis.parentapp.navigation.Documents
+import com.mis.parentapp.navigation.EditProfile
 import com.mis.parentapp.navigation.FAQs
+import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.FormsAndRequest
 import com.mis.parentapp.navigation.Home
 import com.mis.parentapp.navigation.Me
+import com.mis.parentapp.navigation.Meeting
+import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.MonitorAcademic
 import com.mis.parentapp.navigation.Notification
 import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.navigation.PaymentOptions
+import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.SignIn
 import com.mis.parentapp.navigation.Student
 import com.mis.parentapp.navigation.StudyLoad
 import com.mis.parentapp.navigation.TrackAttendance
 import com.mis.parentapp.navigation.UpcomingEvents
-import com.mis.parentapp.navigation.Announcements
-import com.mis.parentapp.navigation.Feedbacks
-import com.mis.parentapp.navigation.Meeting
-import com.mis.parentapp.navigation.Messages
-import com.mis.parentapp.navigation.DataSafety
-import com.mis.parentapp.navigation.EditProfile
-import com.mis.parentapp.navigation.Preference
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.EmojiEmotions
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material3.Surface
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.ui.draw.clip
-import com.mis.parentapp.navigation.Chat
 import com.mis.parentapp.shared.StudentSharedViewModel
-import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.utilities.modals.GenericMenuModal
 import com.mis.parentapp.utilities.modals.MenuItem
 
@@ -195,8 +196,8 @@ fun MainScreen(
 
     val menuItems = when {
         currentDestination?.hasRoute(Home::class) == true -> listOf(
-            MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents); showBottomSheet = false },
-            MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities); showBottomSheet = false }
+            MenuItem("Upcoming events", "Stay updated on school activities.", Icons.Filled.Settings) { navController.navigate(UpcomingEvents()); showBottomSheet = false },
+            MenuItem("Recent activities", "Check your recent logs.", Icons.Filled.Settings) { navController.navigate(RecentActivities()); showBottomSheet = false }
         )
         currentDestination?.hasRoute(Student::class) == true -> listOf(
             MenuItem("Monitor Academic", "Check academic progress.", Icons.Filled.School) { navController.navigate(MonitorAcademic); showBottomSheet = false },
@@ -384,16 +385,18 @@ fun MainScreen(
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable<UpcomingEvents> {
+                composable<UpcomingEvents> { backStackEntry ->
+                    val args = backStackEntry.toRoute<UpcomingEvents>()
                     SubScreen(
-                        startDestination = UpcomingEvents,
+                        startDestination = args,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
                 }
-                composable<RecentActivities> {
+                composable<RecentActivities> { backStackEntry ->
+                    val args = backStackEntry.toRoute<RecentActivities>()
                     SubScreen(
-                        startDestination = RecentActivities,
+                        startDestination = args,
                         studentVM = studentSharedViewModel,
                         onBack = { navController.popBackStack() }
                     )
@@ -506,12 +509,16 @@ fun MainScreen(
             if (showSharedTopBar) {
                 MainTopBar(
                     onMenuClick = { showBottomSheet = true },
-                    onNotificationClick = { navController.navigate(Notification) },
+                    onNotificationClick = {
+                        studentSharedViewModel.clearNotifications()
+                        navController.navigate(Notification)
+                    },
                     onCalendarClick = { navController.navigate(Calendar) },
                     iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                     menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                     backgroundColor = topBarBackgroundColor,
-                    isMeScreen = currentDestination?.hasRoute(Me::class) == true
+                    isMeScreen = currentDestination?.hasRoute(Me::class) == true,
+                    notificationCount = studentSharedViewModel.unreadAnnouncements
                 )
             }
         }
@@ -538,7 +545,8 @@ fun MainTopBar(
     iconTint: Color,
     menuIconTint: Color,
     backgroundColor: Color,
-    isMeScreen: Boolean = false
+    isMeScreen: Boolean = false,
+    notificationCount: Int = 0
 ) {
     Row(
         modifier = Modifier
@@ -559,13 +567,42 @@ fun MainTopBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onNotificationClick) {
-                Image(
-                    painter = painterResource(id = R.drawable.ph_bell),
-                    contentDescription = "Notifications",
-                    modifier = Modifier.size(32.dp),
-                    colorFilter = ColorFilter.tint(iconTint)
-                )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onNotificationClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Box {
+                    Image(
+                        painter = painterResource(id = R.drawable.ph_bell),
+                        contentDescription = "Notifications",
+                        modifier = Modifier.size(32.dp),
+                        colorFilter = ColorFilter.tint(iconTint)
+                    )
+                    if (notificationCount > 0) {
+                        val displayCount = if (notificationCount > 9) "9+" else notificationCount.toString()
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 4.dp, y = 4.dp)
+                                .size(18.dp)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                                .border(2.dp, backgroundColor, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = displayCount,
+                                color = MaterialTheme.colorScheme.onError,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
+                }
             }
             IconButton(onClick = onMenuClick) {
                 Icon(
