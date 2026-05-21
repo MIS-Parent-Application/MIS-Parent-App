@@ -13,9 +13,42 @@ data class LoginRequest(
 )
 
 data class LoginResponse(
-    val token: String,
-    val parent: Parent,
-    val dashboard: ParentDashboard
+    val token: String? = null,
+    val parent: Parent? = null,
+    val dashboard: ParentDashboard? = null,
+    val requiresTwoFactor: Boolean = false,
+    val otpToken: String? = null,
+    val email: String? = null,
+    val expiresAt: String? = null,
+    val retryAfterSeconds: Int? = null
+)
+
+data class VerifyOtpRequest(
+    val otpToken: String,
+    val code: String
+)
+
+data class ResendOtpRequest(
+    val otpToken: String
+)
+
+data class ResendOtpResponse(
+    val otpToken: String,
+    val email: String,
+    val expiresAt: String,
+    val retryAfterSeconds: Int
+)
+
+data class ParentSecuritySettingsDto(
+    val parentId: Int,
+    val email: String,
+    val phone: String,
+    val twoFactorEnabled: Boolean
+)
+
+data class UpdateParentSecurityRequest(
+    val parentId: Int = 1,
+    val twoFactorEnabled: Boolean
 )
 
 data class Parent(
@@ -23,7 +56,18 @@ data class Parent(
     val name: String,
     val email: String,
     val phone: String,
-    val children: List<Int>
+    val children: List<Int>,
+    val profileImageUrl: String? = null,
+    val backgroundImageUrl: String? = null
+)
+
+data class ParentProfileUpdateRequest(
+    val parentId: Int = 1,
+    val email: String? = null,
+    val phone: String? = null,
+    val profileImageUrl: String? = null,
+    val profileImageData: String? = null,
+    val profileImageMimeType: String? = null
 )
 
 data class Child(
@@ -40,8 +84,18 @@ data class Child(
     val gpa: Double,
     val pendingPayments: Int,
     val notificationCount: Int = 0,
+    val performancePercentage: Int = 0,
+    val profileImageUrl: String? = null,
+    val backgroundImageUrl: String? = null,
     val schedules: List<ClassSchedule> = emptyList(),
     val studyLoad: List<StudyLoadSubject> = emptyList()
+)
+
+data class StudentPhotoUpdateRequest(
+    val profileImageUrl: String? = null,
+    val backgroundImageUrl: String? = null,
+    val profileImageData: String? = null,
+    val profileImageMimeType: String? = null
 )
 
 data class ClassSchedule(
@@ -77,7 +131,8 @@ data class NotificationDto(
     val type: String,
     val time: String,
     val category: String,
-    val isNew: Boolean
+    val isNew: Boolean,
+    val imageUrl: String? = null
 )
 
 data class CalendarEventDto(

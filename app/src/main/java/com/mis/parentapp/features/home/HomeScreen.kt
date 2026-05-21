@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -66,6 +68,8 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.InitialsImageFallback
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -128,15 +132,24 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
+    var parentName by remember { mutableStateOf("Parent") }
+    var parentProfileImageUrl by remember { mutableStateOf<String?>(null) }
+    val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
             studentVM?.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
+            parentName = dashboard.parent.name
+            parentProfileImageUrl = dashboard.parent.profileImageUrl
             dashboardError = null
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
         }
+    }
+
+    LaunchedEffect(selectedBackendStudentId) {
+        eventViewModel.refreshData(selectedBackendStudentId)
     }
 
     val students = remember(studentVM?.students) {
@@ -147,15 +160,21 @@ fun Body(
         students.firstOrNull { it.student.studentId == selectedId } ?: students.firstOrNull()
     }
 
+    val configuration = LocalConfiguration.current
+    val isWide = configuration.screenWidthDp >= 600
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { Spacer(modifier = Modifier.height(36.dp)) }
+        item { Spacer(modifier = Modifier.height(if (isWide) 16.dp else 36.dp)) }
 
         //STUDENT SELECTOR
         item {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+            Column(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth().padding(top = 16.dp)) {
                 dashboardError?.let { message ->
                     Text(
                         text = message,
@@ -175,14 +194,24 @@ fun Body(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.parent_pic),
+                            RemoteImage(
+                                url = parentProfileImageUrl,
+                                fallbackRes = R.drawable.parent_pic,
                                 contentDescription = "Parent Profile",
                                 modifier = Modifier
                                     .requiredSize(50.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
+                                fallbackContent = {
+                                    InitialsImageFallback(
+                                        name = parentName,
+                                        modifier = Modifier
+                                            .requiredSize(50.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    )
+                                }
                             )
 
                             Text(
@@ -198,6 +227,7 @@ fun Body(
                     items(students) { studentWrapper ->
                         StudentSelectorItem(
                             student = studentWrapper.student,
+                            profileImageUrl = studentWrapper.profileImageUrl,
                             isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
                             onClick = {
                                 studentVM?.students
@@ -210,57 +240,92 @@ fun Body(
             }
         }
 
-        // PRESENCE HEADER
+        // CONTENT WRAPPER
         item {
-            selectedStudent?.let { studentWithSchedules ->
-                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
-                StudentPresenceHeader(
-                    student = studentWithSchedules.student,
-                    isInClass = schedulePair.first.schedule != null
-                )
-            }
-        }
+            Column(
+                modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                if (isWide) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            selectedStudent?.let { studentWithSchedules ->
+                                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                                StudentPresenceHeader(
+                                    student = studentWithSchedules.student,
+                                    profileImageUrl = studentWithSchedules.profileImageUrl,
+                                    isInClass = schedulePair.first.schedule != null
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                ScheduleSection(now = schedulePair.first, next = schedulePair.second)
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            selectedStudent?.student?.let { child ->
+                                QuickStatsSection(
+                                    attendance = "${(child.attendanceScore * 100).toInt()}%",
+                                    gpa = child.gpa.toString(),
+                                    performance = "${child.performanceScore}%",
+                                    notifications = child.notificationCount.toString()
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // PRESENCE HEADER
+                    selectedStudent?.let { studentWithSchedules ->
+                        val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                        StudentPresenceHeader(
+                            student = studentWithSchedules.student,
+                            profileImageUrl = studentWithSchedules.profileImageUrl,
+                            isInClass = schedulePair.first.schedule != null
+                        )
+                    }
 
-        // SCHEDULE LISTS
-        item {
-            selectedStudent?.let { studentWithSchedules ->
-                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
-                ScheduleSection(now = schedulePair.first, next = schedulePair.second)
-            }
-        }
+                    // SCHEDULE LISTS
+                    selectedStudent?.let { studentWithSchedules ->
+                        val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                        ScheduleSection(now = schedulePair.first, next = schedulePair.second)
+                    }
 
-        // QUICK STATS
-        item {
-            selectedStudent?.student?.let { child ->
-                val formattedPending = String.format(Locale.US, "₱ %,.2f", child.pendingPayment)
-
-                QuickStatsSection(
-                    attendance = "${(child.attendanceScore * 100).toInt()}%",
-                    gpa = child.gpa.toString(),
-                    pending = formattedPending,
-                    notifications = child.notificationCount.toString()
-                )
+                    // QUICK STATS
+                    selectedStudent?.student?.let { child ->
+                        QuickStatsSection(
+                            attendance = "${(child.attendanceScore * 100).toInt()}%",
+                            gpa = child.gpa.toString(),
+                            performance = "${child.performanceScore}%",
+                            notifications = child.notificationCount.toString()
+                        )
+                    }
+                }
             }
         }
 
         //UPCOMING EVENTS
         item {
-            EventHorizontalSection(
-                title = "Upcoming Events",
-                events = upcomingEvents,
-                onSeeAllClick = onUpcomingSeeAll,
-                onEventClick = onUpcomingEventClick // Points to upcoming click sequence handler
-            )
+            Box(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
+                EventHorizontalSection(
+                    title = "Upcoming Events",
+                    events = upcomingEvents,
+                    onSeeAllClick = onUpcomingSeeAll,
+                    onEventClick = onUpcomingEventClick
+                )
+            }
         }
 
         //RECENT ACTIVITIES
         item {
-            EventHorizontalSection(
-                title = "Recent Activities",
-                events = recentEvents,
-                onSeeAllClick = onRecentSeeAll,
-                onEventClick = onRecentEventClick // Points to recent activity click sequence handler
-            )
+            Box(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
+                EventHorizontalSection(
+                    title = "Recent Activities",
+                    events = recentEvents,
+                    onSeeAllClick = onRecentSeeAll,
+                    onEventClick = onRecentEventClick
+                )
+            }
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -269,7 +334,9 @@ fun Body(
 
 private data class HomeStudent(
     val student: StudentEntity,
-    val schedules: List<SubjectScheduleEntity>
+    val schedules: List<SubjectScheduleEntity>,
+    val profileImageUrl: String?,
+    val backgroundImageUrl: String?
 )
 
 data class HomeScheduleDisplay(
@@ -291,11 +358,14 @@ private fun Child.toHomeStudent(): HomeStudent {
             attendanceScore = attendanceValue / 100.0,
             gpa = gpa,
             pendingPayment = pendingPayments.toDouble(),
+            performanceScore = performancePercentage,
             notificationCount = notificationCount,
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
         ),
-        schedules = schedules.map { it.toScheduleEntity(studentId) }
+        schedules = schedules.map { it.toScheduleEntity(studentId) },
+        profileImageUrl = profileImageUrl,
+        backgroundImageUrl = backgroundImageUrl
     )
 }
 
@@ -312,6 +382,7 @@ private fun ClassSchedule.toScheduleEntity(studentId: String): SubjectScheduleEn
 @Composable
 fun StudentSelectorItem(
     student: StudentEntity,
+    profileImageUrl: String? = null,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -332,14 +403,24 @@ fun StudentSelectorItem(
                 .background(if (isSelected) highlightColor.copy(alpha = 0.2f) else Color.Transparent)
                 .padding(3.dp)
         ) {
-            Image(
-                painter = painterResource(id = student.profileImageRes),
+            RemoteImage(
+                url = profileImageUrl,
+                fallbackRes = student.profileImageRes,
                 contentDescription = student.name,
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                fallbackContent = {
+                    InitialsImageFallback(
+                        name = student.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
             )
 
             if (isSelected) {
@@ -367,7 +448,11 @@ fun StudentPresenceHeader(student: StudentEntity) {
 }
 
 @Composable
-fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
+fun StudentPresenceHeader(
+    student: StudentEntity,
+    profileImageUrl: String? = null,
+    isInClass: Boolean
+) {
     val highlightColor = if (isInClass) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -418,14 +503,24 @@ fun StudentPresenceHeader(student: StudentEntity, isInClass: Boolean) {
                     .border(width = 3.dp, color = highlightColor, shape = CircleShape)
                     .padding(4.dp)
             ) {
-                Image(
-                    painter = painterResource(id = student.profileImageRes),
+                RemoteImage(
+                    url = profileImageUrl,
+                    fallbackRes = student.profileImageRes,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    fallbackContent = {
+                        InitialsImageFallback(
+                            name = student.name,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                        )
+                    }
                 )
             }
         }
@@ -570,7 +665,7 @@ private fun resolveHomeSchedulePair(
     val calendar = Calendar.getInstance()
     val todayName = SimpleDateFormat("EEEE", Locale.US).format(calendar.time)
     val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
-    
+
     val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.US)
     val todayDateStr = dateFormatter.format(calendar.time)
 
@@ -594,22 +689,31 @@ private fun resolveHomeSchedulePair(
     var nextStatus = "Up Next"
     var nextDate = todayDateStr
 
-    if (nextSchedule == null && schedules.isNotEmpty()) {
+    if (nextSchedule != null) {
+        if (startMinutesFromRange(nextSchedule.time) - nowMinutes >= 720) {
+            nextStatus = "Upcoming"
+        }
+    } else if (schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) })
-        
+
         nextSchedule = sortedAll.firstOrNull { dayOrder(it.day) > todayIdx }
-            ?: sortedAll.firstOrNull() 
-            
+            ?: sortedAll.firstOrNull()
+
         if (nextSchedule != null) {
             nextStatus = nextSchedule.day
             val targetIdx = dayOrder(nextSchedule.day)
             var daysToAdd = targetIdx - todayIdx
             if (daysToAdd <= 0) daysToAdd += 7
-            
+
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)
+
+            val totalGap = (daysToAdd * 24 * 60) + startMinutesFromRange(nextSchedule.time) - nowMinutes
+            if (totalGap < 720) {
+                nextStatus = "Up Next"
+            }
         }
     }
 
@@ -752,7 +856,7 @@ fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
 }
 
 @Composable
-fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifications: String) {
+fun QuickStatsSection(attendance: String, gpa: String, performance: String, notifications: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -778,7 +882,7 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
+            StatCard("Performance", performance, R.drawable.baseline_trending_up_24, Modifier.weight(1f))
             StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
         }
     }

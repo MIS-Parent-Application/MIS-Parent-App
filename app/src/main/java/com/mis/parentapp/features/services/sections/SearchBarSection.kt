@@ -1,6 +1,5 @@
 package com.mis.parentapp.features.services.sections
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,12 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.Child
 import androidx.compose.ui.text.TextStyle
+import com.mis.parentapp.utilities.images.InitialsImageFallback
+import com.mis.parentapp.utilities.images.RemoteImage
 
 @Composable
 fun SearchBarSection(
@@ -78,14 +78,24 @@ fun SearchBarSection(
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             // Profile Picture
-            Image(
-                painter = painterResource(id = R.drawable.student_image),
+            RemoteImage(
+                url = selectedStudent?.profileImageUrl,
+                fallbackRes = R.drawable.student_image,
                 contentDescription = "Profile",
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
                     .clickable { onProfileClick() },
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                fallbackContent = {
+                    InitialsImageFallback(
+                        name = selectedStudent?.name,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .clickable { onProfileClick() }
+                    )
+                }
             )
 
             Spacer(modifier = Modifier.width(12.dp))

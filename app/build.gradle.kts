@@ -88,4 +88,6 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.socket.io.client)
+
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }

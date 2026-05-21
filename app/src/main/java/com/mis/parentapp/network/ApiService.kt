@@ -3,6 +3,7 @@ package com.mis.parentapp.network
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -11,11 +12,26 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
+    @POST("api/auth/verify-otp")
+    suspend fun verifyOtp(@Body request: VerifyOtpRequest): LoginResponse
+
+    @POST("api/auth/resend-otp")
+    suspend fun resendOtp(@Body request: ResendOtpRequest): ResendOtpResponse
+
     @POST("api/auth/parent-login")
     suspend fun parentChatLogin(@Body request: ParentChatLoginRequest): ParentChatLoginResponse
 
     @GET("api/parent/dashboard")
     suspend fun getDashboard(): ParentDashboard
+
+    @GET("api/parent/security")
+    suspend fun getParentSecurity(@Query("parentId") parentId: Int = 1): ParentSecuritySettingsDto
+
+    @PATCH("api/parent/security")
+    suspend fun updateParentSecurity(@Body request: UpdateParentSecurityRequest): ParentSecuritySettingsDto
+
+    @PATCH("api/parent/profile")
+    suspend fun updateParentProfile(@Body request: ParentProfileUpdateRequest): Parent
 
     @GET("api/notifications")
     suspend fun getNotifications(@Query("studentId") studentId: Int? = null): List<NotificationDto>
@@ -25,6 +41,12 @@ interface ApiService {
 
     @GET("api/student/{id}/studyload")
     suspend fun getStudyLoad(@Path("id") studentId: Int): List<StudyLoadSubject>
+
+    @PATCH("api/student/{id}/photos")
+    suspend fun updateStudentPhotos(
+        @Path("id") studentId: Int,
+        @Body request: StudentPhotoUpdateRequest
+    ): Child
 
     @GET("api/student/{id}/grades")
     suspend fun getStudentGrades(@Path("id") studentId: Int): List<GradeDto>

@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +47,8 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.InitialsImageFallback
+import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -65,6 +68,8 @@ fun StudentScreen(
     onStudyLoadClick: () -> Unit = {}
 ) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val configuration = LocalConfiguration.current
+    val isWide = configuration.screenWidthDp >= 600
 
     LaunchedEffect(Unit) {
         try {
@@ -86,20 +91,36 @@ fun StudentScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.TopCenter
     ) {
-        LazyColumn(modifier = Modifier.widthIn(max = 1200.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .widthIn(max = 1200.dp)
+                .fillMaxSize()
+        ) {
             item {
+                val headerHeight = if (isWide) 420.dp else 380.dp
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp)
+                        .height(headerHeight)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.bgpic),
+                    RemoteImage(
+                        url = selectedStudent?.profileImageUrl?.takeIf { it.isNotBlank() }
+                            ?: selectedStudent?.backgroundImageUrl,
+                        fallbackRes = R.drawable.bgpic,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
+                        fallbackContent = {
+                            InitialsImageFallback(
+                                name = selectedStudent?.name,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
+                                isLarge = true
+                            )
+                        }
                     )
                     Box(
                         modifier = Modifier
@@ -134,8 +155,9 @@ fun StudentScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(students, key = { it.id }) { student ->
-                                Image(
-                                    painter = painterResource(id = R.drawable.student_image),
+                                RemoteImage(
+                                    url = student.profileImageUrl,
+                                    fallbackRes = R.drawable.student_image,
                                     contentDescription = student.name,
                                     modifier = Modifier
                                         .size(48.dp)
@@ -146,7 +168,21 @@ fun StudentScreen(
                                             shape = CircleShape
                                         )
                                         .clickable { studentVM.selectStudent(student) },
-                                    contentScale = ContentScale.Crop
+                                    contentScale = ContentScale.Crop,
+                                    fallbackContent = {
+                                        InitialsImageFallback(
+                                            name = student.name,
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .clip(CircleShape)
+                                                .border(
+                                                    width = 2.dp,
+                                                    color = if (student.id == selectedStudent?.id) Color(0xFF8BE28B) else Color.White,
+                                                    shape = CircleShape
+                                                )
+                                                .clickable { studentVM.selectStudent(student) }
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -392,7 +428,11 @@ private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentSch
     var nextStatus = "Up next"
     var nextDate = todayDateStr
 
-    if (nextSchedule == null && schedules.isNotEmpty()) {
+    if (nextSchedule != null) {
+        if (minutesFromTime(nextSchedule.startTime) - nowMinutes >= 720) {
+            nextStatus = "Upcoming"
+        }
+    } else if (schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<ClassSchedule> { dayOrder(it.day) }.thenBy { minutesFromTime(it.startTime) })
 
@@ -408,6 +448,11 @@ private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentSch
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)
+
+            val totalGap = (daysToAdd * 24 * 60) + minutesFromTime(nextSchedule.startTime) - nowMinutes
+            if (totalGap < 720) {
+                nextStatus = "Up next"
+            }
         }
     }
 

@@ -164,12 +164,12 @@ fun EventFilterRow(selectedFilter: String, onFilterSelected: (String) -> Unit) {
             Surface(
                 modifier = Modifier.clickable { onFilterSelected(filter) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
                     text = filter,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     style = AppTypes.type_M3_label_small
                 )
             }
