@@ -9,6 +9,11 @@ android {
     namespace = "com.mis.parentapp"
     compileSdk = 37
 
+    val localApiUrl = "http://127.0.0.1:3000/"
+    val deployedApiUrl = (project.findProperty("PARENT_APP_API_URL") as String?)
+        ?.takeIf { it.isNotBlank() }
+        ?: localApiUrl
+
     defaultConfig {
         applicationId = "com.mis.parentapp"
         minSdk = 24
@@ -17,6 +22,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_BASE_URL", "\"$deployedApiUrl\"")
     }
 
     buildTypes {
@@ -34,6 +40,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
