@@ -61,6 +61,7 @@ import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
 import com.mis.parentapp.data.SubjectScheduleEntity
 import com.mis.parentapp.features.home.menu.EventCard
+import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.network.Child
@@ -79,6 +80,7 @@ import java.util.Locale
 fun HomeScreen(
     modifier: Modifier = Modifier,
     studentVM: StudentSharedViewModel? = null,
+    userProfileViewModel: UserProfileViewModel = viewModel(),
     mainNavController: NavHostController? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -105,6 +107,7 @@ fun HomeScreen(
     Body(
         modifier = modifier,
         studentVM = studentVM,
+        userProfileViewModel = userProfileViewModel,
         onUpcomingSeeAll = { mainNavController?.navigate(UpcomingEvents()) },
         onRecentSeeAll = { mainNavController?.navigate(RecentActivities()) },
         onUpcomingEventClick = { clickedEvent ->
@@ -120,6 +123,7 @@ fun HomeScreen(
 fun Body(
     modifier: Modifier = Modifier,
     studentVM: StudentSharedViewModel? = null,
+    userProfileViewModel: UserProfileViewModel = viewModel(),
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
     onUpcomingEventClick: (EventItem) -> Unit,
@@ -132,16 +136,12 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
-    var parentName by remember { mutableStateOf("Parent") }
-    var parentProfileImageUrl by remember { mutableStateOf<String?>(null) }
     val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
             studentVM?.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
-            parentName = dashboard.parent.name
-            parentProfileImageUrl = dashboard.parent.profileImageUrl
             dashboardError = null
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
@@ -194,25 +194,37 @@ fun Body(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            RemoteImage(
-                                url = parentProfileImageUrl,
-                                fallbackRes = R.drawable.parent_pic,
-                                contentDescription = "Parent Profile",
-                                modifier = Modifier
-                                    .requiredSize(50.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentScale = ContentScale.Crop,
-                                fallbackContent = {
-                                    InitialsImageFallback(
-                                        name = parentName,
-                                        modifier = Modifier
-                                            .requiredSize(50.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    )
-                                }
-                            )
+                            if (userProfileViewModel.profileBitmap != null) {
+                                Image(
+                                    bitmap = userProfileViewModel.profileBitmap!!,
+                                    contentDescription = "Parent Profile",
+                                    modifier = Modifier
+                                        .requiredSize(50.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                RemoteImage(
+                                    url = userProfileViewModel.profileImageUrl,
+                                    fallbackRes = R.drawable.parent_pic,
+                                    contentDescription = "Parent Profile",
+                                    modifier = Modifier
+                                        .requiredSize(50.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentScale = ContentScale.Crop,
+                                    fallbackContent = {
+                                        InitialsImageFallback(
+                                            name = userProfileViewModel.fullName,
+                                            modifier = Modifier
+                                                .requiredSize(50.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        )
+                                    }
+                                )
+                            }
 
                             Text(
                                 text = "Me",
