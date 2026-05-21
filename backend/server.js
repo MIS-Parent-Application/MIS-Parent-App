@@ -819,7 +819,7 @@ function createOtpId() {
 
 async function sendEmailOtp(email, code) {
     const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_APP_PASSWORD;
+    const pass = getEmailAppPassword();
     const from = process.env.EMAIL_FROM || `Colegio De Alicia <${user}>`;
 
     if (!user || !pass) {
@@ -837,7 +837,10 @@ async function sendEmailOtp(email, code) {
         host: process.env.EMAIL_HOST || 'smtp.gmail.com',
         port: Number(process.env.EMAIL_PORT || 465),
         secure: String(process.env.EMAIL_SECURE || 'true') !== 'false',
-        auth: { user, pass }
+        auth: { user, pass },
+        connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS || 15000),
+        greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 15000),
+        socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 20000)
     });
 
     await transporter.sendMail({
@@ -847,10 +850,17 @@ async function sendEmailOtp(email, code) {
         text: `Your Colegio De Alicia Parent App verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`,
         html: `<p>Your Colegio De Alicia Parent App verification code is:</p><h2>${code}</h2><p>This code expires in ${OTP_TTL_MINUTES} minutes.</p>`
     });
+    console.log(`OTP email queued for ${maskEmail(email)}`);
+}
+
+function getEmailAppPassword() {
+    return String(process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS || '')
+        .replace(/\s+/g, '')
+        .trim();
 }
 
 function assertEmailOtpConfigured() {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+    if (!process.env.EMAIL_USER || !getEmailAppPassword()) {
         throw new Error('Email OTP is not configured. Set EMAIL_USER and EMAIL_APP_PASSWORD.');
     }
     try {
