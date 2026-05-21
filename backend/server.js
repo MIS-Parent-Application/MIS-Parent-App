@@ -6,7 +6,6 @@ const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const sqlite3 = require('sqlite3').verbose();
 const nodemailer = require('nodemailer');
-const crypto = require('crypto');
 
 const app = express();
 app.use(cors());

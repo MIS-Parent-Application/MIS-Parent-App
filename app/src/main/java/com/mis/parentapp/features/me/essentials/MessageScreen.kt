@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.network.ChatMessageDto
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun MessageScreen(
@@ -41,6 +42,12 @@ fun MessageScreen(
     // Initialize Chat
     LaunchedEffect(contactId) {
         viewModel.initChat(contactId)
+        val pending = SharedFeedback.message
+        if (!pending.isNullOrBlank()) {
+            kotlinx.coroutines.delay(800)
+            viewModel.sendFeedbackMessage(contactId, pending)
+            SharedFeedback.message = null
+        }
     }
 
     Column(

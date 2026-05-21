@@ -18,12 +18,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UsernameSignInScreen(
     backgroundResId: Int,
@@ -32,6 +45,27 @@ fun UsernameSignInScreen(
     modifier: Modifier = Modifier
 ) {
     var username by remember { mutableStateOf("") }
+    var isFocused by remember { mutableStateOf(false) }
+    val isKeyboardVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
+    
+    // Clear focus when keyboard is hidden
+    LaunchedEffect(isKeyboardVisible) {
+        if (!isKeyboardVisible) {
+            focusManager.clearFocus()
+            isFocused = false
+        }
+    }
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val offsetY by animateDpAsState(
+        targetValue = if (isFocused && isKeyboardVisible) (-120).dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "offsetAnimation"
+    )
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -62,7 +96,7 @@ fun UsernameSignInScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding()
+                .offset { IntOffset(0, with(density) { offsetY.roundToPx() }) }
                 .padding(24.dp)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -124,7 +158,8 @@ fun UsernameSignInScreen(
                     placeholder = { Text(stringResource(id = R.string.username_hint), color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(8.dp))
+                        .onFocusChanged { isFocused = it.isFocused },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = ColorsDefaultTheme.color_Surface,
                         unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
@@ -134,7 +169,6 @@ fun UsernameSignInScreen(
                         unfocusedTextColor = ColorsDefaultTheme.color_On_surface
                     ),
                     singleLine = true,
-//                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

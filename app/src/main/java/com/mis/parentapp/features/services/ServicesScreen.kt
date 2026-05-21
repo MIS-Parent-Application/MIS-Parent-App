@@ -308,9 +308,6 @@ fun Body(
     paymentHistory: List<PaymentRecord>
 ) {
 
-    // NAV CONTROLLER
-    val navController = rememberNavController()
-
     // GET STUDENTS FROM VIEWMODEL
     val students = studentVM.students
 
@@ -335,9 +332,6 @@ fun Body(
 
                 SearchBarSection(
                     selectedStudent = selectedStudent,
-                    navController = navController,
-
-                    // CHANGE STUDENT DYNAMICALLY
                     onProfileClick = {
 
                         if (students.isNotEmpty()) {

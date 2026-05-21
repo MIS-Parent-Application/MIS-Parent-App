@@ -11,11 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,12 +47,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 
 
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.offset
+
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PasswordSignInScreen(
     username: String,
@@ -66,6 +80,27 @@ fun PasswordSignInScreen(
 ) {
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
+    val isKeyboardVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
+
+    // Clear focus when keyboard is hidden
+    LaunchedEffect(isKeyboardVisible) {
+        if (!isKeyboardVisible) {
+            focusManager.clearFocus()
+            isFocused = false
+        }
+    }
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val offsetY by animateDpAsState(
+        targetValue = if (isFocused && isKeyboardVisible) (-120).dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "offsetAnimation"
+    )
     val context = androidx.compose.ui.platform.LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -97,7 +132,7 @@ fun PasswordSignInScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding()
+                .offset { IntOffset(0, with(density) { offsetY.roundToPx() }) }
                 .padding(24.dp)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -159,7 +194,8 @@ fun PasswordSignInScreen(
                     placeholder = { Text(stringResource(id = R.string.password_hint), color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(8.dp))
+                        .onFocusChanged { isFocused = it.isFocused },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = ColorsDefaultTheme.color_Surface,
                         unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
@@ -264,23 +300,3 @@ fun PasswordSignInScreen(
         }
     }
 }
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PasswordSignInScreenPreview() {
-//    ParentAppTheme {
-//        val dummyUserDao = object : UserDAO {
-//            override suspend fun registerUser(user: UserEntity) {}
-//            override suspend fun loginUser(email: String, password: String): UserEntity? = null
-//        }
-//        val viewModel = remember { AuthViewModel(dummyUserDao) }
-//        PasswordSignInScreen(
-//            username = "test@example.com",
-//            backgroundResId = R.drawable.bg_one_sign_screen,
-//            viewModel = viewModel,
-//            onBack = {},
-//            onSignInSuccess = {}
-//        )
-//    }
-//}

@@ -418,7 +418,11 @@ fun SubScreen(
                     AnnouncementsScreen()
                 }
                 composable<Feedbacks> {
-                    FeedbacksScreen()
+                    FeedbacksScreen(
+                        onOpenTeacherMessages = {
+                            navController.navigate(Messages)
+                        }
+                    )
                 }
                 composable<Meeting> {
                     MeetingScreen()
