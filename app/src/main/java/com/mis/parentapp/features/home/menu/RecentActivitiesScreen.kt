@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.features.home.EventsViewModel
@@ -27,20 +26,23 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentActivitiesScreen(
+    studentId: Int? = null,
     autoSelectEventId: Int? = null,
     onBackClick: () -> Unit,
     onDetailTopBarChange: (Boolean, (() -> Unit)?, (() -> Unit)?) -> Unit
 ) {
     val context = LocalContext.current
     val viewModel: EventsViewModel = viewModel(
-        factory = EventsViewModel.provideFactory(
-            EventRepository(AppDatabase.getDatabase(context).eventDao())
-        )
+        factory = EventsViewModel.provideFactory(EventRepository())
     )
 
     val events by viewModel.recentEvents.collectAsState(initial = emptyList())
     val selectedFilter = remember { mutableStateOf("All") }
     var selectedEvent by remember { mutableStateOf<EventItem?>(null) }
+
+    LaunchedEffect(studentId) {
+        viewModel.refreshData(studentId)
+    }
 
     LaunchedEffect(events, autoSelectEventId) {
         if (autoSelectEventId != null && selectedEvent == null && events.isNotEmpty()) {

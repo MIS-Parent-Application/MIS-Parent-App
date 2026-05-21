@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.mis.parentapp.R
-import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.EventItem
 import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
@@ -126,8 +125,7 @@ fun Body(
     onRecentEventClick: (EventItem) -> Unit
 ) {
     val context = LocalContext.current
-    val db = AppDatabase.getDatabase(context)
-    val eventRepo = remember { EventRepository(db.eventDao()) }
+    val eventRepo = remember { EventRepository() }
     val eventViewModel: EventsViewModel = viewModel(factory = EventsViewModel.provideFactory(eventRepo))
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
@@ -149,7 +147,9 @@ fun Body(
     }
 
     LaunchedEffect(selectedBackendStudentId) {
-        eventViewModel.refreshData(selectedBackendStudentId)
+        if (selectedBackendStudentId != null) {
+            eventViewModel.refreshData(selectedBackendStudentId)
+        }
     }
 
     val students = remember(studentVM?.students) {

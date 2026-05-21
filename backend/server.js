@@ -649,7 +649,20 @@ async function sendEmailOtp(email, code) {
     });
 }
 
+function assertEmailOtpConfigured() {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+        throw new Error('Email OTP is not configured. Set EMAIL_USER and EMAIL_APP_PASSWORD.');
+    }
+    try {
+        require.resolve('nodemailer');
+    } catch (_error) {
+        throw new Error('Email dependency missing. Run npm install in the backend folder.');
+    }
+}
+
 async function issueLoginOtp(parent) {
+    assertEmailOtpConfigured();
+
     const code = createOtpCode();
     const otpId = createOtpId();
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
@@ -660,7 +673,9 @@ async function issueLoginOtp(parent) {
          VALUES (?, ?, ?, ?, ?)`,
         [otpId, parent.id, hashOtp(code), expiresAt, createdAt]
     );
-    await sendEmailOtp(parent.email, code);
+    sendEmailOtp(parent.email, code).catch(error => {
+        console.error(`Failed to send OTP email to parent ${parent.id}:`, error.message);
+    });
 
     return {
         otpToken: otpId,

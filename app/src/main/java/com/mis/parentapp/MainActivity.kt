@@ -8,7 +8,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -64,14 +63,6 @@ fun AppNavigation(windowSizeClass: androidx.compose.material3.windowsizeclass.Wi
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
-
-    LaunchedEffect(Unit) {
-        if (authViewModel.isUserLoggedIn()) {
-            navController.navigate(MainContainer) {
-                popUpTo(OnBoarding) { inclusive = true }
-            }
-        }
-    }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {

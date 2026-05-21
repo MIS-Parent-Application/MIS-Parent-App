@@ -74,7 +74,7 @@ import com.mis.parentapp.features.services.menu.PaymentOptionsScreen
 import com.mis.parentapp.features.student.StudyLoadScreen
 import com.mis.parentapp.features.student.menu.MonitorAcademicScreen
 import com.mis.parentapp.features.student.menu.TrackAttendanceScreen
-import com.mis.parentapp.features.widgets.AcademicCalendarScreen
+import com.mis.parentapp.features.home.CalendarScreen
 import com.mis.parentapp.navigation.Analytics
 import com.mis.parentapp.navigation.Announcements
 import com.mis.parentapp.navigation.Calendar
@@ -332,6 +332,7 @@ fun SubScreen(
                     val routeArgs = backStackEntry.toRoute<UpcomingEvents>()
 
                     UpcomingEventsScreen(
+                        studentId = selectedStudent?.id,
                         autoSelectEventId = routeArgs.autoSelectEventId,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
@@ -346,6 +347,7 @@ fun SubScreen(
                     val routeArgs = backStackEntry.toRoute<RecentActivities>()
 
                     RecentActivitiesScreen(
+                        studentId = selectedStudent?.id,
                         autoSelectEventId = routeArgs.autoSelectEventId,
                         onBackClick = {
                             if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
@@ -364,7 +366,12 @@ fun SubScreen(
                     )
                 }
                 composable<Calendar> {
-                    AcademicCalendarScreen()
+                    CalendarScreen(
+                        studentVM = studentVM,
+                        onBackClick = {
+                            if (navController.previousBackStackEntry != null) navController.popBackStack() else onBack()
+                        }
+                    )
                 }
                 composable<StudyLoad> {
                     StudyLoadScreen(

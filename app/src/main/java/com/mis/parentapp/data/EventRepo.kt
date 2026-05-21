@@ -3,22 +3,34 @@ package com.mis.parentapp.data
 import com.mis.parentapp.network.ApiService
 import com.mis.parentapp.network.CalendarEventDto
 import com.mis.parentapp.network.RetrofitInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 class EventRepository(
-    private val eventDao: EventDao,
     private val api: ApiService = RetrofitInstance.api
 ) {
+    private val recentEvents = MutableStateFlow<List<EventItem>>(emptyList())
+    private val upcomingEvents = MutableStateFlow<List<EventItem>>(emptyList())
 
-    fun getRecentEvents() = eventDao.getEventsByType("RECENT")
-    fun getUpcomingEvents() = eventDao.getEventsByType("UPCOMING")
+    fun getRecentEvents() = recentEvents.asStateFlow()
+    fun getUpcomingEvents() = upcomingEvents.asStateFlow()
+
+    fun clearEvents() {
+        recentEvents.value = emptyList()
+        upcomingEvents.value = emptyList()
+    }
 
     suspend fun refreshEvents(studentId: Int? = null) {
         val syncedEvents = api.getCalendarEvents(studentId).map { it.toEventItem() }
-        eventDao.clearEvents()
-        eventDao.insertEvents(syncedEvents)
+        recentEvents.value = syncedEvents
+            .filter { it.eventType == "RECENT" }
+            .sortedWith(compareByDescending<EventItem> { it.date }.thenBy { it.time })
+        upcomingEvents.value = syncedEvents
+            .filter { it.eventType == "UPCOMING" }
+            .sortedWith(compareBy<EventItem> { it.date }.thenBy { it.time })
     }
 
     private fun CalendarEventDto.toEventItem(): EventItem {

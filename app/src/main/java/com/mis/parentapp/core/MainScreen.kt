@@ -179,7 +179,8 @@ fun MainScreen(
             currentDestination?.hasRoute(Chat::class) == true ||
             currentDestination?.hasRoute(DataSafety::class) == true ||
             currentDestination?.hasRoute(EditProfile::class) == true ||
-            currentDestination?.hasRoute(Preference::class) == true) && !isExpanded
+            currentDestination?.hasRoute(Preference::class) == true ||
+            currentDestination?.hasRoute(About::class) == true) && !isExpanded
 
     val showSharedTopBar = (bottomTabs.any { tab ->
         currentDestination?.hasRoute(tab.route::class) == true
@@ -649,6 +650,11 @@ fun androidx.navigation.NavGraphBuilder.mainNavGraph(
             startDestination = Preference,
             studentVM = studentSharedViewModel,
             onBack = { navController.popBackStack() }
+        )
+    }
+    composable<About> {
+        AboutScreen(
+            onBackClick = { navController.popBackStack() }
         )
     }
 }
