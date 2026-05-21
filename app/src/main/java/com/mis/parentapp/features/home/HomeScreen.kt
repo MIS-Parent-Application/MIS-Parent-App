@@ -657,7 +657,11 @@ private fun resolveHomeSchedulePair(
     var nextStatus = "Up Next"
     var nextDate = todayDateStr
 
-    if (nextSchedule == null && schedules.isNotEmpty()) {
+    if (nextSchedule != null) {
+        if (startMinutesFromRange(nextSchedule.time) - nowMinutes >= 720) {
+            nextStatus = "Upcoming"
+        }
+    } else if (schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) })
 
@@ -673,6 +677,11 @@ private fun resolveHomeSchedulePair(
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)
+
+            val totalGap = (daysToAdd * 24 * 60) + startMinutesFromRange(nextSchedule.time) - nowMinutes
+            if (totalGap < 720) {
+                nextStatus = "Up Next"
+            }
         }
     }
 
