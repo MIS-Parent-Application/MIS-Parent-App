@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.Child
 import androidx.compose.ui.text.TextStyle
+import com.mis.parentapp.utilities.images.InitialsImageFallback
 import com.mis.parentapp.utilities.images.RemoteImage
 
 @Composable
@@ -85,7 +86,16 @@ fun SearchBarSection(
                     .size(36.dp)
                     .clip(CircleShape)
                     .clickable { onProfileClick() },
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                fallbackContent = {
+                    InitialsImageFallback(
+                        name = selectedStudent?.name,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .clickable { onProfileClick() }
+                    )
+                }
             )
 
             Spacer(modifier = Modifier.width(12.dp))

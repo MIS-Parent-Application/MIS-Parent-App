@@ -74,6 +74,7 @@ import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.auth.AuthViewModel
+import com.mis.parentapp.features.auth.OtpSignInScreen
 import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
@@ -96,6 +97,7 @@ import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.MonitorAcademic
 import com.mis.parentapp.navigation.Notification
+import com.mis.parentapp.navigation.OtpSignIn
 import com.mis.parentapp.navigation.PasswordSignIn
 import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.navigation.Preference
@@ -325,6 +327,36 @@ fun MainScreen(
                     val args = backStackEntry.toRoute<PasswordSignIn>()
                     PasswordSignInScreen(
                         username = args.email,
+                        backgroundResId = args.backgroundResId,
+                        viewModel = authViewModel,
+                        onBack = { navController.popBackStack() },
+                        onSignInSuccess = {
+                            navController.navigate(Home) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onOtpRequired = { password, otpToken, email ->
+                            navController.navigate(
+                                OtpSignIn(
+                                    backgroundResId = args.backgroundResId,
+                                    username = args.email,
+                                    password = password,
+                                    otpToken = otpToken,
+                                    email = email
+                                )
+                            )
+                        }
+                    )
+                }
+
+                composable<OtpSignIn> { backStackEntry ->
+                    val args = backStackEntry.toRoute<OtpSignIn>()
+                    OtpSignInScreen(
+                        username = args.username,
+                        password = args.password,
+                        otpToken = args.otpToken,
+                        email = args.email,
                         backgroundResId = args.backgroundResId,
                         viewModel = authViewModel,
                         onBack = { navController.popBackStack() },

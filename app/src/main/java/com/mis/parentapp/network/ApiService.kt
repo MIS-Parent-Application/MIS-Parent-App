@@ -12,11 +12,26 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
+    @POST("api/auth/verify-otp")
+    suspend fun verifyOtp(@Body request: VerifyOtpRequest): LoginResponse
+
+    @POST("api/auth/resend-otp")
+    suspend fun resendOtp(@Body request: ResendOtpRequest): ResendOtpResponse
+
     @POST("api/auth/parent-login")
     suspend fun parentChatLogin(@Body request: ParentChatLoginRequest): ParentChatLoginResponse
 
     @GET("api/parent/dashboard")
     suspend fun getDashboard(): ParentDashboard
+
+    @GET("api/parent/security")
+    suspend fun getParentSecurity(@Query("parentId") parentId: Int = 1): ParentSecuritySettingsDto
+
+    @PATCH("api/parent/security")
+    suspend fun updateParentSecurity(@Body request: UpdateParentSecurityRequest): ParentSecuritySettingsDto
+
+    @PATCH("api/parent/profile")
+    suspend fun updateParentProfile(@Body request: ParentProfileUpdateRequest): Parent
 
     @GET("api/notifications")
     suspend fun getNotifications(@Query("studentId") studentId: Int? = null): List<NotificationDto>

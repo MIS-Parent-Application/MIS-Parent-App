@@ -3,6 +3,7 @@ package com.mis.parentapp.features.me
 import android.app.Application
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,7 +14,10 @@ import androidx.lifecycle.viewModelScope
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.network.RetrofitInstance
+import com.mis.parentapp.network.ParentProfileUpdateRequest
+import com.mis.parentapp.network.UpdateParentSecurityRequest
 import kotlinx.coroutines.launch
+import java.io.ByteArrayInputStream
 import java.io.InputStream
 
 class UserProfileViewModel(application: Application) : AndroidViewModel(application) {
@@ -26,6 +30,8 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     
     var profileImageRes by mutableStateOf(R.drawable.parent_pic)
     var profileBitmap by mutableStateOf<ImageBitmap?>(null)
+    var profileImageUrl by mutableStateOf<String?>(null)
+    var backgroundImageUrl by mutableStateOf<String?>(null)
     var currentUsername: String? = null
 
     // Data Safety states
@@ -37,7 +43,19 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun toggleTwoFactor(enabled: Boolean) {
+        val previous = twoFactorEnabled
         twoFactorEnabled = enabled
+        viewModelScope.launch {
+            runCatching {
+                RetrofitInstance.api.updateParentSecurity(
+                    UpdateParentSecurityRequest(twoFactorEnabled = enabled)
+                )
+            }.onSuccess {
+                twoFactorEnabled = it.twoFactorEnabled
+            }.onFailure {
+                twoFactorEnabled = previous
+            }
+        }
     }
 
     fun toggleLoginAlerts(enabled: Boolean) {
@@ -67,11 +85,14 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                 // 2. Load from API to update
                 val dashboard = RetrofitInstance.api.getDashboard()
                 // Update fields if they are null in DB or keep API as source of truth for name
-                if (dbUser?.fullName == null) fullName = dashboard.parent.name
-                if (dbUser?.email == null) email = dashboard.parent.email
-                if (dbUser?.phoneNumber == null) phoneNumber = dashboard.parent.phone
+                fullName = dashboard.parent.name
+                email = dashboard.parent.email
+                phoneNumber = dashboard.parent.phone
+                profileImageUrl = dashboard.parent.profileImageUrl
+                backgroundImageUrl = dashboard.parent.backgroundImageUrl ?: dashboard.parent.profileImageUrl
                 
                 isPrimaryGuardian = dashboard.parent.children.isNotEmpty()
+                loadSecuritySettings()
                 
                 // Save basic info to DB if not present
                 if (dbUser == null) {
@@ -93,6 +114,16 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    private suspend fun loadSecuritySettings() {
+        runCatching {
+            RetrofitInstance.api.getParentSecurity()
+        }.onSuccess {
+            twoFactorEnabled = it.twoFactorEnabled
+            email = it.email
+            phoneNumber = it.phone
+        }
+    }
+
     fun updateProfile(newName: String, newEmail: String, newPhone: String) {
         fullName = newName
         email = newEmail
@@ -102,17 +133,47 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
             currentUsername?.let {
                 userDao.updateProfile(it, newName, newEmail, newPhone)
             }
+            runCatching {
+                RetrofitInstance.api.updateParentProfile(
+                    ParentProfileUpdateRequest(
+                        email = newEmail,
+                        phone = newPhone
+                    )
+                )
+            }.onSuccess {
+                fullName = it.name
+                email = it.email
+                phoneNumber = it.phone
+                profileImageUrl = it.profileImageUrl
+                backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
+            }
         }
     }
     
     fun updateProfileImage(inputStream: InputStream?, uri: Uri?) {
         viewModelScope.launch {
             try {
-                val bitmap = BitmapFactory.decodeStream(inputStream)
+                val bytes = inputStream?.use { it.readBytes() } ?: return@launch
+                val bitmap = BitmapFactory.decodeStream(ByteArrayInputStream(bytes))
                 profileBitmap = bitmap?.asImageBitmap()
                 
                 currentUsername?.let {
                     userDao.updateProfileImage(it, uri?.toString())
+                }
+                val mimeType = uri?.let { getApplication<Application>().contentResolver.getType(it) } ?: "image/jpeg"
+                val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                runCatching {
+                    RetrofitInstance.api.updateParentProfile(
+                        ParentProfileUpdateRequest(
+                            email = email,
+                            phone = phoneNumber,
+                            profileImageData = base64,
+                            profileImageMimeType = mimeType
+                        )
+                    )
+                }.onSuccess {
+                    profileImageUrl = it.profileImageUrl
+                    backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
                 }
             } catch (e: Exception) {
             }

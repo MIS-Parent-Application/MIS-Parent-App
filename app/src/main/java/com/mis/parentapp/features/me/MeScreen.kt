@@ -39,6 +39,8 @@ import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
+import com.mis.parentapp.utilities.images.InitialsImageFallback
+import com.mis.parentapp.utilities.images.RemoteImage
 
 @Composable
 fun MeScreen(
@@ -68,6 +70,9 @@ fun MeScreen(
                         .height(headerHeight)
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
+                    val parentBackgroundUrl = userProfileViewModel.backgroundImageUrl
+                        ?: userProfileViewModel.profileImageUrl
+
                     if (userProfileViewModel.profileBitmap != null) {
                         Image(
                             bitmap = userProfileViewModel.profileBitmap!!,
@@ -83,8 +88,9 @@ fun MeScreen(
                                 )
                         )
                     } else {
-                        Image(
-                            painter = painterResource(id = userProfileViewModel.profileImageRes),
+                        RemoteImage(
+                            url = parentBackgroundUrl,
+                            fallbackRes = userProfileViewModel.profileImageRes,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
@@ -94,7 +100,21 @@ fun MeScreen(
                                         bottomStart = 32.dp,
                                         bottomEnd = 32.dp
                                     )
+                                ),
+                            fallbackContent = {
+                                InitialsImageFallback(
+                                    name = userProfileViewModel.fullName,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(
+                                            RoundedCornerShape(
+                                                bottomStart = 32.dp,
+                                                bottomEnd = 32.dp
+                                            )
+                                        ),
+                                    isLarge = true
                                 )
+                            }
                         )
                     }
 

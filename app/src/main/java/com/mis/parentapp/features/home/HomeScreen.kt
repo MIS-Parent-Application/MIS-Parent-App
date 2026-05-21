@@ -66,6 +66,7 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.InitialsImageFallback
 import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -129,12 +130,16 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
+    var parentName by remember { mutableStateOf("Parent") }
+    var parentProfileImageUrl by remember { mutableStateOf<String?>(null) }
     val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
             studentVM?.updateStudents(dashboard.children)
+            parentName = dashboard.parent.name
+            parentProfileImageUrl = dashboard.parent.profileImageUrl
             dashboardError = null
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
@@ -181,14 +186,24 @@ fun Body(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.parent_pic),
+                            RemoteImage(
+                                url = parentProfileImageUrl,
+                                fallbackRes = R.drawable.parent_pic,
                                 contentDescription = "Parent Profile",
                                 modifier = Modifier
                                     .requiredSize(50.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentScale = ContentScale.Crop
+                                contentScale = ContentScale.Crop,
+                                fallbackContent = {
+                                    InitialsImageFallback(
+                                        name = parentName,
+                                        modifier = Modifier
+                                            .requiredSize(50.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    )
+                                }
                             )
 
                             Text(
@@ -353,7 +368,16 @@ fun StudentSelectorItem(
                     .fillMaxSize()
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                fallbackContent = {
+                    InitialsImageFallback(
+                        name = student.name,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    )
+                }
             )
 
             if (isSelected) {
@@ -444,7 +468,16 @@ fun StudentPresenceHeader(
                         .fillMaxSize()
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    fallbackContent = {
+                        InitialsImageFallback(
+                            name = student.name,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                        )
+                    }
                 )
             }
         }
