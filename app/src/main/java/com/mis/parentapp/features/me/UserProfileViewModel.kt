@@ -17,7 +17,6 @@ import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.network.ParentProfileUpdateRequest
 import com.mis.parentapp.network.UpdateParentSecurityRequest
 import kotlinx.coroutines.launch
-import java.io.ByteArrayInputStream
 import java.io.InputStream
 
 class UserProfileViewModel(application: Application) : AndroidViewModel(application) {
@@ -77,7 +76,10 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                     if (it.fullName != null) fullName = it.fullName
                     if (it.email != null) email = it.email
                     if (it.phoneNumber != null) phoneNumber = it.phoneNumber
-                    if (it.profileImageUri != null) {
+                    if (it.profileImageBlob != null) {
+                        val bitmap = BitmapFactory.decodeByteArray(it.profileImageBlob, 0, it.profileImageBlob.size)
+                        profileBitmap = bitmap?.asImageBitmap()
+                    } else if (it.profileImageUri != null) {
                         loadBitmapFromUri(Uri.parse(it.profileImageUri))
                     }
                 }
@@ -154,11 +156,11 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             try {
                 val bytes = inputStream?.use { it.readBytes() } ?: return@launch
-                val bitmap = BitmapFactory.decodeStream(ByteArrayInputStream(bytes))
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 profileBitmap = bitmap?.asImageBitmap()
                 
                 currentUsername?.let {
-                    userDao.updateProfileImage(it, uri?.toString())
+                    userDao.updateProfileImage(it, uri?.toString(), bytes)
                 }
                 val mimeType = uri?.let { getApplication<Application>().contentResolver.getType(it) } ?: "image/jpeg"
                 val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)

@@ -21,12 +21,12 @@ object Notification
 
 @Serializable
 data class UpcomingEvents(
-    val autoSelectEventId: Int? = null // Change from object to data class with default null value
+    val autoSelectEventId: Int? = null
 )
 
 @Serializable
 data class RecentActivities(
-    val autoSelectEventId: Int? = null // Accepts an optional event ID parameter
+    val autoSelectEventId: Int? = null
 )
 
 @Serializable
@@ -67,3 +67,4 @@ object PaymentOptions
 @Serializable object DataSafety
 @Serializable object EditProfile
 @Serializable object Preference
+@Serializable object About  // 👈 ADDED THIS LINE

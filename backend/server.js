@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'mis_parent_app.db');
 const UPLOAD_DIR = path.join(__dirname, 'data', 'uploads');
@@ -187,6 +188,7 @@ async function initDatabase() {
             image_url TEXT
         )
     `);
+    await ensureColumn('calendar_events', 'image_url', "TEXT");
     await run(`
         CREATE TABLE IF NOT EXISTS academic_grades (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -197,27 +199,6 @@ async function initDatabase() {
             instructor TEXT NOT NULL,
             remarks TEXT NOT NULL DEFAULT '',
             term TEXT NOT NULL,
-            FOREIGN KEY(student_id) REFERENCES students(id)
-        )
-    `);
-    await run(`
-        CREATE TABLE IF NOT EXISTS academic_performance_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            type TEXT NOT NULL,
-            title TEXT NOT NULL,
-            subject TEXT NOT NULL,
-            teacher TEXT NOT NULL,
-            summary TEXT NOT NULL,
-            details TEXT NOT NULL,
-            criteria TEXT NOT NULL,
-            image_url TEXT,
-            score TEXT,
-            status TEXT NOT NULL,
-            assigned_date TEXT NOT NULL,
-            due_date TEXT NOT NULL,
-            time_ago TEXT NOT NULL,
-            is_positive INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(student_id) REFERENCES students(id)
         )
     `);
@@ -422,105 +403,6 @@ async function seedOfficialData() {
         }
     }
 
-    const performanceCount = await get('SELECT COUNT(*) AS count FROM academic_performance_records');
-    if (performanceCount.count === 0) {
-        const performance = [
-            [
-                101,
-                'high_score',
-                'High score in exam',
-                'IT 312 - Mobile Development',
-                'Prof. Reyes',
-                'Nathaniel earned one of the highest scores in the Mobile Development practical exam.',
-                'The practical exam required students to build a working Android screen, connect it to sample data, and explain the navigation flow. Nathaniel completed the required UI states, used proper spacing, and demonstrated a clean understanding of Compose layout behavior during the checking period.',
-                'Criteria: functional screen output, correct navigation, readable code structure, and accurate explanation during checking.',
-                '',
-                '47/50',
-                'Completed',
-                '2026-05-18',
-                '2026-05-18',
-                '4hrs ago',
-                1
-            ],
-            [
-                101,
-                'low_score',
-                'Low score in assignment',
-                'IT 326 - Database Systems',
-                'Dr. Maria Santos',
-                'Database normalization activity needs follow-up because several required answers were incomplete.',
-                'The submitted worksheet answered the first normal form section correctly but missed important explanations for second and third normal form. The teacher recommends reviewing dependency rules and resubmitting the corrected examples before the next database laboratory session.',
-                'Criteria: complete normalization steps, correct table decomposition, proper primary keys, and explanation of functional dependencies.',
-                '',
-                '18/30',
-                'Needs follow-up',
-                '2026-05-16',
-                '2026-05-21',
-                '1d ago',
-                0
-            ],
-            [
-                101,
-                'missing_input',
-                'Missing project reflection',
-                'GE 108 - Ethics',
-                'Ms. Dela Cruz',
-                'Reflection paper for the ethics case discussion has not been recorded as submitted.',
-                'The activity asks students to describe the ethical issue, explain the possible decisions, and connect the discussion to classroom values. If the student already submitted, please coordinate with the instructor so the record can be updated.',
-                'Criteria: clear issue statement, personal reflection, connection to the lesson, and complete submission through the class channel.',
-                '',
-                '',
-                'Missing',
-                '2026-05-14',
-                '2026-05-20',
-                '2d ago',
-                0
-            ],
-            [
-                102,
-                'high_score',
-                'High score in quiz',
-                'CS 210 - Data Structures',
-                'Prof. Molina',
-                'Sofia received a high score in the linked-list quiz.',
-                'The quiz covered node traversal, insertion, deletion, and basic complexity analysis. Sofia answered the tracing problems accurately and explained the pointer updates clearly during checking.',
-                'Criteria: correct tracing, accurate insertion/deletion steps, and clear explanation of time complexity.',
-                '',
-                '28/30',
-                'Completed',
-                '2026-05-17',
-                '2026-05-17',
-                '5hrs ago',
-                1
-            ],
-            [
-                102,
-                'low_score',
-                'Low score in output',
-                'MATH 214 - Discrete Math',
-                'Ms. Aquino',
-                'Set theory problem set requires correction and teacher feedback.',
-                'The output showed good effort but several proof steps were skipped. The teacher advised Sofia to show complete reasoning and label each set operation used in the solution.',
-                'Criteria: complete proof steps, correct notation, accurate final answer, and readable solution format.',
-                '',
-                '21/35',
-                'For correction',
-                '2026-05-15',
-                '2026-05-22',
-                '1d ago',
-                0
-            ]
-        ];
-        for (const item of performance) {
-            await run(
-                `INSERT INTO academic_performance_records
-                 (student_id, type, title, subject, teacher, summary, details, criteria, image_url, score, status, assigned_date, due_date, time_ago, is_positive)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                item
-            );
-        }
-    }
-
     const paymentCount = await get('SELECT COUNT(*) AS count FROM payment_records');
     if (paymentCount.count === 0) {
         const payments = [
@@ -701,6 +583,7 @@ function mapStudent(row, schedules = [], studyLoad = []) {
         attendance: row.attendance,
         gpa: row.gpa,
         pendingPayments: row.pending_payments,
+        notificationCount: row.notificationCount || 0,
         profileImageUrl: row.profile_image_url || '',
         backgroundImageUrl: row.background_image_url || '',
         schedules,
@@ -834,27 +717,6 @@ function mapGrade(row) {
     };
 }
 
-function mapAcademicPerformance(row) {
-    return {
-        id: row.id,
-        studentId: row.student_id,
-        type: row.type,
-        title: row.title,
-        subject: row.subject,
-        teacher: row.teacher,
-        summary: row.summary,
-        details: row.details,
-        criteria: row.criteria,
-        imageUrl: row.image_url,
-        score: row.score,
-        status: row.status,
-        assignedDate: row.assigned_date,
-        dueDate: row.due_date,
-        timeAgo: row.time_ago,
-        isPositive: Boolean(row.is_positive)
-    };
-}
-
 function mapAttendance(row) {
     return {
         id: row.id,
@@ -981,13 +843,19 @@ async function buildDashboard(parentId = 1) {
     const parent = await getParent(parentId);
     if (!parent) return null;
 
+    const schoolUnread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND student_id IS NULL');
     const children = [];
     for (const childId of parent.children) {
         const child = await getStudent(childId);
-        if (child) children.push(child);
+        if (child) {
+            const childUnread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND student_id = ?', [childId]);
+            child.notificationCount = childUnread.count + schoolUnread.count;
+            children.push(child);
+        }
     }
 
-    const unread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1');
+    const childIds = parent.children.length > 0 ? parent.children.join(',') : '0';
+    const totalUnread = await get(`SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND (student_id IS NULL OR student_id IN (${childIds}))`);
     const upcomingEvents = await all(
         'SELECT title, date FROM calendar_events ORDER BY date LIMIT 3'
     );
@@ -995,7 +863,7 @@ async function buildDashboard(parentId = 1) {
     return {
         parent,
         children,
-        unreadAnnouncements: unread.count,
+        unreadAnnouncements: totalUnread.count,
         upcomingEvents: upcomingEvents.map(event => `${event.title} - ${event.date}`)
     };
 }
@@ -1311,21 +1179,6 @@ app.get('/api/student/:id/grades', asyncHandler(async (req, res) => {
     res.json(rows.map(mapGrade));
 }));
 
-app.get('/api/student/:id/academic-performance', asyncHandler(async (req, res) => {
-    const studentId = Number(req.params.id);
-    const student = await get('SELECT id FROM students WHERE id = ?', [studentId]);
-    if (!student) {
-        return res.status(404).json({ error: 'Student not found' });
-    }
-    const rows = await all(
-        `SELECT * FROM academic_performance_records
-         WHERE student_id = ?
-         ORDER BY assigned_date DESC, id DESC`,
-        [studentId]
-    );
-    res.json(rows.map(mapAcademicPerformance));
-}));
-
 app.get('/api/student/:id/attendance', asyncHandler(async (req, res) => {
     const studentId = Number(req.params.id);
     const student = await get('SELECT id FROM students WHERE id = ?', [studentId]);
@@ -1493,7 +1346,6 @@ initDatabase()
             console.log('  PATCH /api/student/:id/photos');
             console.log('  GET /api/student/:id/studyload');
             console.log('  GET /api/student/:id/grades');
-            console.log('  GET /api/student/:id/academic-performance');
             console.log('  GET /api/student/:id/attendance');
             console.log('  GET /api/student/:id/payments');
             console.log('  GET /api/faculty');

@@ -20,8 +20,8 @@ interface UserDAO {
     @Query("UPDATE users SET fullName = :name, email = :email, phoneNumber = :phone WHERE username = :username")
     suspend fun updateProfile(username: String, name: String, email: String, phone: String)
 
-    @Query("UPDATE users SET profileImageUri = :uri WHERE username = :username")
-    suspend fun updateProfileImage(username: String, uri: String?)
+    @Query("UPDATE users SET profileImageUri = :uri, profileImageBlob = :blob WHERE username = :username")
+    suspend fun updateProfileImage(username: String, uri: String?, blob: ByteArray?)
 
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getCurrentUser(): UserEntity?

@@ -22,11 +22,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
@@ -46,6 +46,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.PermanentNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -73,6 +79,7 @@ import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.UserRepository
+import com.mis.parentapp.features.me.AboutScreen
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.OtpSignInScreen
 import com.mis.parentapp.features.auth.PasswordSignInScreen
@@ -81,6 +88,7 @@ import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.features.student.StudentScreen
+import com.mis.parentapp.navigation.About
 import com.mis.parentapp.navigation.Announcements
 import com.mis.parentapp.navigation.Calendar
 import com.mis.parentapp.navigation.Chat
@@ -115,12 +123,15 @@ import com.mis.parentapp.utilities.modals.MenuItem
 @SuppressLint("ViewModelConstructorInComposable")
 @Composable
 fun MainScreen(
+    windowSizeClass: WindowSizeClass,
     onSignOut: () -> Unit
 ) {
     val navController = rememberNavController()
     val studentSharedViewModel: StudentSharedViewModel = viewModel()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    val isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
 
     // Get the ChatViewModel scoped to the Chat route if it exists in the backstack
     val isChatInBackstack = currentDestination?.hierarchy?.any { it.hasRoute(Chat::class) } == true
@@ -148,7 +159,7 @@ fun MainScreen(
         BottomTab("Me", Me, Icons.Filled.Person, Icons.Outlined.Person)
     )
 
-    val showBottomBar = bottomTabs.any { tab ->
+    val showBottomBar = (bottomTabs.any { tab ->
         currentDestination?.hierarchy?.any { it.hasRoute(tab.route::class) } == true
     } || currentDestination?.hasRoute(Notification::class) == true ||
             currentDestination?.hasRoute(Calendar::class) == true ||
@@ -168,17 +179,15 @@ fun MainScreen(
             currentDestination?.hasRoute(Chat::class) == true ||
             currentDestination?.hasRoute(DataSafety::class) == true ||
             currentDestination?.hasRoute(EditProfile::class) == true ||
-            currentDestination?.hasRoute(Preference::class) == true
+            currentDestination?.hasRoute(Preference::class) == true) && !isExpanded
 
-    val showSharedTopBar = bottomTabs.any { tab ->
+    val showSharedTopBar = (bottomTabs.any { tab ->
         currentDestination?.hasRoute(tab.route::class) == true
-    }
+    }) && !isExpanded
 
     val isChatScreen = currentDestination?.hasRoute(Chat::class) == true
-
     val useWhiteIcons = currentDestination?.hasRoute(Student::class) == true ||
             currentDestination?.hasRoute(Me::class) == true
-
     val isSolidTopBar = currentDestination?.hasRoute(Home::class) == true
 
     val topBarBackgroundColor by animateColorAsState(
@@ -200,49 +209,28 @@ fun MainScreen(
             MenuItem("Track Attendance", "Daily presence records.", Icons.Filled.Settings) { navController.navigate(TrackAttendance); showBottomSheet = false }
         )
         currentDestination?.hasRoute(Me::class) == true -> listOf(
-            MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { showBottomSheet = false }
+            MenuItem("About App", "Information about MIS Parent App.", Icons.Outlined.Info) { navController.navigate(About); showBottomSheet = false }
         )
         else -> emptyList()
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            if (isChatScreen) {
-                val chatArgs = navBackStackEntry?.toRoute<Chat>()
-                ChatInputBar(
-                    text = chatViewModel.chatTextState,
-                    onTextChange = { chatViewModel.chatTextState = it },
-                    onSend = {
-                        chatArgs?.let { chatViewModel.sendMessage(it.id) }
-                    }
-                )
-            } else if (showBottomBar) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.background
-                ) {
+    if (isExpanded) {
+        PermanentNavigationDrawer(
+            drawerContent = {
+                PermanentDrawerSheet(modifier = Modifier.width(240.dp)) {
+                    Spacer(Modifier.height(12.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.school_logo),
+                        contentDescription = "School Logo",
+                        modifier = Modifier.size(100.dp).padding(16.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
                     bottomTabs.forEach { tab ->
                         val selected = currentDestination?.hierarchy?.any {
                             it.hasRoute(tab.route::class)
-                        } == true || when (tab.route) {
-                            Home -> currentDestination?.hasRoute(Notification::class) == true ||
-                                    currentDestination?.hasRoute(Calendar::class) == true ||
-                                    currentDestination?.hasRoute(UpcomingEvents::class) == true ||
-                                    currentDestination?.hasRoute(RecentActivities::class) == true
-                            Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
-                                    currentDestination?.hasRoute(TrackAttendance::class) == true ||
-                                    currentDestination?.hasRoute(StudyLoad::class) == true
-                            Me -> currentDestination?.hasRoute(Announcements::class) == true ||
-                                    currentDestination?.hasRoute(Feedbacks::class) == true ||
-                                    currentDestination?.hasRoute(Meeting::class) == true ||
-                                    currentDestination?.hasRoute(Messages::class) == true ||
-                                    currentDestination?.hasRoute(Chat::class) == true ||
-                                    currentDestination?.hasRoute(DataSafety::class) == true ||
-                                    currentDestination?.hasRoute(EditProfile::class) == true ||
-                                    currentDestination?.hasRoute(Preference::class) == true
-                            else -> false
-                        }
-                        NavigationBarItem(
+                        } == true
+                        NavigationDrawerItem(
+                            label = { Text(tab.label) },
                             selected = selected,
                             onClick = {
                                 navController.navigate(tab.route) {
@@ -259,303 +247,409 @@ fun MainScreen(
                                     contentDescription = tab.label
                                 )
                             },
-                            label = { Text(tab.label) },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primary,
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
+                }
+            }
+        ) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = Home,
+                        modifier = Modifier.padding(innerPadding),
+                        enterTransition = { fadeIn(tween(300)) },
+                        exitTransition = { fadeOut(tween(300)) }
+                    ) {
+                        mainNavGraph(
+                            navController,
+                            authViewModel,
+                            userProfileViewModel,
+                            studentSharedViewModel,
+                            dao,
+                            chatViewModel,
+                            onSignOut
                         )
                     }
                 }
             }
         }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            NavHost(
-                navController = navController,
-                startDestination = Home,
-                modifier = Modifier.padding(
-                    top = if (isSolidTopBar) innerPadding.calculateTopPadding() else 0.dp,
-                    bottom = innerPadding.calculateBottomPadding()
-                ),
-                enterTransition = {
-                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(300)
-                    )
-                },
-                exitTransition = {
-                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(300)
-                    )
-                },
-                popEnterTransition = {
-                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(300)
-                    )
-                },
-                popExitTransition = {
-                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(300)
-                    )
-                }
-            ) {
-                composable<DebugMenu> {
-                    DebugMenuScreen(
-                        onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
-                    )
-                }
-
-                composable<SignIn> { backStackEntry ->
-                    val args = backStackEntry.toRoute<SignIn>()
-                    UsernameSignInScreen(
-                        backgroundResId = args.backgroundResId,
-                        onBack = { navController.popBackStack() },
-                        onNavigateToPassword = { email ->
-                            navController.navigate(PasswordSignIn(args.backgroundResId, email))
+    } else {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            bottomBar = {
+                if (isChatScreen) {
+                    val chatArgs = navBackStackEntry?.toRoute<Chat>()
+                    ChatInputBar(
+                        text = chatViewModel.chatTextState,
+                        onTextChange = { chatViewModel.chatTextState = it },
+                        onSend = {
+                            chatArgs?.let { chatViewModel.sendMessage(it.id) }
                         }
                     )
-                }
-
-                composable<PasswordSignIn> { backStackEntry ->
-                    val args = backStackEntry.toRoute<PasswordSignIn>()
-                    PasswordSignInScreen(
-                        username = args.email,
-                        backgroundResId = args.backgroundResId,
-                        viewModel = authViewModel,
-                        onBack = { navController.popBackStack() },
-                        onSignInSuccess = {
-                            navController.navigate(Home) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
+                } else if (showBottomBar) {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.background
+                    ) {
+                        bottomTabs.forEach { tab ->
+                            val selected = currentDestination?.hierarchy?.any {
+                                it.hasRoute(tab.route::class)
+                            } == true || when (tab.route) {
+                                Home -> currentDestination?.hasRoute(Notification::class) == true ||
+                                        currentDestination?.hasRoute(Calendar::class) == true ||
+                                        currentDestination?.hasRoute(UpcomingEvents::class) == true ||
+                                        currentDestination?.hasRoute(RecentActivities::class) == true
+                                Student -> currentDestination?.hasRoute(MonitorAcademic::class) == true ||
+                                        currentDestination?.hasRoute(TrackAttendance::class) == true ||
+                                        currentDestination?.hasRoute(StudyLoad::class) == true
+                                Me -> currentDestination?.hasRoute(Announcements::class) == true ||
+                                        currentDestination?.hasRoute(Feedbacks::class) == true ||
+                                        currentDestination?.hasRoute(Meeting::class) == true ||
+                                        currentDestination?.hasRoute(Messages::class) == true ||
+                                        currentDestination?.hasRoute(Chat::class) == true ||
+                                        currentDestination?.hasRoute(DataSafety::class) == true ||
+                                        currentDestination?.hasRoute(EditProfile::class) == true ||
+                                        currentDestination?.hasRoute(Preference::class) == true
+                                else -> false
                             }
-                        },
-                        onOtpRequired = { password, otpToken, email ->
-                            navController.navigate(
-                                OtpSignIn(
-                                    backgroundResId = args.backgroundResId,
-                                    username = args.email,
-                                    password = password,
-                                    otpToken = otpToken,
-                                    email = email
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    navController.navigate(tab.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                                        contentDescription = tab.label
+                                    )
+                                },
+                                label = { Text(tab.label) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = MaterialTheme.colorScheme.primary,
+                                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             )
                         }
+                    }
+                }
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                NavHost(
+                    navController = navController,
+                    startDestination = Home,
+                    modifier = Modifier.padding(
+                        top = if (isSolidTopBar) innerPadding.calculateTopPadding() else 0.dp,
+                        bottom = innerPadding.calculateBottomPadding()
+                    ),
+                    enterTransition = {
+                        fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    exitTransition = {
+                        fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popEnterTransition = {
+                        fadeIn(animationSpec = tween(300)) + slideIntoContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popExitTransition = {
+                        fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
+                            AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    }
+                ) {
+                    mainNavGraph(
+                        navController,
+                        authViewModel,
+                        userProfileViewModel,
+                        studentSharedViewModel,
+                        dao,
+                        chatViewModel,
+                        onSignOut
                     )
                 }
 
-                composable<OtpSignIn> { backStackEntry ->
-                    val args = backStackEntry.toRoute<OtpSignIn>()
-                    OtpSignInScreen(
-                        username = args.username,
-                        password = args.password,
-                        otpToken = args.otpToken,
-                        email = args.email,
+                if (showSharedTopBar) {
+                    MainTopBar(
+                        onMenuClick = { showBottomSheet = true },
+                        onNotificationClick = { navController.navigate(Notification) },
+                        onCalendarClick = { navController.navigate(Calendar) },
+                        iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
+                        menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
+                        backgroundColor = topBarBackgroundColor,
+                        isMeScreen = currentDestination?.hasRoute(Me::class) == true
+                    )
+                }
+            }
+
+            if (showBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showBottomSheet = false },
+                    sheetState = sheetState,
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    GenericMenuModal(
+                        items = menuItems
+                    )
+                }
+            }
+        }
+    }
+}
+
+fun androidx.navigation.NavGraphBuilder.mainNavGraph(
+    navController: androidx.navigation.NavHostController,
+    authViewModel: AuthViewModel,
+    userProfileViewModel: com.mis.parentapp.features.me.UserProfileViewModel,
+    studentSharedViewModel: StudentSharedViewModel,
+    dao: com.mis.parentapp.data.StudentMonitoringDao,
+    chatViewModel: ChatViewModel,
+    onSignOut: () -> Unit
+) {
+    composable<DebugMenu> {
+        DebugMenuScreen(
+            onNavigateToSignIn = { bgId -> navController.navigate(SignIn(bgId)) },
+        )
+    }
+
+    composable<SignIn> { backStackEntry ->
+        val args = backStackEntry.toRoute<SignIn>()
+        UsernameSignInScreen(
+            backgroundResId = args.backgroundResId,
+            onBack = { navController.popBackStack() },
+            onNavigateToPassword = { email ->
+                navController.navigate(PasswordSignIn(args.backgroundResId, email))
+            }
+        )
+    }
+
+    composable<PasswordSignIn> { backStackEntry ->
+        val args = backStackEntry.toRoute<PasswordSignIn>()
+        PasswordSignInScreen(
+            username = args.email,
+            backgroundResId = args.backgroundResId,
+            viewModel = authViewModel,
+            onBack = { navController.popBackStack() },
+            onSignInSuccess = {
+                navController.navigate(Home) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            onOtpRequired = { password, otpToken, email ->
+                navController.navigate(
+                    OtpSignIn(
                         backgroundResId = args.backgroundResId,
-                        viewModel = authViewModel,
-                        onBack = { navController.popBackStack() },
-                        onSignInSuccess = {
-                            navController.navigate(Home) {
-                                popUpTo(0) { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        }
+                        username = args.email,
+                        password = password,
+                        otpToken = otpToken,
+                        email = email
                     )
-                }
-
-                composable<Me> {
-                    MeScreen(
-                        navController = navController,
-                        authViewModel = authViewModel,
-                        userProfileViewModel = userProfileViewModel,
-                        onSignOutClick = onSignOut
-                    )
-                }
-                composable<Home> {
-                    HomeScreen(
-                        studentVM = studentSharedViewModel,
-                        mainNavController = navController
-                    )
-                }
-                composable<Student> {
-                    StudentScreen(
-                        studentVM = studentSharedViewModel,
-                        dao = dao,
-                        onStudyLoadClick = { navController.navigate(StudyLoad) }
-                    )
-                }
-                composable<Notification> {
-                    SubScreen(
-                        startDestination = Notification,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Calendar> {
-                    SubScreen(
-                        startDestination = Calendar,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<StudyLoad> {
-                    SubScreen(
-                        startDestination = StudyLoad,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<UpcomingEvents> { backStackEntry ->
-                    val args = backStackEntry.toRoute<UpcomingEvents>()
-                    SubScreen(
-                        startDestination = args,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<RecentActivities> { backStackEntry ->
-                    val args = backStackEntry.toRoute<RecentActivities>()
-                    SubScreen(
-                        startDestination = args,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<MonitorAcademic> {
-                    SubScreen(
-                        startDestination = MonitorAcademic,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<TrackAttendance> {
-                    SubScreen(
-                        startDestination = TrackAttendance,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Documents> {
-                    SubScreen(
-                        startDestination = Documents,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<FormsAndRequest> {
-                    SubScreen(
-                        startDestination = FormsAndRequest,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<FAQs> {
-                    SubScreen(
-                        startDestination = FAQs,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<PaymentOptions> {
-                    SubScreen(
-                        startDestination = PaymentOptions,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Announcements> {
-                    SubScreen(
-                        startDestination = Announcements,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Feedbacks> {
-                    SubScreen(
-                        startDestination = Feedbacks,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Meeting> {
-                    SubScreen(
-                        startDestination = Meeting,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable<Messages> {
-                    SubScreen(
-                        startDestination = Messages,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() },
-                        onNavigate = { route: Any -> navController.navigate(route) }
-                    )
-                }
-                composable<Chat> { backStackEntry ->
-                    val args = backStackEntry.toRoute<Chat>()
-                    SubScreen(
-                        startDestination = args,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() },
-                        chatViewModel = chatViewModel
-                    )
-                }
-                composable<DataSafety> {
-                    SubScreen(
-                        startDestination = DataSafety,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() },
-                        userProfileViewModel = userProfileViewModel
-                    )
-                }
-                composable<EditProfile> {
-                    SubScreen(
-                        startDestination = EditProfile,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() },
-                        userProfileViewModel = userProfileViewModel
-                    )
-                }
-                composable<Preference> {
-                    SubScreen(
-                        startDestination = Preference,
-                        studentVM = studentSharedViewModel,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-            }
-
-            if (showSharedTopBar) {
-                MainTopBar(
-                    onMenuClick = { showBottomSheet = true },
-                    onNotificationClick = { navController.navigate(Notification) },
-                    onCalendarClick = { navController.navigate(Calendar) },
-                    iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                    menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                    backgroundColor = topBarBackgroundColor,
-                    isMeScreen = currentDestination?.hasRoute(Me::class) == true
                 )
             }
-        }
+        )
+    }
 
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.background
-            ) {
-                GenericMenuModal(
-                    items = menuItems
-                )
+    composable<OtpSignIn> { backStackEntry ->
+        val args = backStackEntry.toRoute<OtpSignIn>()
+        OtpSignInScreen(
+            username = args.username,
+            password = args.password,
+            otpToken = args.otpToken,
+            email = args.email,
+            backgroundResId = args.backgroundResId,
+            viewModel = authViewModel,
+            onBack = { navController.popBackStack() },
+            onSignInSuccess = {
+                navController.navigate(Home) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             }
-        }
+        )
+    }
+
+    composable<Me> {
+        MeScreen(
+            navController = navController,
+            authViewModel = authViewModel,
+            userProfileViewModel = userProfileViewModel,
+            onSignOutClick = onSignOut
+        )
+    }
+    composable<Home> {
+        HomeScreen(
+            studentVM = studentSharedViewModel,
+            mainNavController = navController
+        )
+    }
+    composable<Student> {
+        StudentScreen(
+            studentVM = studentSharedViewModel,
+            dao = dao,
+            onStudyLoadClick = { navController.navigate(StudyLoad) }
+        )
+    }
+    composable<Notification> {
+        SubScreen(
+            startDestination = Notification,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<Calendar> {
+        SubScreen(
+            startDestination = Calendar,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<StudyLoad> {
+        SubScreen(
+            startDestination = StudyLoad,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<UpcomingEvents> { backStackEntry ->
+        val args = backStackEntry.toRoute<UpcomingEvents>()
+        SubScreen(
+            startDestination = args,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<RecentActivities> { backStackEntry ->
+        val args = backStackEntry.toRoute<RecentActivities>()
+        SubScreen(
+            startDestination = args,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<MonitorAcademic> {
+        SubScreen(
+            startDestination = MonitorAcademic,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<TrackAttendance> {
+        SubScreen(
+            startDestination = TrackAttendance,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<Documents> {
+        SubScreen(
+            startDestination = Documents,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<FormsAndRequest> {
+        SubScreen(
+            startDestination = FormsAndRequest,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<FAQs> {
+        SubScreen(
+            startDestination = FAQs,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<PaymentOptions> {
+        SubScreen(
+            startDestination = PaymentOptions,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<Announcements> {
+        SubScreen(
+            startDestination = Announcements,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<Feedbacks> {
+        SubScreen(
+            startDestination = Feedbacks,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<Meeting> {
+        SubScreen(
+            startDestination = Meeting,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
+    }
+    composable<Messages> {
+        SubScreen(
+            startDestination = Messages,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() },
+            onNavigate = { route: Any -> navController.navigate(route) }
+        )
+    }
+    composable<Chat> { backStackEntry ->
+        val args = backStackEntry.toRoute<Chat>()
+        SubScreen(
+            startDestination = args,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() },
+            chatViewModel = chatViewModel
+        )
+    }
+    composable<DataSafety> {
+        SubScreen(
+            startDestination = DataSafety,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() },
+            userProfileViewModel = userProfileViewModel
+        )
+    }
+    composable<EditProfile> {
+        SubScreen(
+            startDestination = EditProfile,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() },
+            userProfileViewModel = userProfileViewModel
+        )
+    }
+    composable<Preference> {
+        SubScreen(
+            startDestination = Preference,
+            studentVM = studentSharedViewModel,
+            onBack = { navController.popBackStack() }
+        )
     }
 }
 
@@ -651,7 +745,7 @@ fun ChatInputBar(text: String, onTextChange: (String) -> Unit, onSend: () -> Uni
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Icon(Icons.Default.Send, contentDescription = "Send")
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
             }
         }
     }
