@@ -18,6 +18,10 @@ const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 10);
 const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
 const OTP_SECRET = process.env.OTP_SECRET || 'mis-parent-app-dev-otp-secret';
+const APP_VERSION_CODE = Number(process.env.APP_VERSION_CODE || 1);
+const APP_VERSION_NAME = process.env.APP_VERSION_NAME || '1.0';
+const APP_APK_URL = process.env.APP_APK_URL || '';
+const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || 'No update is available yet.';
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -882,6 +886,15 @@ app.get('/api/health', asyncHandler(async (req, res) => {
     });
 }));
 
+app.get('/api/app/version', asyncHandler(async (_req, res) => {
+    res.json({
+        versionCode: APP_VERSION_CODE,
+        versionName: APP_VERSION_NAME,
+        apkUrl: APP_APK_URL,
+        releaseNotes: APP_RELEASE_NOTES
+    });
+}));
+
 app.post('/api/auth/login', asyncHandler(async (req, res) => {
     const { username, password } = req.body || {};
     const account = await get(
@@ -1335,6 +1348,7 @@ initDatabase()
             console.log(`Phone URL example: http://192.168.1.248:${PORT}`);
             console.log('Available endpoints:');
             console.log('  GET /api/health');
+            console.log('  GET /api/app/version');
             console.log('  POST /api/auth/login');
             console.log('  POST /api/auth/verify-otp');
             console.log('  POST /api/auth/resend-otp');

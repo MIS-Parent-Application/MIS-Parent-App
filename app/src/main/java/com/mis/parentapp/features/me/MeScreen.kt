@@ -1,5 +1,8 @@
 package com.mis.parentapp.features.me
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.mis.parentapp.BuildConfig
 import com.mis.parentapp.R
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.me.sections.SettingsSection
@@ -39,8 +43,12 @@ import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
+import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.utilities.images.InitialsImageFallback
 import com.mis.parentapp.utilities.images.RemoteImage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun MeScreen(
@@ -208,6 +216,7 @@ fun MeScreen(
                         "Preferences" -> navController?.navigate(Preference)
                         "Data safety" -> navController?.navigate(DataSafety)
                         "Edit profile" -> navController?.navigate(EditProfile)
+                        "Check for updates" -> checkForAppUpdate(context)
                         "Sign out" -> {
                             authViewModel.signOut {
                                 onSignOutClick()
@@ -216,6 +225,32 @@ fun MeScreen(
                     }
                 })
             }
+        }
+    }
+}
+
+private fun checkForAppUpdate(context: android.content.Context) {
+    CoroutineScope(Dispatchers.Main).launch {
+        runCatching {
+            RetrofitInstance.api.getAppVersion()
+        }.onSuccess { version ->
+            val apkUrl = version.apkUrl.orEmpty()
+            when {
+                version.versionCode <= BuildConfig.VERSION_CODE -> {
+                    Toast.makeText(context, "Your app is up to date.", Toast.LENGTH_LONG).show()
+                }
+                apkUrl.isBlank() -> {
+                    Toast.makeText(context, "Update available, but no download link is configured yet.", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    Toast.makeText(context, "Opening version ${version.versionName} update.", Toast.LENGTH_LONG).show()
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            }
+        }.onFailure {
+            Toast.makeText(context, "Unable to check for updates.", Toast.LENGTH_LONG).show()
         }
     }
 }

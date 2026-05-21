@@ -7,6 +7,13 @@ data class ParentDashboard(
     val upcomingEvents: List<String>
 )
 
+data class AppVersionDto(
+    val versionCode: Int,
+    val versionName: String,
+    val apkUrl: String? = null,
+    val releaseNotes: String? = null
+)
+
 data class LoginRequest(
     val username: String,
     val password: String
