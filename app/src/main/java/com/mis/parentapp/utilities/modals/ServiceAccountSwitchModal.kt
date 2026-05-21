@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.Child
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.InitialsImageFallback
 import com.mis.parentapp.utilities.images.RemoteImage
 
 @Composable
@@ -44,12 +45,21 @@ fun ServiceAccountSwitchModal(
             url = selectedStudent?.profileImageUrl,
             fallbackRes = R.drawable.student_image,
             contentDescription = null,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-            contentScale = ContentScale.Crop
-        )
+        modifier = Modifier
+            .size(80.dp)
+            .clip(CircleShape)
+            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+        contentScale = ContentScale.Crop,
+        fallbackContent = {
+            InitialsImageFallback(
+                name = selectedStudent?.name,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+            )
+        }
+    )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -132,12 +142,21 @@ fun OtherStudentItem(
             url = student.profileImageUrl,
             fallbackRes = R.drawable.student_image,
             contentDescription = null,
-            modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape),
-            contentScale = ContentScale.Crop
-        )
+        modifier = Modifier
+            .size(60.dp)
+            .clip(CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape),
+        contentScale = ContentScale.Crop,
+        fallbackContent = {
+            InitialsImageFallback(
+                name = student.name,
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+            )
+        }
+    )
 
         Spacer(modifier = Modifier.width(16.dp))
 

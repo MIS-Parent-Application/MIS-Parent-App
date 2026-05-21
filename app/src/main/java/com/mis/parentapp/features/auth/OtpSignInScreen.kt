@@ -1,5 +1,6 @@
 package com.mis.parentapp.features.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,17 +20,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,46 +40,55 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
-
+import kotlinx.coroutines.delay
 
 @Composable
-fun PasswordSignInScreen(
+fun OtpSignInScreen(
     username: String,
+    password: String,
+    otpToken: String,
+    email: String,
     backgroundResId: Int,
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onSignInSuccess: () -> Unit,
-    onOtpRequired: (String, String, String) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    var code by remember { mutableStateOf("") }
+    var currentOtpToken by remember(otpToken) { mutableStateOf(otpToken) }
+    var resendCooldown by remember { mutableStateOf(60) }
+    val context = LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(resendCooldown) {
+        if (resendCooldown > 0) {
+            delay(1000)
+            resendCooldown -= 1
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = if (backgroundResId != 0) backgroundResId else R.drawable.bg_one_sign_screen),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Crop
         )
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    brush = Brush.verticalGradient(
+                    Brush.verticalGradient(
                         colors = listOf(
                             Color.Transparent,
                             Color.Black.copy(alpha = 0.26f),
@@ -131,7 +138,7 @@ fun PasswordSignInScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = stringResource(id = R.string.auth_msg),
+                    text = "Verify your email",
                     color = ColorsDefaultTheme.text_color,
                     fontSize = 34.sp,
                     lineHeight = 40.sp,
@@ -139,10 +146,17 @@ fun PasswordSignInScreen(
                 )
 
                 Text(
-                    text = stringResource(id = R.string.password_sub_msg) + " " + "for $username",
+                    text = "Enter the 6-digit code sent to $email",
                     color = ColorsDefaultTheme.text_color.copy(alpha = 0.8f),
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Light
+                )
+
+                Text(
+                    text = "The code expires in 10 minutes. You have up to 5 attempts.",
+                    color = ColorsDefaultTheme.text_color.copy(alpha = 0.72f),
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp
                 )
             }
 
@@ -154,9 +168,11 @@ fun PasswordSignInScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = { Text(stringResource(id = R.string.password_hint), color = Color.Gray) },
+                    value = code,
+                    onValueChange = { value ->
+                        code = value.filter { it.isDigit() }.take(6)
+                    },
+                    placeholder = { Text("Verification code", color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp)),
@@ -166,26 +182,50 @@ fun PasswordSignInScreen(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         focusedTextColor = ColorsDefaultTheme.color_On_surface,
-                        unfocusedTextColor = ColorsDefaultTheme.color_On_surface,
-                        focusedTrailingIconColor = ColorsDefaultTheme.color_On_surface.copy(alpha = 0.6f),
-                        unfocusedTrailingIconColor = ColorsDefaultTheme.color_On_surface.copy(alpha = 0.6f)
+                        unfocusedTextColor = ColorsDefaultTheme.color_On_surface
                     ),
                     singleLine = true,
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        val image = if (passwordVisible) {
-                            Icons.Filled.Visibility
-                        } else {
-                            Icons.Filled.VisibilityOff
-                        }
-
-                        val description = if (passwordVisible) "Hide password" else "Show password"
-
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(imageVector = image, contentDescription = description)
-                        }
-                    }
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        enabled = !isLoading && resendCooldown == 0,
+                        onClick = {
+                            viewModel.resendOtp(
+                                otpToken = currentOtpToken,
+                                onSuccess = { newOtpToken, retryAfterSeconds ->
+                                    currentOtpToken = newOtpToken
+                                    code = ""
+                                    resendCooldown = retryAfterSeconds
+                                    Toast.makeText(context, "A new code was sent", Toast.LENGTH_SHORT).show()
+                                },
+                                onError = { message ->
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    ) {
+                        Text(
+                            text = if (resendCooldown > 0) {
+                                "Resend code in ${resendCooldown}s"
+                            } else {
+                                "Resend code"
+                            },
+                            color = if (resendCooldown > 0) {
+                                ColorsDefaultTheme.text_color.copy(alpha = 0.62f)
+                            } else {
+                                ColorsDefaultTheme.color_Primary_green
+                            },
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -197,14 +237,13 @@ fun PasswordSignInScreen(
                         modifier = Modifier.padding(end = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        repeat(3) { index ->
-                            val isActiveStep = index <= 2
+                        repeat(3) {
                             Box(
                                 modifier = Modifier
                                     .width(32.dp)
                                     .height(5.dp)
                                     .background(
-                                        color = if (isActiveStep) ColorsDefaultTheme.color_Primary_green else Color.White,
+                                        color = ColorsDefaultTheme.color_Primary_green,
                                         shape = RoundedCornerShape(4.dp)
                                     )
                             )
@@ -215,20 +254,19 @@ fun PasswordSignInScreen(
 
                     Button(
                         onClick = {
-                            if (password.isNotEmpty()) {
-                                viewModel.signIn(
+                            if (code.length == 6) {
+                                viewModel.verifyOtp(
                                     username = username,
                                     pass = password,
-                                    onSuccess = { onSignInSuccess() },
-                                    onOtpRequired = { otpToken, email ->
-                                        onOtpRequired(password, otpToken, email)
-                                    },
+                                    otpToken = currentOtpToken,
+                                    code = code,
+                                    onSuccess = onSignInSuccess,
                                     onError = { message ->
-                                        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                                     }
                                 )
                             } else {
-                                android.widget.Toast.makeText(context, "Please enter your password", android.widget.Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Enter the 6-digit code", Toast.LENGTH_SHORT).show()
                             }
                         },
                         modifier = Modifier
@@ -240,7 +278,7 @@ fun PasswordSignInScreen(
                         )
                     ) {
                         Text(
-                            text = stringResource(id = R.string.sign_in_btn_text),
+                            text = "Verify",
                             color = ColorsDefaultTheme.color_Surface,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold
@@ -264,23 +302,3 @@ fun PasswordSignInScreen(
         }
     }
 }
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PasswordSignInScreenPreview() {
-//    ParentAppTheme {
-//        val dummyUserDao = object : UserDAO {
-//            override suspend fun registerUser(user: UserEntity) {}
-//            override suspend fun loginUser(email: String, password: String): UserEntity? = null
-//        }
-//        val viewModel = remember { AuthViewModel(dummyUserDao) }
-//        PasswordSignInScreen(
-//            username = "test@example.com",
-//            backgroundResId = R.drawable.bg_one_sign_screen,
-//            viewModel = viewModel,
-//            onBack = {},
-//            onSignInSuccess = {}
-//        )
-//    }
-//}

@@ -2,20 +2,30 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const sqlite3 = require('sqlite3').verbose();
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+
 
 
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'mis_parent_app.db');
+const UPLOAD_DIR = path.join(__dirname, 'data', 'uploads');
+const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 10);
+const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
+const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
+const OTP_SECRET = process.env.OTP_SECRET || 'mis-parent-app-dev-otp-secret';
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const db = new sqlite3.Database(DB_PATH);
+app.use('/media/uploads', express.static(UPLOAD_DIR));
 
 const twoFACodes = {};
 
@@ -133,15 +143,33 @@ async function initDatabase() {
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
-            phone TEXT NOT NULL
+            phone TEXT NOT NULL,
+            profile_image_url TEXT NOT NULL DEFAULT '',
+            background_image_url TEXT NOT NULL DEFAULT '',
+            two_factor_enabled INTEGER NOT NULL DEFAULT 0
         )
     `);
+    await ensureColumn('parents', 'profile_image_url', "TEXT NOT NULL DEFAULT ''");
+    await ensureColumn('parents', 'background_image_url', "TEXT NOT NULL DEFAULT ''");
+    await ensureColumn('parents', 'two_factor_enabled', 'INTEGER NOT NULL DEFAULT 0');
     await run(`
         CREATE TABLE IF NOT EXISTS parent_accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             parent_id INTEGER NOT NULL,
+            FOREIGN KEY(parent_id) REFERENCES parents(id)
+        )
+    `);
+    await run(`
+        CREATE TABLE IF NOT EXISTS login_otps (
+            id TEXT PRIMARY KEY,
+            parent_id INTEGER NOT NULL,
+            code_hash TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            used INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
             FOREIGN KEY(parent_id) REFERENCES parents(id)
         )
     `);
@@ -218,11 +246,13 @@ async function initDatabase() {
             time TEXT NOT NULL,
             category TEXT NOT NULL,
             is_new INTEGER NOT NULL DEFAULT 0,
-            image_url TEXT NOT NULL DEFAULT ''
+            image_url TEXT NOT NULL DEFAULT '',
+            is_positive INTEGER NOT NULL DEFAULT 1
         )
     `);
     await ensureColumn('notifications', 'image_url', "TEXT NOT NULL DEFAULT ''");
-    
+    await ensureColumn('notifications', 'is_positive', "INTEGER NOT NULL DEFAULT 1");
+
     // FIX: Added image_url TEXT column to handle the mock image asset strings
     await run(`
         CREATE TABLE IF NOT EXISTS calendar_events (
@@ -308,7 +338,7 @@ async function initDatabase() {
 async function seedDatabase() {
     await run(
         'INSERT INTO parents (id, name, email, phone) VALUES (?, ?, ?, ?)',
-        [1, 'Jordan McClure', 'jordan.mcclure@email.com', '+63 917 555 0198']
+        [1, 'Jordan McClure', 'julianamaelloveras@gmail.com', '09082105876']
     );
     await run(
         'INSERT INTO parent_accounts (username, password, parent_id) VALUES (?, ?, ?), (?, ?, ?)',
@@ -327,27 +357,6 @@ async function seedDatabase() {
             student
         );
         await run('INSERT INTO parent_students (parent_id, student_id) VALUES (?, ?)', [1, student[0]]);
-    }
-
-    const studentPhotos = [
-        [
-            101,
-            'https://ui-avatars.com/api/?name=Nathaniel+B.+McClure&background=1B5E20&color=FFFFFF&size=256&format=png',
-            'https://picsum.photos/seed/colegio-nathaniel/1200/700'
-        ],
-        [
-            102,
-            'https://ui-avatars.com/api/?name=Sofia+B.+McClure&background=F6D44B&color=1B4D13&size=256&format=png',
-            'https://picsum.photos/seed/colegio-sofia/1200/700'
-        ]
-    ];
-    for (const photo of studentPhotos) {
-        await run(
-            `UPDATE students
-             SET profile_image_url = ?, background_image_url = ?
-             WHERE id = ?`,
-            [photo[1], photo[2], photo[0]]
-        );
     }
 
     const schedules = [
@@ -391,15 +400,15 @@ async function seedDatabase() {
     }
 
     const notifications = [
-        [1, 101, 'Nathaniel has a Mobile Development laboratory activity due today.', 'Reminder', '1hr ago', 'academic', 1, 'event1.jpg'],
-        [2, 101, 'Database Systems quiz score has been posted.', 'Activity', '4hrs ago', 'academic', 1, 'event2.jpg'],
-        [3, 102, "Sofia's PE uniform fee is still pending.", 'Reminder', 'Yesterday', 'financial', 1, 'event3.jpg'],
-        [4, null, 'College assembly will be held on May 24 at the auditorium.', 'Event', 'Yesterday', 'college', 0, 'event1.jpg'],
-        [5, null, 'Emergency drill schedule has been moved to next week.', 'Emergency', '2 days ago', 'school-wide', 0, 'event2.jpg']
+        [1, 101, 'Nathaniel has a Mobile Development laboratory activity due today.', 'Reminder', '1hr ago', 'academic', 1, 'event1.jpg', 1],
+        [2, 101, 'Database Systems quiz score has been posted.', 'Activity', '4hrs ago', 'academic', 1, 'event2.jpg', 1],
+        [3, 102, "Sofia's PE uniform fee is still pending.", 'Reminder', 'Yesterday', 'financial', 1, 'event3.jpg', 0],
+        [4, null, 'College assembly will be held on May 24 at the auditorium.', 'Event', 'Yesterday', 'college', 0, 'event1.jpg', 1],
+        [5, null, 'Emergency drill schedule has been moved to next week.', 'Emergency', '2 days ago', 'school-wide', 0, 'event2.jpg', 1]
     ];
     for (const notification of notifications) {
         await run(
-            'INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url, is_positive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             notification
         );
     }
@@ -525,6 +534,11 @@ async function seedOfficialData() {
 }
 
 async function normalizeOfficialData() {
+    await run(
+        'UPDATE parents SET email = ?, phone = ? WHERE id = ?',
+        ['julianamaelloveras@gmail.com', '09082105876', 1]
+    );
+
     const officialEvents = [
         [1, 101, 'Mobile Development Practical Exam', 'Exam', '2026-05-15', '08:00 AM', 'Hands-on Android Compose assessment in Lab 402.', 'Academic', 'event1.jpg'],
         [2, 101, 'Capstone Consultation', 'Academic', '2026-05-17', '03:00 PM', 'Project progress check with Dr. Lim.', 'Reminder', 'event2.jpg'],
@@ -570,13 +584,14 @@ async function normalizeOfficialData() {
             date,
             audience === 'student' ? category.toLowerCase() : category,
             id <= 5 ? 1 : 0,
-            imageUrl
+            imageUrl,
+            1
         ];
     });
     for (const notification of eventNotifications) {
         await run(
-            `INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url, is_positive)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(id) DO UPDATE SET
                 student_id = excluded.student_id,
                 text = excluded.text,
@@ -584,30 +599,9 @@ async function normalizeOfficialData() {
                 time = excluded.time,
                 category = excluded.category,
                 is_new = excluded.is_new,
-                image_url = excluded.image_url`,
+                image_url = excluded.image_url,
+                is_positive = excluded.is_positive`,
             notification
-        );
-    }
-
-    const studentPhotoUpdates = [
-        [
-            'https://ui-avatars.com/api/?name=Nathaniel+B.+McClure&background=1B5E20&color=FFFFFF&size=256&format=png',
-            'https://picsum.photos/seed/colegio-nathaniel/1200/700',
-            101
-        ],
-        [
-            'https://ui-avatars.com/api/?name=Sofia+B.+McClure&background=F6D44B&color=1B4D13&size=256&format=png',
-            'https://picsum.photos/seed/colegio-sofia/1200/700',
-            102
-        ]
-    ];
-    for (const item of studentPhotoUpdates) {
-        await run(
-            `UPDATE students
-             SET profile_image_url = CASE WHEN profile_image_url = '' THEN ? ELSE profile_image_url END,
-                 background_image_url = CASE WHEN background_image_url = '' THEN ? ELSE background_image_url END
-             WHERE id = ?`,
-            item
         );
     }
 
@@ -676,6 +670,89 @@ function mapStudent(row, schedules = [], studyLoad = []) {
         schedules,
         studyLoad
     };
+}
+
+function maskEmail(email) {
+    const [name, domain] = String(email || '').split('@');
+    if (!name || !domain) return email || '';
+    const visible = name.slice(0, Math.min(2, name.length));
+    return `${visible}${'*'.repeat(Math.max(2, name.length - visible.length))}@${domain}`;
+}
+
+function hashOtp(code) {
+    return crypto
+        .createHash('sha256')
+        .update(`${code}:${OTP_SECRET}`)
+        .digest('hex');
+}
+
+function createOtpCode() {
+    return String(crypto.randomInt(100000, 1000000));
+}
+
+function createOtpId() {
+    return crypto.randomBytes(24).toString('hex');
+}
+
+async function sendEmailOtp(email, code) {
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_APP_PASSWORD;
+    const from = process.env.EMAIL_FROM || `Colegio De Alicia <${user}>`;
+
+    if (!user || !pass) {
+        throw new Error('Email OTP is not configured. Set EMAIL_USER and EMAIL_APP_PASSWORD.');
+    }
+
+    let nodemailer;
+    try {
+        nodemailer = require('nodemailer');
+    } catch (_error) {
+        throw new Error('Email dependency missing. Run npm install in the backend folder.');
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: Number(process.env.EMAIL_PORT || 465),
+        secure: String(process.env.EMAIL_SECURE || 'true') !== 'false',
+        auth: { user, pass }
+    });
+
+    await transporter.sendMail({
+        from,
+        to: email,
+        subject: 'Colegio De Alicia Parent App verification code',
+        text: `Your Colegio De Alicia Parent App verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`,
+        html: `<p>Your Colegio De Alicia Parent App verification code is:</p><h2>${code}</h2><p>This code expires in ${OTP_TTL_MINUTES} minutes.</p>`
+    });
+}
+
+async function issueLoginOtp(parent) {
+    const code = createOtpCode();
+    const otpId = createOtpId();
+    const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
+    const createdAt = new Date().toISOString();
+
+    await run(
+        `INSERT INTO login_otps (id, parent_id, code_hash, expires_at, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [otpId, parent.id, hashOtp(code), expiresAt, createdAt]
+    );
+    await sendEmailOtp(parent.email, code);
+
+    return {
+        otpToken: otpId,
+        expiresAt,
+        email: maskEmail(parent.email),
+        retryAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS
+    };
+}
+
+function secondsUntilOtpResend(otp) {
+    if (!otp?.created_at) return 0;
+    const createdAt = new Date(String(otp.created_at).replace(' ', 'T').replace(/Z?$/, 'Z')).getTime();
+    if (!Number.isFinite(createdAt)) return 0;
+    const elapsedSeconds = Math.floor((Date.now() - createdAt) / 1000);
+    return Math.max(0, OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds);
 }
 
 function mapSchedule(row) {
@@ -768,6 +845,23 @@ function mapChatMessage(row) {
     };
 }
 
+function saveUploadedImage({ ownerType, ownerId, imageData, mimeType }) {
+    if (!imageData) return null;
+
+    const cleanMime = String(mimeType || 'image/jpeg').toLowerCase();
+    const extension = cleanMime.includes('png') ? 'png' : cleanMime.includes('webp') ? 'webp' : 'jpg';
+    const cleanData = String(imageData).replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+    const buffer = Buffer.from(cleanData, 'base64');
+
+    if (!buffer.length || buffer.length > 6 * 1024 * 1024) {
+        throw new Error('Image must be a valid file up to 6MB');
+    }
+
+    const fileName = `${ownerType}-${ownerId}-${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${extension}`;
+    fs.writeFileSync(path.join(UPLOAD_DIR, fileName), buffer);
+    return `/media/uploads/${fileName}`;
+}
+
 async function getParent(parentId) {
     const parent = await get('SELECT * FROM parents WHERE id = ?', [parentId]);
     if (!parent) return null;
@@ -782,7 +876,9 @@ async function getParent(parentId) {
         name: parent.name,
         email: parent.email,
         phone: parent.phone,
-        children: children.map(item => item.student_id)
+        children: children.map(item => item.student_id),
+        profileImageUrl: parent.profile_image_url || '',
+        backgroundImageUrl: parent.background_image_url || parent.profile_image_url || ''
     };
 }
 
@@ -833,6 +929,23 @@ async function buildDashboard(parentId = 1) {
     for (const childId of parent.children) {
         const child = await getStudent(childId);
         if (child) {
+            // Calculate Performance Percentage
+            const attendanceVal = parseFloat(child.attendance.replace('%', '')) || 0;
+
+            // Normalized GPA (3.0 is passing limit at 75%)
+            let gpaNormalized;
+            if (child.gpa <= 3.0) {
+                gpaNormalized = 100 - (child.gpa - 1.0) * 12.5; // 1.0 -> 100, 3.0 -> 75
+            } else {
+                gpaNormalized = 75 - (child.gpa - 3.0) * 37.5;  // 3.0 -> 75, 5.0 -> 0
+            }
+
+            const performanceRecords = await all('SELECT is_positive FROM notifications WHERE student_id = ? AND type IN ("Activity", "Reminder")', [childId]);
+            const positiveCount = performanceRecords.filter(r => r.is_positive === 1).length;
+            const taskScore = performanceRecords.length > 0 ? (positiveCount / performanceRecords.length) * 100 : 100;
+
+            child.performancePercentage = Math.round((gpaNormalized * 0.6) + (attendanceVal * 0.3) + (taskScore * 0.1));
+
             const childUnread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND student_id = ?', [childId]);
             child.notificationCount = childUnread.count + schoolUnread.count;
             children.push(child);
@@ -881,12 +994,104 @@ app.post('/api/auth/login', asyncHandler(async (req, res) => {
 
     const parent = await getParent(account.parent_id);
     const dashboard = await buildDashboard(account.parent_id);
+    const parentRow = await get('SELECT * FROM parents WHERE id = ?', [account.parent_id]);
+
+    if (parentRow?.two_factor_enabled) {
+        try {
+            const otp = await issueLoginOtp(parentRow);
+            return res.json({
+                requiresTwoFactor: true,
+                otpToken: otp.otpToken,
+                email: otp.email,
+                expiresAt: otp.expiresAt,
+                retryAfterSeconds: otp.retryAfterSeconds,
+                parent
+            });
+        } catch (error) {
+            return res.status(503).json({ error: error.message });
+        }
+    }
 
     res.json({
+        requiresTwoFactor: false,
         token: `parent-token-${account.parent_id}`,
         parent,
         dashboard
     });
+}));
+
+app.post('/api/auth/verify-otp', asyncHandler(async (req, res) => {
+    const { otpToken, code } = req.body || {};
+    const otp = await get('SELECT * FROM login_otps WHERE id = ?', [String(otpToken || '')]);
+
+    if (!otp || otp.used) {
+        return res.status(401).json({ error: 'Invalid or expired verification code' });
+    }
+
+    if (new Date(otp.expires_at).getTime() < Date.now()) {
+        return res.status(401).json({ error: 'Verification code has expired' });
+    }
+
+    if (otp.attempts >= OTP_MAX_ATTEMPTS) {
+        return res.status(429).json({ error: 'Too many verification attempts' });
+    }
+
+    const matches = hashOtp(String(code || '').trim()) === otp.code_hash;
+    await run('UPDATE login_otps SET attempts = attempts + 1 WHERE id = ?', [otp.id]);
+
+    if (!matches) {
+        return res.status(401).json({ error: 'Invalid verification code' });
+    }
+
+    await run('UPDATE login_otps SET used = 1 WHERE id = ?', [otp.id]);
+
+    const parent = await getParent(otp.parent_id);
+    const dashboard = await buildDashboard(otp.parent_id);
+    res.json({
+        requiresTwoFactor: false,
+        token: `parent-token-${otp.parent_id}`,
+        parent,
+        dashboard
+    });
+}));
+
+app.post('/api/auth/resend-otp', asyncHandler(async (req, res) => {
+    const { otpToken } = req.body || {};
+    const currentOtp = await get('SELECT * FROM login_otps WHERE id = ?', [String(otpToken || '')]);
+
+    if (!currentOtp || currentOtp.used) {
+        return res.status(401).json({ error: 'Invalid or expired verification code' });
+    }
+
+    if (new Date(currentOtp.expires_at).getTime() < Date.now()) {
+        return res.status(401).json({ error: 'Verification code has expired. Please sign in again.' });
+    }
+
+    const retryAfterSeconds = secondsUntilOtpResend(currentOtp);
+    if (retryAfterSeconds > 0) {
+        return res.status(429).json({
+            error: `Please wait ${retryAfterSeconds} seconds before requesting another code`,
+            retryAfterSeconds
+        });
+    }
+
+    const parent = await get('SELECT * FROM parents WHERE id = ?', [currentOtp.parent_id]);
+    if (!parent?.two_factor_enabled) {
+        return res.status(400).json({ error: 'Two-factor authentication is not enabled' });
+    }
+
+    try {
+        await run('UPDATE login_otps SET used = 1 WHERE id = ?', [currentOtp.id]);
+        const otp = await issueLoginOtp(parent);
+        return res.json({
+            otpToken: otp.otpToken,
+            email: otp.email,
+            expiresAt: otp.expiresAt,
+            retryAfterSeconds: otp.retryAfterSeconds
+        });
+    } catch (error) {
+        return res.status(503).json({ error: error.message });
+    }
 }));
 
 app.post('/api/auth/parent-login', asyncHandler(async (req, res) => {
@@ -924,6 +1129,81 @@ app.get('/api/parent/dashboard', asyncHandler(async (req, res) => {
     res.json(dashboard);
 }));
 
+app.get('/api/parent/security', asyncHandler(async (req, res) => {
+    const parentId = Number(req.query.parentId || 1);
+    const parent = await get('SELECT id, email, phone, two_factor_enabled FROM parents WHERE id = ?', [parentId]);
+    if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+    }
+    res.json({
+        parentId: parent.id,
+        email: parent.email,
+        phone: parent.phone,
+        twoFactorEnabled: Boolean(parent.two_factor_enabled)
+    });
+}));
+
+app.patch('/api/parent/security', asyncHandler(async (req, res) => {
+    const parentId = Number(req.body?.parentId || req.query.parentId || 1);
+    const enabled = Boolean(req.body?.twoFactorEnabled);
+    const parent = await get('SELECT id FROM parents WHERE id = ?', [parentId]);
+    if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    await run('UPDATE parents SET two_factor_enabled = ? WHERE id = ?', [enabled ? 1 : 0, parentId]);
+    const updated = await get('SELECT id, email, phone, two_factor_enabled FROM parents WHERE id = ?', [parentId]);
+    res.json({
+        parentId: updated.id,
+        email: updated.email,
+        phone: updated.phone,
+        twoFactorEnabled: Boolean(updated.two_factor_enabled)
+    });
+}));
+
+app.patch('/api/parent/profile', asyncHandler(async (req, res) => {
+    const parentId = Number(req.body?.parentId || req.query.parentId || 1);
+    const parent = await get('SELECT * FROM parents WHERE id = ?', [parentId]);
+    if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    let profileImageUrl = req.body?.profileImageUrl;
+    if (req.body?.profileImageData) {
+        try {
+            profileImageUrl = saveUploadedImage({
+                ownerType: 'parent',
+                ownerId: parentId,
+                imageData: req.body.profileImageData,
+                mimeType: req.body.profileImageMimeType
+            });
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+    }
+
+    const email = req.body?.email === undefined ? parent.email : String(req.body.email || '').trim();
+    const phone = req.body?.phone === undefined ? parent.phone : String(req.body.phone || '').trim();
+
+    await run(
+        `UPDATE parents
+         SET email = ?,
+             phone = ?,
+             profile_image_url = COALESCE(?, profile_image_url),
+             background_image_url = COALESCE(?, background_image_url)
+         WHERE id = ?`,
+        [
+            email,
+            phone,
+            profileImageUrl === undefined ? null : String(profileImageUrl || '').trim(),
+            profileImageUrl === undefined ? null : String(profileImageUrl || '').trim(),
+            parentId
+        ]
+    );
+
+    res.json(await getParent(parentId));
+}));
+
 app.get('/api/student/:id/profile', asyncHandler(async (req, res) => {
     const student = await getStudent(Number(req.params.id));
     if (!student) {
@@ -940,9 +1220,24 @@ app.patch('/api/student/:id/photos', asyncHandler(async (req, res) => {
     }
 
     const profileImageUrl = req.body?.profileImageUrl;
-    const backgroundImageUrl = req.body?.backgroundImageUrl;
-    if (profileImageUrl === undefined && backgroundImageUrl === undefined) {
-        return res.status(400).json({ error: 'Provide profileImageUrl or backgroundImageUrl.' });
+    let backgroundImageUrl = req.body?.backgroundImageUrl;
+    let uploadedProfileImageUrl;
+    if (req.body?.profileImageData) {
+        try {
+            uploadedProfileImageUrl = saveUploadedImage({
+                ownerType: 'student',
+                ownerId: studentId,
+                imageData: req.body.profileImageData,
+                mimeType: req.body.profileImageMimeType
+            });
+            backgroundImageUrl = uploadedProfileImageUrl;
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+    }
+
+    if (profileImageUrl === undefined && backgroundImageUrl === undefined && uploadedProfileImageUrl === undefined) {
+        return res.status(400).json({ error: 'Provide profileImageUrl, backgroundImageUrl, or profileImageData.' });
     }
 
     await run(
@@ -951,7 +1246,7 @@ app.patch('/api/student/:id/photos', asyncHandler(async (req, res) => {
              background_image_url = COALESCE(?, background_image_url)
          WHERE id = ?`,
         [
-            profileImageUrl === undefined ? null : String(profileImageUrl || '').trim(),
+            uploadedProfileImageUrl || (profileImageUrl === undefined ? null : String(profileImageUrl || '').trim()),
             backgroundImageUrl === undefined ? null : String(backgroundImageUrl || '').trim(),
             studentId
         ]
@@ -1085,7 +1380,8 @@ app.get('/api/notifications', asyncHandler(async (req, res) => {
         time: item.time,
         category: item.category,
         isNew: Boolean(item.is_new),
-        imageUrl: item.image_url || ''
+        imageUrl: item.image_url || '',
+        isPositive: Boolean(item.is_positive)
     })));
 }));
 
@@ -1139,7 +1435,11 @@ initDatabase()
             console.log('Available endpoints:');
             console.log('  GET /api/health');
             console.log('  POST /api/auth/login');
+            console.log('  POST /api/auth/verify-otp');
+            console.log('  POST /api/auth/resend-otp');
             console.log('  GET /api/parent/dashboard');
+            console.log('  GET/PATCH /api/parent/security');
+            console.log('  PATCH /api/parent/profile');
             console.log('  GET /api/notifications?studentId=101');
             console.log('  GET /api/calendar?studentId=101');
             console.log('  PATCH /api/student/:id/photos');

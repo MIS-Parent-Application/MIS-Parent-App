@@ -39,6 +39,8 @@ import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
+import com.mis.parentapp.utilities.images.InitialsImageFallback
+import com.mis.parentapp.utilities.images.RemoteImage
 
 @Composable
 fun MeScreen(
@@ -51,9 +53,9 @@ fun MeScreen(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val isWide = configuration.screenWidthDp >= 600
-    val headerHeight = if (isWide) (configuration.screenHeightDp.dp * 0.5f).coerceIn(300.dp, 500.dp) 
+    val headerHeight = if (isWide) (configuration.screenHeightDp.dp * 0.5f).coerceIn(300.dp, 500.dp)
                        else (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
-    
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -74,6 +76,9 @@ fun MeScreen(
                         .height(headerHeight)
                 ) {
                     // BACKGROUND IMAGE WITH ROUNDED BOTTOM
+                    val parentBackgroundUrl = userProfileViewModel.backgroundImageUrl
+                        ?: userProfileViewModel.profileImageUrl
+
                     if (userProfileViewModel.profileBitmap != null) {
                         Image(
                             bitmap = userProfileViewModel.profileBitmap!!,
@@ -89,8 +94,9 @@ fun MeScreen(
                                 )
                         )
                     } else {
-                        Image(
-                            painter = painterResource(id = userProfileViewModel.profileImageRes),
+                        RemoteImage(
+                            url = parentBackgroundUrl,
+                            fallbackRes = userProfileViewModel.profileImageRes,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
@@ -100,7 +106,21 @@ fun MeScreen(
                                         bottomStart = 32.dp,
                                         bottomEnd = 32.dp
                                     )
+                                ),
+                            fallbackContent = {
+                                InitialsImageFallback(
+                                    name = userProfileViewModel.fullName,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(
+                                            RoundedCornerShape(
+                                                bottomStart = 32.dp,
+                                                bottomEnd = 32.dp
+                                            )
+                                        ),
+                                    isLarge = true
                                 )
+                            }
                         )
                     }
 

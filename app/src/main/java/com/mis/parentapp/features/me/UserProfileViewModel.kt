@@ -3,6 +3,7 @@ package com.mis.parentapp.features.me
 import android.app.Application
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,15 +14,14 @@ import androidx.lifecycle.viewModelScope
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.network.RetrofitInstance
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.mis.parentapp.network.ParentProfileUpdateRequest
+import com.mis.parentapp.network.UpdateParentSecurityRequest
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 class UserProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val userDao = AppDatabase.getDatabase(application).userDao()
-    private val apiService = RetrofitInstance.api
+
     var fullName by mutableStateOf("Nathaniel B. McClure")
     var email by mutableStateOf("nathaniel.mcclure@example.com")
     var phoneNumber by mutableStateOf("+63 912 345 6789")
@@ -29,89 +29,32 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     
     var profileImageRes by mutableStateOf(R.drawable.parent_pic)
     var profileBitmap by mutableStateOf<ImageBitmap?>(null)
+    var profileImageUrl by mutableStateOf<String?>(null)
+    var backgroundImageUrl by mutableStateOf<String?>(null)
     var currentUsername: String? = null
 
     // Data Safety states
     var twoFactorEnabled by mutableStateOf(false)
     var loginAlertsEnabled by mutableStateOf(false)
 
-    private val _twoFAState = MutableStateFlow<TwoFAState>(TwoFAState.Idle)
-    val twoFAState: StateFlow<TwoFAState> = _twoFAState
-
-    sealed class TwoFAState {
-        object Idle : TwoFAState()
-        object SendingCode : TwoFAState()
-        object CodeSent : TwoFAState()
-        object Verifying : TwoFAState()
-        object Success : TwoFAState()
-        data class Error(val message: String) : TwoFAState()
-    }
-
-    fun sendTwoFACode(userId: String, email: String) {
-        viewModelScope.launch {
-            _twoFAState.value = TwoFAState.SendingCode
-            try {
-                val response = apiService.send2FACode(mapOf("userId" to userId, "email" to email))
-                if (response.isSuccessful) {
-                    _twoFAState.value = TwoFAState.CodeSent
-                } else {
-                    _twoFAState.value = TwoFAState.Error("Failed to send code")
-                }
-            } catch (e: Exception) {
-                _twoFAState.value = TwoFAState.Error(e.message ?: "Unknown error")
-            }
-        }
-    }
-
-    fun verifyAndToggleTwoFA(userId: String, code: String, enable: Boolean) {
-        viewModelScope.launch {
-            _twoFAState.value = TwoFAState.Verifying
-            try {
-                val verifyResponse = apiService.verify2FACode(
-                    mapOf(
-                        "userId" to userId,
-                        "code" to code
-                    )
-                )
-                if (verifyResponse.isSuccessful) {
-                    // Code verified, now toggle 2FA
-                    val toggleResponse = apiService.toggle2FA(
-                        mapOf(
-                            "userId" to userId,
-                            "enable" to enable
-                        )
-                    )
-                    if (toggleResponse.isSuccessful) {
-                        // Update UI switch state
-                        twoFactorEnabled = enable
-                        _twoFAState.value = TwoFAState.Success
-                    } else {
-                        _twoFAState.value =
-                            TwoFAState.Error("Failed to update 2FA")
-                    }
-
-                } else {
-                    _twoFAState.value =
-                        TwoFAState.Error("Invalid or expired code")
-                }
-            } catch (e: Exception) {
-                _twoFAState.value =
-                    TwoFAState.Error(e.message ?: "Unknown error")
-            }
-        }
-    }
-
-    fun reset2FAState() {
-        _twoFAState.value = TwoFAState.Idle
-    }
-//
-
     init {
         loadProfileData()
     }
 
     fun toggleTwoFactor(enabled: Boolean) {
+        val previous = twoFactorEnabled
         twoFactorEnabled = enabled
+        viewModelScope.launch {
+            runCatching {
+                RetrofitInstance.api.updateParentSecurity(
+                    UpdateParentSecurityRequest(twoFactorEnabled = enabled)
+                )
+            }.onSuccess {
+                twoFactorEnabled = it.twoFactorEnabled
+            }.onFailure {
+                twoFactorEnabled = previous
+            }
+        }
     }
 
     fun toggleLoginAlerts(enabled: Boolean) {
@@ -144,11 +87,14 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                 // 2. Load from API to update
                 val dashboard = RetrofitInstance.api.getDashboard()
                 // Update fields if they are null in DB or keep API as source of truth for name
-                if (dbUser?.fullName == null) fullName = dashboard.parent.name
-                if (dbUser?.email == null) email = dashboard.parent.email
-                if (dbUser?.phoneNumber == null) phoneNumber = dashboard.parent.phone
+                fullName = dashboard.parent.name
+                email = dashboard.parent.email
+                phoneNumber = dashboard.parent.phone
+                profileImageUrl = dashboard.parent.profileImageUrl
+                backgroundImageUrl = dashboard.parent.backgroundImageUrl ?: dashboard.parent.profileImageUrl
                 
                 isPrimaryGuardian = dashboard.parent.children.isNotEmpty()
+                loadSecuritySettings()
                 
                 // Save basic info to DB if not present
                 if (dbUser == null) {
@@ -170,6 +116,16 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    private suspend fun loadSecuritySettings() {
+        runCatching {
+            RetrofitInstance.api.getParentSecurity()
+        }.onSuccess {
+            twoFactorEnabled = it.twoFactorEnabled
+            email = it.email
+            phoneNumber = it.phone
+        }
+    }
+
     fun updateProfile(newName: String, newEmail: String, newPhone: String) {
         fullName = newName
         email = newEmail
@@ -179,18 +135,47 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
             currentUsername?.let {
                 userDao.updateProfile(it, newName, newEmail, newPhone)
             }
+            runCatching {
+                RetrofitInstance.api.updateParentProfile(
+                    ParentProfileUpdateRequest(
+                        email = newEmail,
+                        phone = newPhone
+                    )
+                )
+            }.onSuccess {
+                fullName = it.name
+                email = it.email
+                phoneNumber = it.phone
+                profileImageUrl = it.profileImageUrl
+                backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
+            }
         }
     }
     
     fun updateProfileImage(inputStream: InputStream?, uri: Uri?) {
         viewModelScope.launch {
             try {
-                val bytes = inputStream?.readBytes()
-                val bitmap = if (bytes != null) BitmapFactory.decodeByteArray(bytes, 0, bytes.size) else null
+                val bytes = inputStream?.use { it.readBytes() } ?: return@launch
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 profileBitmap = bitmap?.asImageBitmap()
                 
                 currentUsername?.let {
                     userDao.updateProfileImage(it, uri?.toString(), bytes)
+                }
+                val mimeType = uri?.let { getApplication<Application>().contentResolver.getType(it) } ?: "image/jpeg"
+                val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                runCatching {
+                    RetrofitInstance.api.updateParentProfile(
+                        ParentProfileUpdateRequest(
+                            email = email,
+                            phone = phoneNumber,
+                            profileImageData = base64,
+                            profileImageMimeType = mimeType
+                        )
+                    )
+                }.onSuccess {
+                    profileImageUrl = it.profileImageUrl
+                    backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
                 }
             } catch (e: Exception) {
             }

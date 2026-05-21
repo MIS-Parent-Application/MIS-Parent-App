@@ -43,6 +43,13 @@ import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import com.mis.parentapp.ui.theme.ParentAppTheme
 import java.io.IOException
 
+private val StudyLoadPaper = Color(0xFFFFFFFF)
+private val StudyLoadInk = Color(0xFF111111)
+private val StudyLoadMutedInk = Color(0xFF4F5A4E)
+private val StudyLoadGreen = Color(0xFF1F6F24)
+private val StudyLoadLightGreen = Color(0xFFEFF8E5)
+private val StudyLoadLine = Color(0xFF6B7468)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudyLoadScreen(
@@ -136,8 +143,8 @@ private fun OfficialStudyLoadDocument(
             modifier = Modifier
                 .width(720.dp)
                 .wrapContentHeight()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
-                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                .background(StudyLoadPaper, RoundedCornerShape(8.dp))
+                .border(1.dp, StudyLoadLine.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
                 .padding(22.dp)
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -181,20 +188,20 @@ private fun StudyLoadHeader(semester: String, schoolYear: String) {
         ) {
             Text(
                 text = "COLEGIO DE ALICIA",
-                color = MaterialTheme.colorScheme.primary,
+                color = StudyLoadGreen,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "Alicia, Bohol",
-                color = MaterialTheme.colorScheme.outline,
+                color = StudyLoadMutedInk,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = "OFFICIAL STUDY LOAD",
-                color = MaterialTheme.colorScheme.onSurface,
+                color = StudyLoadInk,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 10.dp)
@@ -203,11 +210,11 @@ private fun StudyLoadHeader(semester: String, schoolYear: String) {
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "$semester $schoolYear",
-                color = MaterialTheme.colorScheme.primary,
+                color = StudyLoadGreen,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
-            Text(text = "View only", color = MaterialTheme.colorScheme.outline, fontSize = 10.sp)
+            Text(text = "View only", color = StudyLoadMutedInk, fontSize = 10.sp)
         }
     }
 }
@@ -217,7 +224,7 @@ private fun StudentInfoBlock(student: Child) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(6.dp))
+            .background(StudyLoadLightGreen, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -231,10 +238,10 @@ private fun StudentInfoBlock(student: Child) {
 @Composable
 private fun StudyLoadInfo(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        Text(text = label, color = MaterialTheme.colorScheme.outline, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+        Text(text = label, color = StudyLoadMutedInk, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         Text(
             text = value,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = StudyLoadInk,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 2,
@@ -272,13 +279,13 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, MaterialTheme.colorScheme.outline)
-            .background(if (isHeader) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+            .border(0.5.dp, StudyLoadLine)
+            .background(if (isHeader) StudyLoadGreen else StudyLoadPaper)
     ) {
         values.forEachIndexed { index, value ->
             Text(
                 text = value,
-                color = if (isHeader) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                color = if (isHeader) Color.White else StudyLoadInk,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
                 fontSize = if (isHeader) 9.sp else 10.sp,
@@ -288,7 +295,7 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
                 modifier = Modifier
                     .width(widths[index])
                     .heightIn(min = 30.dp)
-                    .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    .border(0.5.dp, StudyLoadLine.copy(alpha = 0.55f))
                     .padding(horizontal = 6.dp, vertical = 8.dp)
             )
         }
@@ -299,20 +306,25 @@ private fun StudyLoadTableRow(values: List<String>, isHeader: Boolean = false) {
 private fun StudyLoadFooter(subjects: List<StudyLoadSubject>, dateEnrolled: String) {
     val totalUnits = subjects.sumOf { it.units }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.primary, thickness = 1.dp)
+        HorizontalDivider(color = StudyLoadGreen, thickness = 1.dp)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("DATE ENROLLED: $dateEnrolled", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-            Text("TOTAL: $totalUnits", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("DATE ENROLLED: $dateEnrolled", color = StudyLoadInk, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("TOTAL: $totalUnits", color = StudyLoadInk, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
-        Text("LEGEND: (W) = Withdrawn     ** = Dissolved Subject", fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+        Text(
+            "LEGEND: (W) = Withdrawn     ** = Dissolved Subject",
+            color = StudyLoadInk,
+            fontSize = 10.sp,
+            fontFamily = FontFamily.Monospace
+        )
         Text(
             text = "This official study load is generated from Colegio De Alicia parent portal records.",
             fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            color = StudyLoadMutedInk
         )
         Text(
             text = "Generated copy is for parent/student viewing and verification purposes.",
-            color = MaterialTheme.colorScheme.primary,
+            color = StudyLoadGreen,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp
         )

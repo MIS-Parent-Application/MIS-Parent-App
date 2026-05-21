@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.R
 import com.mis.parentapp.features.me.UserProfileViewModel
+import com.mis.parentapp.utilities.images.InitialsImageFallback
+import com.mis.parentapp.utilities.images.RemoteImage
 
 @Composable
 fun EditProfileScreen(
@@ -70,14 +72,24 @@ fun EditProfileScreen(
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Image(
-                    painter = painterResource(id = userProfileViewModel.profileImageRes),
+                RemoteImage(
+                    url = userProfileViewModel.profileImageUrl,
+                    fallbackRes = userProfileViewModel.profileImageRes,
                     contentDescription = null,
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
                         .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    fallbackContent = {
+                        InitialsImageFallback(
+                            name = userProfileViewModel.fullName,
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        )
+                    }
                 )
             }
             Surface(

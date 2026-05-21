@@ -47,6 +47,7 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
+import com.mis.parentapp.utilities.images.InitialsImageFallback
 import com.mis.parentapp.utilities.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -103,13 +104,23 @@ fun StudentScreen(
                         .height(headerHeight)
                 ) {
                     RemoteImage(
-                        url = selectedStudent?.backgroundImageUrl,
+                        url = selectedStudent?.profileImageUrl?.takeIf { it.isNotBlank() }
+                            ?: selectedStudent?.backgroundImageUrl,
                         fallbackRes = R.drawable.bgpic,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
+                        fallbackContent = {
+                            InitialsImageFallback(
+                                name = selectedStudent?.name,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
+                                isLarge = true
+                            )
+                        }
                     )
                     Box(
                         modifier = Modifier
@@ -157,7 +168,21 @@ fun StudentScreen(
                                             shape = CircleShape
                                         )
                                         .clickable { studentVM.selectStudent(student) },
-                                    contentScale = ContentScale.Crop
+                                    contentScale = ContentScale.Crop,
+                                    fallbackContent = {
+                                        InitialsImageFallback(
+                                            name = student.name,
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .clip(CircleShape)
+                                                .border(
+                                                    width = 2.dp,
+                                                    color = if (student.id == selectedStudent?.id) Color(0xFF8BE28B) else Color.White,
+                                                    shape = CircleShape
+                                                )
+                                                .clickable { studentVM.selectStudent(student) }
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -403,7 +428,11 @@ private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentSch
     var nextStatus = "Up next"
     var nextDate = todayDateStr
 
-    if (nextSchedule == null && schedules.isNotEmpty()) {
+    if (nextSchedule != null) {
+        if (minutesFromTime(nextSchedule.startTime) - nowMinutes >= 720) {
+            nextStatus = "Upcoming"
+        }
+    } else if (schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<ClassSchedule> { dayOrder(it.day) }.thenBy { minutesFromTime(it.startTime) })
 
@@ -419,6 +448,11 @@ private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentSch
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)
+
+            val totalGap = (daysToAdd * 24 * 60) + minutesFromTime(nextSchedule.startTime) - nowMinutes
+            if (totalGap < 720) {
+                nextStatus = "Up next"
+            }
         }
     }
 
