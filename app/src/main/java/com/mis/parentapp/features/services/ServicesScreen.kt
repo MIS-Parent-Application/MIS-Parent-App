@@ -45,6 +45,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
+import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.CreatePaymentRequest
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.features.services.sections.SearchBarSection
@@ -302,78 +303,64 @@ fun Body(
     studentVM: StudentSharedViewModel,
     onPayClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onMenuClick: () -> Unit, // Parameter integrated
+    onMenuClick: () -> Unit,
     onQrClick: () -> Unit,
     paymentHistory: List<PaymentRecord>
 ) {
+
+    // GET STUDENTS FROM VIEWMODEL
+    val students = studentVM.students
+
+    // DYNAMIC SELECTED STUDENT
+    val selectedStudent = studentVM.selectedStudent
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // TOP BAR
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.coldea_logo_jk1jkwfg_1),
-                contentDescription = "Logo",
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape)
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.formkit_date),
-                    contentDescription = "Date",
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { }
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.ph_bell),
-                    contentDescription = "Notifications",
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { }
-                )
 
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Menu",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clickable { onMenuClick() } // Callback executed here
-                )
-            }
-        }
-
-        // CONTENT
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.Start,
             modifier = Modifier.fillMaxSize()
         ) {
+
             item {
+
                 Spacer(modifier = Modifier.height(4.dp))
 
                 SearchBarSection(
-                    selectedStudent = studentVM.selectedStudent,
-                    onProfileClick = onProfileClick,
-                    onQrClick = onQrClick,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    selectedStudent = selectedStudent,
+                    onProfileClick = {
+
+                        if (students.isNotEmpty()) {
+
+                            val currentIndex =
+                                students.indexOf(selectedStudent)
+
+                            val nextIndex =
+                                if (currentIndex == students.lastIndex) {
+                                    0
+                                } else {
+                                    currentIndex + 1
+                                }
+
+                            val nextStudent = students[nextIndex]
+                            studentVM.selectStudent(nextStudent)
+                        }
+
+                        onProfileClick()
+                    },
+
+                    onQrClick = {
+                        onQrClick()
+                    }
                 )
             }
 
             item {
+
                 Image(
                     painter = painterResource(id = R.drawable.program),
                     contentDescription = null,
@@ -386,12 +373,14 @@ fun Body(
             }
 
             item {
+
                 ContributionDuesSection(
                     onPayClick = onPayClick
                 )
             }
 
             item {
+
                 PaymentHistorySection(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     paymentHistory = paymentHistory

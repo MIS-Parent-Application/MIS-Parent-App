@@ -91,6 +91,7 @@ data class Child(
     val gpa: Double,
     val pendingPayments: Int,
     val notificationCount: Int = 0,
+    val performancePercentage: Int = 0,
     val profileImageUrl: String? = null,
     val backgroundImageUrl: String? = null,
     val schedules: List<ClassSchedule> = emptyList(),

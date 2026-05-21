@@ -18,13 +18,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.network.ChatMessageDto
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun MessageScreen(
     contactId: String,
     senderName: String,
     onBack: () -> Unit,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = viewModel(),
+    onFeedbackSent: (() -> Unit)? = null
 ) {
     val listState = rememberLazyListState()
     val messages = viewModel.messages
@@ -41,6 +43,15 @@ fun MessageScreen(
     // Initialize Chat
     LaunchedEffect(contactId) {
         viewModel.initChat(contactId)
+        val pending = SharedFeedback.message
+        if (!pending.isNullOrBlank()) {
+            // Small delay to ensure initialization/socket is ready
+            kotlinx.coroutines.delay(500)
+            viewModel.sendFeedbackMessage(contactId, pending)
+            SharedFeedback.message = null
+            // Navigate back immediately after sending
+            onFeedbackSent?.invoke() ?: onBack()
+        }
     }
 
     Column(

@@ -12,10 +12,10 @@ import androidx.room.RoomDatabase
         CourseGrade::class,
         AttendanceRecord::class,
         EventItem::class,
-        StudentEntity::class,          // Added
-        SubjectScheduleEntity::class   // Added
+        StudentEntity::class,
+        SubjectScheduleEntity::class
     ],
-    version = 10, // Incremented
+    version = 11, // Incremented version to fix integrity/schema mismatch
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

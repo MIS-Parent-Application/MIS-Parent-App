@@ -30,3 +30,4 @@ object FacultyChatRetrofit {
             .create(FacultyChatApiService::class.java)
     }
 }
+

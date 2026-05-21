@@ -24,6 +24,8 @@ constraintlayout = "2.2.1"
 itextg = "5.5.10"
 foundation = "1.11.1"
 ui = "1.11.1"
+foundationVersion = "1.11.2"
+uiText = "1.11.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,6 +62,8 @@ socket-io-client = { group = "io.socket", name = "socket.io-client", version = "
 itextg = { module = "com.itextpdf:itextg", version.ref = "itextg" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-compose-material3-windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
+androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

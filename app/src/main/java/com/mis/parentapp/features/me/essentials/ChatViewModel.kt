@@ -139,6 +139,24 @@ class ChatViewModel : ViewModel() {
         errorMessage = null
     }
 
+    fun sendFeedbackMessage(contactId: String, message: String) {
+        if (message.isBlank()) return
+        val pId = parentChatId
+        val payload = JSONObject().apply {
+            put("receiver_id", contactId)
+            put("message", message)
+        }
+        socket?.emit("send_message", payload)
+        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+        messages = messages + ChatMessageDto(
+            sender_id = pId,
+            receiver_id = contactId,
+            message = message,
+            created_at = timestamp
+        )
+        errorMessage = null
+    }
+
     override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()

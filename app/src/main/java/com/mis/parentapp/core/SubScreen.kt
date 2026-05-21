@@ -64,6 +64,7 @@ import com.mis.parentapp.features.me.essentials.FeedbacksScreen
 import com.mis.parentapp.features.me.essentials.MeetingScreen
 import com.mis.parentapp.features.me.essentials.MessageScreen
 import com.mis.parentapp.features.me.essentials.MessagesScreen
+import com.mis.parentapp.features.me.essentials.SharedFeedback
 import com.mis.parentapp.features.me.settings.DataSafetyScreen
 import com.mis.parentapp.features.me.settings.EditProfileScreen
 import com.mis.parentapp.features.me.settings.PreferenceScreen
@@ -425,7 +426,11 @@ fun SubScreen(
                     AnnouncementsScreen()
                 }
                 composable<Feedbacks> {
-                    FeedbacksScreen()
+                    FeedbacksScreen(
+                        onOpenTeacherMessages = {
+                            navController.navigate(Messages)
+                        }
+                    )
                 }
                 composable<Meeting> {
                     MeetingScreen()
@@ -437,7 +442,11 @@ fun SubScreen(
                             if (onNavigate != null) {
                                 onNavigate(route)
                             } else {
-                                navController.navigate(route)
+                                navController.navigate(route) {
+                                    if (SharedFeedback.message != null) {
+                                        popUpTo(Feedbacks) { inclusive = false }
+                                    }
+                                }
                             }
                         }
                     )
@@ -455,7 +464,11 @@ fun SubScreen(
                                 onBack()
                             }
                         },
-                        viewModel = vm
+                        viewModel = vm,
+                        onFeedbackSent = {
+                            // Pop all the way back to the FeedbacksScreen instantly
+                            navController.popBackStack(Feedbacks, inclusive = false)
+                        }
                     )
                 }
                 composable<DataSafety> {

@@ -428,7 +428,11 @@ private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentSch
     var nextStatus = "Up next"
     var nextDate = todayDateStr
 
-    if (nextSchedule == null && schedules.isNotEmpty()) {
+    if (nextSchedule != null) {
+        if (minutesFromTime(nextSchedule.startTime) - nowMinutes >= 720) {
+            nextStatus = "Upcoming"
+        }
+    } else if (schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<ClassSchedule> { dayOrder(it.day) }.thenBy { minutesFromTime(it.startTime) })
 
@@ -444,6 +448,11 @@ private fun resolveSchedulePair(schedules: List<ClassSchedule>): Pair<StudentSch
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)
+
+            val totalGap = (daysToAdd * 24 * 60) + minutesFromTime(nextSchedule.startTime) - nowMinutes
+            if (totalGap < 720) {
+                nextStatus = "Up next"
+            }
         }
     }
 

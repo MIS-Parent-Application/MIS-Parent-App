@@ -60,6 +60,7 @@ import com.mis.parentapp.data.EventRepository
 import com.mis.parentapp.data.StudentEntity
 import com.mis.parentapp.data.SubjectScheduleEntity
 import com.mis.parentapp.features.home.menu.EventCard
+import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.navigation.RecentActivities
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.network.Child
@@ -78,6 +79,7 @@ import java.util.Locale
 fun HomeScreen(
     modifier: Modifier = Modifier,
     studentVM: StudentSharedViewModel? = null,
+    userProfileViewModel: UserProfileViewModel = viewModel(),
     mainNavController: NavHostController? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -104,6 +106,7 @@ fun HomeScreen(
     Body(
         modifier = modifier,
         studentVM = studentVM,
+        userProfileViewModel = userProfileViewModel,
         onUpcomingSeeAll = { mainNavController?.navigate(UpcomingEvents()) },
         onRecentSeeAll = { mainNavController?.navigate(RecentActivities()) },
         onUpcomingEventClick = { clickedEvent ->
@@ -119,6 +122,7 @@ fun HomeScreen(
 fun Body(
     modifier: Modifier = Modifier,
     studentVM: StudentSharedViewModel? = null,
+    userProfileViewModel: UserProfileViewModel = viewModel(),
     onUpcomingSeeAll: () -> Unit,
     onRecentSeeAll: () -> Unit,
     onUpcomingEventClick: (EventItem) -> Unit,
@@ -130,16 +134,12 @@ fun Body(
     val upcomingEvents by eventViewModel.upcomingEvents.collectAsState()
     val recentEvents by eventViewModel.recentEvents.collectAsState()
     var dashboardError by remember { mutableStateOf<String?>(null) }
-    var parentName by remember { mutableStateOf("Parent") }
-    var parentProfileImageUrl by remember { mutableStateOf<String?>(null) }
     val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
         try {
             val dashboard = RetrofitInstance.api.getDashboard()
             studentVM?.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
-            parentName = dashboard.parent.name
-            parentProfileImageUrl = dashboard.parent.profileImageUrl
             dashboardError = null
         } catch (e: Exception) {
             dashboardError = "Unable to load server student data."
@@ -194,25 +194,37 @@ fun Body(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            RemoteImage(
-                                url = parentProfileImageUrl,
-                                fallbackRes = R.drawable.parent_pic,
-                                contentDescription = "Parent Profile",
-                                modifier = Modifier
-                                    .requiredSize(50.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentScale = ContentScale.Crop,
-                                fallbackContent = {
-                                    InitialsImageFallback(
-                                        name = parentName,
-                                        modifier = Modifier
-                                            .requiredSize(50.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    )
-                                }
-                            )
+                            if (userProfileViewModel.profileBitmap != null) {
+                                Image(
+                                    bitmap = userProfileViewModel.profileBitmap!!,
+                                    contentDescription = "Parent Profile",
+                                    modifier = Modifier
+                                        .requiredSize(50.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                RemoteImage(
+                                    url = userProfileViewModel.profileImageUrl,
+                                    fallbackRes = R.drawable.parent_pic,
+                                    contentDescription = "Parent Profile",
+                                    modifier = Modifier
+                                        .requiredSize(50.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentScale = ContentScale.Crop,
+                                    fallbackContent = {
+                                        InitialsImageFallback(
+                                            name = userProfileViewModel.fullName,
+                                            modifier = Modifier
+                                                .requiredSize(50.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        )
+                                    }
+                                )
+                            }
 
                             Text(
                                 text = "Me",
@@ -265,11 +277,10 @@ fun Body(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             selectedStudent?.student?.let { child ->
-                                val formattedPending = String.format(Locale.US, "₱ %,.2f", child.pendingPayment)
                                 QuickStatsSection(
                                     attendance = "${(child.attendanceScore * 100).toInt()}%",
                                     gpa = child.gpa.toString(),
-                                    pending = formattedPending,
+                                    performance = "${child.performanceScore}%",
                                     notifications = child.notificationCount.toString()
                                 )
                             }
@@ -294,11 +305,10 @@ fun Body(
 
                     // QUICK STATS
                     selectedStudent?.student?.let { child ->
-                        val formattedPending = String.format(Locale.US, "₱ %,.2f", child.pendingPayment)
                         QuickStatsSection(
                             attendance = "${(child.attendanceScore * 100).toInt()}%",
                             gpa = child.gpa.toString(),
-                            pending = formattedPending,
+                            performance = "${child.performanceScore}%",
                             notifications = child.notificationCount.toString()
                         )
                     }
@@ -360,6 +370,7 @@ private fun Child.toHomeStudent(): HomeStudent {
             attendanceScore = attendanceValue / 100.0,
             gpa = gpa,
             pendingPayment = pendingPayments.toDouble(),
+            performanceScore = performancePercentage,
             notificationCount = notificationCount,
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
@@ -690,7 +701,11 @@ private fun resolveHomeSchedulePair(
     var nextStatus = "Up Next"
     var nextDate = todayDateStr
 
-    if (nextSchedule == null && schedules.isNotEmpty()) {
+    if (nextSchedule != null) {
+        if (startMinutesFromRange(nextSchedule.time) - nowMinutes >= 720) {
+            nextStatus = "Upcoming"
+        }
+    } else if (schedules.isNotEmpty()) {
         val todayIdx = dayOrder(todayName)
         val sortedAll = schedules.sortedWith(compareBy<SubjectScheduleEntity> { dayOrder(it.day) }.thenBy { startMinutesFromRange(it.time) })
 
@@ -706,6 +721,11 @@ private fun resolveHomeSchedulePair(
             val nextCal = Calendar.getInstance()
             nextCal.add(Calendar.DAY_OF_YEAR, daysToAdd)
             nextDate = dateFormatter.format(nextCal.time)
+
+            val totalGap = (daysToAdd * 24 * 60) + startMinutesFromRange(nextSchedule.time) - nowMinutes
+            if (totalGap < 720) {
+                nextStatus = "Up Next"
+            }
         }
     }
 
@@ -848,7 +868,7 @@ fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
 }
 
 @Composable
-fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifications: String) {
+fun QuickStatsSection(attendance: String, gpa: String, performance: String, notifications: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -874,7 +894,7 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
+            StatCard("Performance", performance, R.drawable.baseline_trending_up_24, Modifier.weight(1f))
             StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
         }
     }

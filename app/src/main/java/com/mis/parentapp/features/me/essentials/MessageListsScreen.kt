@@ -75,6 +75,14 @@ fun MessagesScreen(onMessageClick: (MessageData) -> Unit) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        if (SharedFeedback.message != null) {
+            Text(
+                text = "Select a teacher to send your feedback.",
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
         if (errorMessage != null) {
             Text(
                 text = errorMessage!!,
