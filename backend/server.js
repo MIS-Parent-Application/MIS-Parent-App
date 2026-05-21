@@ -14,7 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'mis_parent_app.db');
 const UPLOAD_DIR = path.join(__dirname, 'data', 'uploads');
-const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 10);
+const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 15);
 const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
 const OTP_SECRET = process.env.OTP_SECRET || 'mis-parent-app-dev-otp-secret';
