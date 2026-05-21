@@ -76,7 +76,7 @@
 
 Use this APK for phone testing and presentation:
 
-[Download MIS Parent App APK](https://raw.githubusercontent.com/MIS-Parent-Application/MIS-Parent-App/LLOVERAS_students/apk/MIS-Parent-App-debug.apk)
+[Download MIS Parent App APK](https://raw.githubusercontent.com/MIS-Parent-Application/MIS-Parent-App/master/apk/MIS-Parent-App-debug.apk)
 
 The APK is connected to the deployed backend:
 
