@@ -1,12 +1,9 @@
 package com.mis.parentapp.features.me.essentials
 
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,7 +28,6 @@ fun FeedbacksScreen(
 
     var feedbackText by remember { mutableStateOf("") }
     var rating by remember { mutableIntStateOf(0) }
-    var selectedOption by remember { mutableStateOf("Teacher") }
 
     Column(
         modifier = Modifier
@@ -56,7 +52,6 @@ fun FeedbacksScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Feedback Input
         OutlinedTextField(
             value = feedbackText,
             onValueChange = { feedbackText = it },
@@ -69,91 +64,29 @@ fun FeedbacksScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Send To Options
         Text(
-            text = "Send Feedback To",
+            text = "Send Feedback To: Teacher",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Rate our service",
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .selectable(
-                        selected = selectedOption == "Teacher",
-                        onClick = { selectedOption = "Teacher" }
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                RadioButton(
-                    selected = selectedOption == "Teacher",
-                    onClick = { selectedOption = "Teacher" }
-                )
-
-                Text(text = "Teacher")
-            }
-
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .selectable(
-                        selected = selectedOption == "Gmail",
-                        onClick = { selectedOption = "Gmail" }
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                RadioButton(
-                    selected = selectedOption == "Gmail",
-                    onClick = { selectedOption = "Gmail" }
-                )
-
-                Text(text = "Gmail")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Rating Section
-        Text(
-            text = "Rate our service",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
+        Row(verticalAlignment = Alignment.CenterVertically) {
             for (i in 1..5) {
-
-                IconButton(
-                    onClick = {
-                        rating = i
-                    }
-                ) {
-
+                IconButton(onClick = { rating = i }) {
                     Icon(
-                        imageVector = if (i <= rating)
-                            Icons.Filled.Star
-                        else
-                            Icons.Outlined.StarBorder,
+                        imageVector = if (i <= rating) Icons.Filled.Star else Icons.Outlined.StarBorder,
                         contentDescription = "Star Rating",
-                        tint = if (i <= rating)
-                            Color(0xFFFFC107)
-                        else
-                            Color.Gray,
+                        tint = if (i <= rating) Color(0xFFFFC107) else Color.Gray,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -162,77 +95,32 @@ fun FeedbacksScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Submit Button
         Button(
             onClick = {
 
                 if (feedbackText.isBlank()) {
-
                     Toast.makeText(
                         context,
                         "Please enter feedback first.",
                         Toast.LENGTH_SHORT
                     ).show()
-
                     return@Button
                 }
 
-                // If Teacher is selected
-                if (selectedOption == "Teacher") {
+                val feedbackMessage = """
+                    Feedback:
+                    
+                    $feedbackText
+                    
+                    Rating: $rating/5
+                """.trimIndent()
 
-                    val feedbackMessage = """
-                        Feedback:
-                        
-                        $feedbackText
-                        
-                        Rating: $rating/5
-                    """.trimIndent()
+                SharedFeedback.message = feedbackMessage
+                onOpenTeacherMessages(feedbackMessage)
 
-                    // Save feedback temporarily
-                    SharedFeedback.message = feedbackMessage
+                feedbackText = ""
+                rating = 0
 
-                    // Open teacher messages
-                    onOpenTeacherMessages(feedbackMessage)
-
-                } else {
-
-                    // Gmail Send
-                    val recipientEmail = "yourgmail@gmail.com"
-
-                    val subject = "Parent App Feedback"
-
-                    val message = """
-                        Feedback:
-                        
-                        $feedbackText
-                        
-                        Rating: $rating/5
-                    """.trimIndent()
-
-                    val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:$recipientEmail")
-                        putExtra(Intent.EXTRA_SUBJECT, subject)
-                        putExtra(Intent.EXTRA_TEXT, message)
-                    }
-
-                    try {
-
-                        context.startActivity(
-                            Intent.createChooser(intent, "Send Feedback")
-                        )
-
-                        feedbackText = ""
-                        rating = 0
-
-                    } catch (e: Exception) {
-
-                        Toast.makeText(
-                            context,
-                            "No email app found.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -242,7 +130,6 @@ fun FeedbacksScreen(
                 containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
-
             Text(
                 text = "Submit Feedback",
                 fontSize = 16.sp,
