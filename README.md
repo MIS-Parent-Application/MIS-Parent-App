@@ -76,7 +76,7 @@
 
 Use this APK for phone testing and presentation:
 
-[Download MIS Parent App APK](./apk/MIS-Parent-App-debug.apk)
+[Download MIS Parent App APK](https://raw.githubusercontent.com/MIS-Parent-Application/MIS-Parent-App/LLOVERAS_students/apk/MIS-Parent-App-debug.apk)
 
 The APK is connected to the deployed backend:
 
@@ -98,6 +98,8 @@ The APK is connected to the deployed backend:
 12. Enter the newest code in the OTP screen. Do not reuse an old or expired code.
 
 If the phone says the app is blocked by Play Protect, choose **Install anyway** only for this school testing APK. This is expected because the APK is a debug build and is not from the Play Store.
+
+If GitHub opens a black **Unable to view file** screen instead of downloading, tap **Open in browser** first, then download from the browser. The APK cannot be previewed by GitHub; it must be downloaded.
 
 ### Test Login
 
