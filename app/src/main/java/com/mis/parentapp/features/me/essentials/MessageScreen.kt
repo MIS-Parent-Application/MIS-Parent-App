@@ -25,7 +25,8 @@ fun MessageScreen(
     contactId: String,
     senderName: String,
     onBack: () -> Unit,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = viewModel(),
+    onFeedbackSent: (() -> Unit)? = null
 ) {
     val listState = rememberLazyListState()
     val messages = viewModel.messages
@@ -44,9 +45,12 @@ fun MessageScreen(
         viewModel.initChat(contactId)
         val pending = SharedFeedback.message
         if (!pending.isNullOrBlank()) {
-            kotlinx.coroutines.delay(800)
+            // Small delay to ensure initialization/socket is ready
+            kotlinx.coroutines.delay(500)
             viewModel.sendFeedbackMessage(contactId, pending)
             SharedFeedback.message = null
+            // Navigate back immediately after sending
+            onFeedbackSent?.invoke() ?: onBack()
         }
     }
 
