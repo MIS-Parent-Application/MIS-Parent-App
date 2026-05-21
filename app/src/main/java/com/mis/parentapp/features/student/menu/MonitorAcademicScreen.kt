@@ -611,13 +611,21 @@ fun GradientGradeCard(grade: AcademicGradeItem) {
                         )
                     }
 
+                    val isPassed = grade.grade <= 3.0
                     Box(
                         modifier = Modifier
-                            .background(Color(0xFF4CAF50), RoundedCornerShape(12.dp))
+                            .background(if (isPassed) Color(0xFF4CAF50) else Color(0xFFD32F2F), RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("100%\npassed", style = AppTypes.type_M3_label_small.copy(fontSize = 9.sp), color = Color.White, fontWeight = FontWeight.Bold, lineHeight = 11.sp, textAlign = TextAlign.Center)
+                        Text(
+                            text = if (isPassed) "PASSED" else "FAILED",
+                            style = AppTypes.type_M3_label_small.copy(fontSize = 9.sp),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 11.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
 

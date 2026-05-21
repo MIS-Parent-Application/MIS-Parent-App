@@ -142,11 +142,13 @@ async function initDatabase() {
             time TEXT NOT NULL,
             category TEXT NOT NULL,
             is_new INTEGER NOT NULL DEFAULT 0,
-            image_url TEXT NOT NULL DEFAULT ''
+            image_url TEXT NOT NULL DEFAULT '',
+            is_positive INTEGER NOT NULL DEFAULT 1
         )
     `);
     await ensureColumn('notifications', 'image_url', "TEXT NOT NULL DEFAULT ''");
-    
+    await ensureColumn('notifications', 'is_positive', "INTEGER NOT NULL DEFAULT 1");
+
     // FIX: Added image_url TEXT column to handle the mock image asset strings
     await run(`
         CREATE TABLE IF NOT EXISTS calendar_events (
@@ -315,15 +317,15 @@ async function seedDatabase() {
     }
 
     const notifications = [
-        [1, 101, 'Nathaniel has a Mobile Development laboratory activity due today.', 'Reminder', '1hr ago', 'academic', 1, 'event1.jpg'],
-        [2, 101, 'Database Systems quiz score has been posted.', 'Activity', '4hrs ago', 'academic', 1, 'event2.jpg'],
-        [3, 102, "Sofia's PE uniform fee is still pending.", 'Reminder', 'Yesterday', 'financial', 1, 'event3.jpg'],
-        [4, null, 'College assembly will be held on May 24 at the auditorium.', 'Event', 'Yesterday', 'college', 0, 'event1.jpg'],
-        [5, null, 'Emergency drill schedule has been moved to next week.', 'Emergency', '2 days ago', 'school-wide', 0, 'event2.jpg']
+        [1, 101, 'Nathaniel has a Mobile Development laboratory activity due today.', 'Reminder', '1hr ago', 'academic', 1, 'event1.jpg', 1],
+        [2, 101, 'Database Systems quiz score has been posted.', 'Activity', '4hrs ago', 'academic', 1, 'event2.jpg', 1],
+        [3, 102, "Sofia's PE uniform fee is still pending.", 'Reminder', 'Yesterday', 'financial', 1, 'event3.jpg', 0],
+        [4, null, 'College assembly will be held on May 24 at the auditorium.', 'Event', 'Yesterday', 'college', 0, 'event1.jpg', 1],
+        [5, null, 'Emergency drill schedule has been moved to next week.', 'Emergency', '2 days ago', 'school-wide', 0, 'event2.jpg', 1]
     ];
     for (const notification of notifications) {
         await run(
-            'INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url, is_positive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             notification
         );
     }
@@ -494,13 +496,14 @@ async function normalizeOfficialData() {
             date,
             audience === 'student' ? category.toLowerCase() : category,
             id <= 5 ? 1 : 0,
-            imageUrl
+            imageUrl,
+            1
         ];
     });
     for (const notification of eventNotifications) {
         await run(
-            `INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `INSERT INTO notifications (id, student_id, text, type, time, category, is_new, image_url, is_positive)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(id) DO UPDATE SET
                 student_id = excluded.student_id,
                 text = excluded.text,
@@ -508,7 +511,8 @@ async function normalizeOfficialData() {
                 time = excluded.time,
                 category = excluded.category,
                 is_new = excluded.is_new,
-                image_url = excluded.image_url`,
+                image_url = excluded.image_url,
+                is_positive = excluded.is_positive`,
             notification
         );
     }
@@ -757,6 +761,23 @@ async function buildDashboard(parentId = 1) {
     for (const childId of parent.children) {
         const child = await getStudent(childId);
         if (child) {
+            // Calculate Performance Percentage
+            const attendanceVal = parseFloat(child.attendance.replace('%', '')) || 0;
+
+            // Normalized GPA (3.0 is passing limit at 75%)
+            let gpaNormalized;
+            if (child.gpa <= 3.0) {
+                gpaNormalized = 100 - (child.gpa - 1.0) * 12.5; // 1.0 -> 100, 3.0 -> 75
+            } else {
+                gpaNormalized = 75 - (child.gpa - 3.0) * 37.5;  // 3.0 -> 75, 5.0 -> 0
+            }
+
+            const performanceRecords = await all('SELECT is_positive FROM notifications WHERE student_id = ? AND type IN ("Activity", "Reminder")', [childId]);
+            const positiveCount = performanceRecords.filter(r => r.is_positive === 1).length;
+            const taskScore = performanceRecords.length > 0 ? (positiveCount / performanceRecords.length) * 100 : 100;
+
+            child.performancePercentage = Math.round((gpaNormalized * 0.6) + (attendanceVal * 0.3) + (taskScore * 0.1));
+
             const childUnread = await get('SELECT COUNT(*) AS count FROM notifications WHERE is_new = 1 AND student_id = ?', [childId]);
             child.notificationCount = childUnread.count + schoolUnread.count;
             children.push(child);
@@ -1009,7 +1030,8 @@ app.get('/api/notifications', asyncHandler(async (req, res) => {
         time: item.time,
         category: item.category,
         isNew: Boolean(item.is_new),
-        imageUrl: item.image_url || ''
+        imageUrl: item.image_url || '',
+        isPositive: Boolean(item.is_positive)
     })));
 }));
 

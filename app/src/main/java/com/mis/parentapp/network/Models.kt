@@ -39,6 +39,7 @@ data class Child(
     val attendance: String,
     val gpa: Double,
     val pendingPayments: Int,
+    val performancePercentage: Int = 0,
     val notificationCount: Int = 0,
     val profileImageUrl: String? = null,
     val backgroundImageUrl: String? = null,

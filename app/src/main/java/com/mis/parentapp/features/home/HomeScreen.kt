@@ -250,11 +250,10 @@ fun Body(
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             selectedStudent?.student?.let { child ->
-                                val formattedPending = String.format(Locale.US, "₱ %,.2f", child.pendingPayment)
                                 QuickStatsSection(
                                     attendance = "${(child.attendanceScore * 100).toInt()}%",
                                     gpa = child.gpa.toString(),
-                                    pending = formattedPending,
+                                    performance = "${child.performanceScore}%",
                                     notifications = child.notificationCount.toString()
                                 )
                             }
@@ -279,11 +278,10 @@ fun Body(
 
                     // QUICK STATS
                     selectedStudent?.student?.let { child ->
-                        val formattedPending = String.format(Locale.US, "₱ %,.2f", child.pendingPayment)
                         QuickStatsSection(
                             attendance = "${(child.attendanceScore * 100).toInt()}%",
                             gpa = child.gpa.toString(),
-                            pending = formattedPending,
+                            performance = "${child.performanceScore}%",
                             notifications = child.notificationCount.toString()
                         )
                     }
@@ -345,6 +343,7 @@ private fun Child.toHomeStudent(): HomeStudent {
             attendanceScore = attendanceValue / 100.0,
             gpa = gpa,
             pendingPayment = pendingPayments.toDouble(),
+            performanceScore = performancePercentage,
             notificationCount = notificationCount,
             profileImageRes = R.drawable.student_image,
             isPresent = resolveCurrentClass(schedules) != null
@@ -824,7 +823,7 @@ fun HomeMenuDrawer(onItemClick: (String) -> Unit) {
 }
 
 @Composable
-fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifications: String) {
+fun QuickStatsSection(attendance: String, gpa: String, performance: String, notifications: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -850,7 +849,7 @@ fun QuickStatsSection(attendance: String, gpa: String, pending: String, notifica
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatCard("Pending due", pending, R.drawable.boxicons_wallet_filled, Modifier.weight(1f))
+            StatCard("Performance", performance, R.drawable.baseline_trending_up_24, Modifier.weight(1f))
             StatCard("Notifications", notifications, R.drawable.fluent_color_megaphone_loud_32, Modifier.weight(1f))
         }
     }
