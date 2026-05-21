@@ -511,6 +511,7 @@ fun androidx.navigation.NavGraphBuilder.mainNavGraph(
     composable<Home> {
         HomeScreen(
             studentVM = studentSharedViewModel,
+            userProfileViewModel = userProfileViewModel,
             mainNavController = navController
         )
     }
