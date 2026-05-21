@@ -14,10 +14,18 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +51,7 @@ import com.mis.parentapp.navigation.Feedbacks
 import com.mis.parentapp.navigation.Meeting
 import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
+import com.mis.parentapp.network.AppVersionDto
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.utilities.images.InitialsImageFallback
 import com.mis.parentapp.utilities.images.RemoteImage
@@ -63,6 +72,44 @@ fun MeScreen(
     val isWide = configuration.screenWidthDp >= 600
     val headerHeight = if (isWide) (configuration.screenHeightDp.dp * 0.5f).coerceIn(300.dp, 500.dp)
                        else (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
+    var availableUpdate by remember { mutableStateOf<AppVersionDto?>(null) }
+
+    LaunchedEffect(Unit) {
+        runCatching {
+            RetrofitInstance.api.getAppVersion()
+        }.onSuccess { version ->
+            if (version.versionCode > BuildConfig.VERSION_CODE && !version.apkUrl.isNullOrBlank()) {
+                availableUpdate = version
+            }
+        }
+    }
+
+    availableUpdate?.let { update ->
+        AlertDialog(
+            onDismissRequest = { availableUpdate = null },
+            title = { Text("Update available") },
+            text = {
+                Text(
+                    text = "Version ${update.versionName} is ready.\n\n${update.releaseNotes.orEmpty()}"
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openUpdateLink(context, update.apkUrl.orEmpty())
+                        availableUpdate = null
+                    }
+                ) {
+                    Text("Update")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { availableUpdate = null }) {
+                    Text("Later")
+                }
+            }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -244,15 +291,19 @@ private fun checkForAppUpdate(context: android.content.Context) {
                 }
                 else -> {
                     Toast.makeText(context, "Opening version ${version.versionName} update.", Toast.LENGTH_LONG).show()
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
+                    openUpdateLink(context, apkUrl)
                 }
             }
         }.onFailure {
             Toast.makeText(context, "Unable to check for updates.", Toast.LENGTH_LONG).show()
         }
     }
+}
+
+private fun openUpdateLink(context: android.content.Context, apkUrl: String) {
+    context.startActivity(
+        Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
 }
 
 //@Preview(showBackground = true, widthDp = 360)
