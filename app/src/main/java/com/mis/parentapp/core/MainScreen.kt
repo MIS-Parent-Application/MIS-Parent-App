@@ -85,12 +85,12 @@ import com.mis.parentapp.DebugMenuScreen
 import com.mis.parentapp.R
 import com.mis.parentapp.data.AppDatabase
 import com.mis.parentapp.data.UserRepository
-import com.mis.parentapp.features.me.AboutScreen
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.OtpSignInScreen
 import com.mis.parentapp.features.auth.PasswordSignInScreen
 import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
+import com.mis.parentapp.features.me.AboutScreen
 import com.mis.parentapp.features.me.MeScreen
 import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.features.student.StudentScreen
@@ -399,12 +399,16 @@ fun MainScreen(
                 if (showSharedTopBar) {
                     MainTopBar(
                         onMenuClick = { showBottomSheet = true },
-                        onNotificationClick = { navController.navigate(Notification) },
+                        onNotificationClick = {
+                            studentSharedViewModel.clearNotifications()
+                            navController.navigate(Notification)
+                        },
                         onCalendarClick = { navController.navigate(Calendar) },
                         iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                         menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
                         backgroundColor = topBarBackgroundColor,
-                        isMeScreen = currentDestination?.hasRoute(Me::class) == true
+                        isMeScreen = currentDestination?.hasRoute(Me::class) == true,
+                        notificationCount = studentSharedViewModel.unreadAnnouncements
                     )
                 }
             }
@@ -419,25 +423,6 @@ fun MainScreen(
                         items = menuItems
                     )
                 }
-            }
-        }
-    }
-}
-
-            if (showSharedTopBar) {
-                MainTopBar(
-                    onMenuClick = { showBottomSheet = true },
-                    onNotificationClick = {
-                        studentSharedViewModel.clearNotifications()
-                        navController.navigate(Notification)
-                    },
-                    onCalendarClick = { navController.navigate(Calendar) },
-                    iconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                    menuIconTint = if (useWhiteIcons) Color.White else MaterialTheme.colorScheme.onBackground,
-                    backgroundColor = topBarBackgroundColor,
-                    isMeScreen = currentDestination?.hasRoute(Me::class) == true,
-                    notificationCount = studentSharedViewModel.unreadAnnouncements
-                )
             }
         }
     }
@@ -674,6 +659,11 @@ fun androidx.navigation.NavGraphBuilder.mainNavGraph(
             startDestination = Preference,
             studentVM = studentSharedViewModel,
             onBack = { navController.popBackStack() }
+        )
+    }
+    composable<About> {
+        AboutScreen(
+            onBackClick = { navController.popBackStack() }
         )
     }
 }
