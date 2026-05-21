@@ -285,6 +285,27 @@ async function initDatabase() {
         )
     `);
     await run(`
+        CREATE TABLE IF NOT EXISTS academic_performance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            teacher TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            details TEXT NOT NULL,
+            criteria TEXT NOT NULL,
+            image_url TEXT,
+            score TEXT,
+            status TEXT NOT NULL,
+            assigned_date TEXT NOT NULL,
+            due_date TEXT NOT NULL,
+            time_ago TEXT NOT NULL,
+            is_positive INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY(student_id) REFERENCES students(id)
+        )
+    `);
+    await run(`
         CREATE TABLE IF NOT EXISTS attendance_subjects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             student_id INTEGER NOT NULL,
@@ -480,6 +501,105 @@ async function seedOfficialData() {
                 `INSERT INTO attendance_subjects
                  (student_id, subject_name, instructor, present_days, total_days, late_days, absent_days)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                item
+            );
+        }
+    }
+
+    const performanceCount = await get('SELECT COUNT(*) AS count FROM academic_performance');
+    if (performanceCount.count === 0) {
+        const performance = [
+            [
+                101,
+                'high_score',
+                'High score in exam',
+                'IT 312 - Mobile Development',
+                'Prof. Reyes',
+                'Nathaniel earned one of the highest scores in the Mobile Development practical exam.',
+                'The practical exam required students to build a working Android screen, connect it to sample data, and explain the navigation flow. Nathaniel completed the required UI states, used proper spacing, and demonstrated a clear understanding of Compose layout behavior during the checking period.',
+                'Functional screen output, correct navigation, readable code structure, and accurate explanation during checking.',
+                'event1.jpg',
+                '47/50',
+                'Completed',
+                '2026-05-18',
+                '2026-05-18',
+                '4hrs ago',
+                1
+            ],
+            [
+                101,
+                'low_score',
+                'Low score in assignment',
+                'IT 326 - Database Systems',
+                'Dr. Maria Santos',
+                'Nathaniel needs improvement in the recent database normalization assignment.',
+                'The submitted output missed several required normalization steps and had incomplete explanations for relationship constraints. The instructor recommends reviewing the feedback and preparing corrections before the next database activity.',
+                'Complete normalization steps, correct primary and foreign key identification, and clear written explanation of table relationships.',
+                'event2.jpg',
+                '18/30',
+                'Needs Review',
+                '2026-05-17',
+                '2026-05-17',
+                '1 day ago',
+                0
+            ],
+            [
+                101,
+                'missing_output',
+                'Missing laboratory output',
+                'IT 318 - Web Systems',
+                'Prof. Garcia',
+                'Nathaniel has not yet submitted the latest Web Systems laboratory output.',
+                'The missing output covers responsive page layout, form validation, and backend request handling. The parent is advised to remind the student to complete and submit the laboratory file as soon as possible.',
+                'Submitted source files, working form validation, responsive layout, and screenshots of successful test cases.',
+                'event3.jpg',
+                null,
+                'Missing',
+                '2026-05-16',
+                '2026-05-20',
+                '2 days ago',
+                0
+            ],
+            [
+                102,
+                'high_score',
+                'Excellent data structures quiz',
+                'CS 210 - Data Structures',
+                'Prof. Molina',
+                'Sofia received a high score in the Data Structures long quiz.',
+                'The quiz covered trees, graph traversal, sorting algorithms, and complexity analysis. Sofia showed strong understanding of traversal order and algorithm comparison.',
+                'Correct answers, clear problem solving, and accurate complexity analysis.',
+                'event1.jpg',
+                '44/50',
+                'Completed',
+                '2026-05-16',
+                '2026-05-16',
+                '2 days ago',
+                1
+            ],
+            [
+                102,
+                'missing_output',
+                'Missing PE activity documentation',
+                'PE 204 - Team Sports',
+                'Coach Ramos',
+                'Sofia still needs to submit the PE activity documentation.',
+                'The required documentation includes activity photos, reflection notes, and attendance confirmation for the team sports session.',
+                'Complete activity documentation, reflection notes, and attendance confirmation.',
+                'event2.jpg',
+                null,
+                'Missing',
+                '2026-05-15',
+                '2026-05-19',
+                '3 days ago',
+                0
+            ]
+        ];
+        for (const item of performance) {
+            await run(
+                `INSERT INTO academic_performance
+                 (student_id, type, title, subject, teacher, summary, details, criteria, image_url, score, status, assigned_date, due_date, time_ago, is_positive)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 item
             );
         }
@@ -813,6 +933,27 @@ function mapGrade(row) {
         instructor: row.instructor,
         remarks: row.remarks,
         term: row.term
+    };
+}
+
+function mapAcademicPerformance(row) {
+    return {
+        id: row.id,
+        studentId: row.student_id,
+        type: row.type,
+        title: row.title,
+        subject: row.subject,
+        teacher: row.teacher,
+        summary: row.summary,
+        details: row.details,
+        criteria: row.criteria,
+        imageUrl: row.image_url || null,
+        score: row.score || null,
+        status: row.status,
+        assignedDate: row.assigned_date,
+        dueDate: row.due_date,
+        timeAgo: row.time_ago,
+        isPositive: Boolean(row.is_positive)
     };
 }
 
@@ -1302,6 +1443,19 @@ app.get('/api/student/:id/grades', asyncHandler(async (req, res) => {
         [studentId]
     );
     res.json(rows.map(mapGrade));
+}));
+
+app.get('/api/student/:id/academic-performance', asyncHandler(async (req, res) => {
+    const studentId = Number(req.params.id);
+    const student = await get('SELECT id FROM students WHERE id = ?', [studentId]);
+    if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+    }
+    const rows = await all(
+        'SELECT * FROM academic_performance WHERE student_id = ? ORDER BY id',
+        [studentId]
+    );
+    res.json(rows.map(mapAcademicPerformance));
 }));
 
 app.get('/api/student/:id/attendance', asyncHandler(async (req, res) => {
