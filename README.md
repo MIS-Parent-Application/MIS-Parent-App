@@ -70,7 +70,7 @@
   </tr>
 </table>
 
-![MIS Parent App Banner](https://github.com/user-attachments/assets/abdc165d-234e-4263-8b16-76bef772de4f)
+
 
 ## Download And Install The APK
 
