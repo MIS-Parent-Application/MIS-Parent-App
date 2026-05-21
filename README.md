@@ -72,6 +72,54 @@
 
 ![MIS Parent App Banner](https://github.com/user-attachments/assets/abdc165d-234e-4263-8b16-76bef772de4f)
 
+## Download And Install The APK
+
+Use this APK for phone testing and presentation:
+
+[Download MIS Parent App APK](./apk/MIS-Parent-App-debug.apk)
+
+The APK is connected to the deployed backend:
+
+`https://mis-parent-app-production.up.railway.app/`
+
+### Step-By-Step Android Installation
+
+1. Open this README on the Android phone.
+2. Tap **Download MIS Parent App APK**.
+3. Wait for the APK download to finish.
+4. Open the downloaded file from the browser download bar or from the phone's **Files / Downloads** folder.
+5. If Android shows **For your security, your phone is not allowed to install unknown apps from this source**, tap **Settings**.
+6. Turn on **Allow from this source** for the browser or file manager being used.
+7. Go back to the APK installer screen.
+8. Tap **Install**.
+9. After installation finishes, tap **Open**.
+10. Log in using the provided parent test account.
+11. If two-factor authentication is enabled, check the registered Gmail inbox for the verification code.
+12. Enter the newest code in the OTP screen. Do not reuse an old or expired code.
+
+If the phone says the app is blocked by Play Protect, choose **Install anyway** only for this school testing APK. This is expected because the APK is a debug build and is not from the Play Store.
+
+### Test Login
+
+Username:
+
+`jordan.mcclure@email.com`
+
+or
+
+`jordan`
+
+Password:
+
+`parent123`
+
+### Important Notes
+
+- The phone must have internet access because the app uses the online Railway backend.
+- If the APK was installed before, uninstall the old app first if login/session behavior looks outdated.
+- If OTP times out, request a fresh code and use the newest email only.
+- After merging changes to `master`, Railway redeploys the backend automatically.
+
 ## 📌 Overview
 The **MIS Parent App** is a mobile application designed to help parents monitor and stay connected with their child's academic and school-related information in real time. It provides easy access to student records, updates, and communication tools through an intuitive and user-friendly interface.
 
