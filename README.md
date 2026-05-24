@@ -4,7 +4,7 @@
   # MIS Parent App - Full Stack Documentation
 
   [![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
-  [![Railway Deployment Status](https://railway.app/badge.svg)](mis-parent-app-production.up.railway.app)
+ [![Railway Deployment Status](https://railway.app/badge.svg)](https://railway.com/project/f7d6a086-3937-4fd3-bcfe-2162c3a63d7)
 
   [![Website](https://img.shields.io/badge/Website-colegiodealicia.com-0066CC?style=for-the-badge&logo=google-chrome&logoColor=white)](http://www.colegiodealicia.com/)
   [![Facebook](https://img.shields.io/badge/Facebook-Official_Page-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/profile.php?id=61574573837221)
