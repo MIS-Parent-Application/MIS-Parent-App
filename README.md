@@ -24,7 +24,7 @@ The **MIS Parent App** is a specialized mobile Management Information System des
 ---
 
 ## 🏗️ System Architecture
-The project follows a **Client-Server architecture** with a modern mobile frontend and a multi-database backend.
+The project follows a **Client-Server architecture** with a modern mobile frontend and a PostgreSQL-backed API.
 
 ### 1. Frontend (Mobile)
 - **Framework:** Kotlin Jetpack Compose (Declarative UI)
@@ -35,9 +35,11 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 
 ### 2. Backend (API)
 - **Runtime:** Node.js (Express framework)
-- **Primary Database (SQLite):** Stores student records, schedules, grades, and core application data.
-- **Production Database (PostgreSQL):** Hosted on Railway; specifically handles user feedback and high-durability production logs.
+- **Primary Database:** PostgreSQL hosted on Railway.
+- **Data Coverage:** Parent accounts, student profiles, schedules, study loads, grades, attendance, payments, notifications, calendar events, faculty contacts, chat messages, feedback, and OTP records.
 - **Email System:** Nodemailer (Gmail SMTP) for Two-Factor Authentication (2FA) codes.
+
+For professor handover, backend architecture, API contracts, database tables, and official data insertion steps, see [Backend Documentation](docs/BACKEND_DOCUMENTATION.md).
 
 ---
 
@@ -52,7 +54,7 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 
 ### Backend Services
 - **Language:** JavaScript (Node.js)
-- **Database Drivers:** `sqlite3` for local/core data, `pg` for production PostgreSQL.
+- **Database Driver:** `pg` for PostgreSQL.
 - **Security:** `crypto` for SHA-256 OTP hashing and session verification.
 - **Middleware:** `cors`, `express.json` (10mb limit for profile image uploads).
 
@@ -88,15 +90,19 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 
 ## 🗄️ Database Schemas
 
-### SQLite (Core Data)
-- `parents`: Basic info, contact details, and 2FA settings.
-- `students`: Academic profiles linked to parent accounts.
-- `academic_grades`: Official scores with term and instructor details.
-- `class_schedules`: Time, room, and subject mapping for daily tracking.
-- `notifications`: Alerts that populate "Recent Activities" and "Announcements".
-
-### PostgreSQL (Production Logs)
-- `parent_app_feedback`: Stores `user_email`, `feedback_type`, `message`, and `app_version` with automatic timestamps.
+### PostgreSQL (Official App Data)
+- `parents`: Parent profile, contact details, profile photos, and 2FA settings.
+- `parent_accounts`: Login credentials mapped to parent records.
+- `students`: Student academic profiles linked to parents.
+- `class_schedules`: Subject schedules, rooms, instructors, and class times.
+- `study_load_subjects`: Official study load rows used by the app and PDF export.
+- `academic_grades`: Official grades with term and instructor details.
+- `academic_performance`: High score, low score, missing output, and performance records.
+- `attendance_subjects`: Per-subject attendance totals.
+- `payment_records`: Payment history and receipt data.
+- `notifications` and `calendar_events`: Home, notification, announcement, and calendar data.
+- `faculty_contacts` and `chat_messages`: Faculty contact list and parent-faculty messages.
+- `parent_app_feedback`: User feedback submitted from the Me screen.
 
 ---
 
@@ -112,7 +118,7 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 ### Backend (Railway)
 1. **Repository:** Connect the `backend/` directory to a Railway project.
 2. **Environment Variables:**
-   - `DATABASE_URL`: Your PostgreSQL connection string.
+   - `DATABASE_URL`: Required PostgreSQL connection string.
    - `EMAIL_USER` / `EMAIL_PASS`: SMTP credentials for 2FA.
    - `PORT`: (Default 3000).
 3. **Automatic Schema:** On startup, the backend verifies and creates necessary PostgreSQL tables automatically.
