@@ -18,9 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
-import com.mis.parentapp.utilities.cards.NotificationCard
-import com.mis.parentapp.utilities.cards.NotificationData
-import com.mis.parentapp.utilities.cards.NotificationType
+import com.mis.parentapp.utils.cards.NotificationCard
+import com.mis.parentapp.utils.cards.NotificationData
+import com.mis.parentapp.utils.cards.NotificationType
 
 @Composable
 fun NotificationsWidget() {

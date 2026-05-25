@@ -16,3 +16,14 @@ local.properties
 /backend/node_modules
 /backend/data
 /backend/.env
+
+# apks & built products
+*.apk
+/apk/
+
+# JVM crash logs
+hs_err_pid*.log
+
+# Kotlin temporary build files
+.kotlin/
+

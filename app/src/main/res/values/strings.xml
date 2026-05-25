@@ -49,4 +49,31 @@
     <string name="section_title_new">New</string>
     <string name="section_title_earlier">Earlier</string>
 
+    <!-- About Screen strings -->
+    <string name="about_title">About App</string>
+    <string name="about_app_description">The official MIS Parent Application of Colegio de Alicia. Designed to empower parents with real-time access to their child\'s academic journey.</string>
+    <string name="about_mission_title">Our Mission</string>
+    <string name="about_mission_content">To bridge the communication gap between the institution and guardians, ensuring that every parent can actively support their child\'s education with convenience and transparency.</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_copyright">© 2025–2026 Colegio de Alicia. All Rights Reserved.</string>
+    <string name="about_website_label">Official Website</string>
+    <string name="about_website_url">www.colegiodealicia.com</string>
+    <string name="about_contact_label">Support Email</string>
+    <string name="about_contact_email">colegiodealiciamunicipalityofa@gmail.com</string>
+
+    <!-- Legal strings -->
+    <string name="about_tos_title">Terms of Service</string>
+    <string name="about_tos_content">By using the MIS Parent App, you agree to abide by the institutional rules of Colegio de Alicia. The app is intended for authorized guardians to monitor academic progress through secure access.</string>
+
+    <string name="about_privacy_title">Privacy Policy</string>
+    <string name="about_privacy_content">We are committed to protecting your data. This application collects authentication credentials and academic records solely for the purpose of educational monitoring. All data is handled in compliance with institutional privacy standards.</string>
+
+    <string name="about_disclaimer_title">Legal Disclaimers</string>
+    <string name="about_disclaimer_content">This software is provided on an \"as is\" basis. While we strive for 100% accuracy, Colegio de Alicia and its developers are not liable for incidental or consequential damages resulting from the use of this app.</string>
+
+    <string name="about_compliance_title">Regulatory Compliance</string>
+    <string name="about_compliance_content">This application adheres to local data privacy acts and standards for educational record protection, ensuring student information remains confidential and secure.</string>
+
+    <string name="about_license_title">Licenses</string>
+    <string name="about_license_content">Legal notices for third-party software used in this application.</string>
 </resources>

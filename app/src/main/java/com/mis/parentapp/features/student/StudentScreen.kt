@@ -2,6 +2,7 @@ package com.mis.parentapp.features.student
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,8 +48,8 @@ import com.mis.parentapp.network.ClassSchedule
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.utilities.images.InitialsImageFallback
-import com.mis.parentapp.utilities.images.RemoteImage
+import com.mis.parentapp.utils.images.InitialsImageFallback
+import com.mis.parentapp.utils.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -139,13 +140,18 @@ fun StudentScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                selectedStudent?.name ?: "Loading student",
+                                text = selectedStudent?.name ?: "Loading student",
                                 color = Color.White,
                                 fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                modifier = Modifier.basicMarquee(
+                                    iterations = Int.MAX_VALUE,
+                                    velocity = 40.dp
+                                )
                             )
-                            Text(selectedStudent?.course ?: "--", color = Color.White)
-                            Text("ID number: ${selectedStudent?.rollNumber ?: "--"}", color = Color.White)
+                            Text(selectedStudent?.course ?: "--", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("ID number: ${selectedStudent?.rollNumber ?: "--"}", color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
 
                         LazyRow(
@@ -377,11 +383,14 @@ fun ScheduleCardSmall(
             lineHeight = 18.sp,
             fontWeight = FontWeight.Bold,
             color = if (isHighlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
+                .basicMarquee(
+                    iterations = Int.MAX_VALUE,
+                    velocity = 40.dp
+                )
         )
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(

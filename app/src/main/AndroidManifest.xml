@@ -3,6 +3,8 @@
 
     <!-- 🌐 INTERNET PERMISSION (for Retrofit) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- ✅ ADDED STORAGE PERMISSIONS FOR PDF DOWNLOAD -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -36,7 +38,7 @@
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
-                android:name="android.support.FILE_PATHS"
+                android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
 

@@ -122,8 +122,8 @@ import com.mis.parentapp.navigation.StudyLoad
 import com.mis.parentapp.navigation.TrackAttendance
 import com.mis.parentapp.navigation.UpcomingEvents
 import com.mis.parentapp.shared.StudentSharedViewModel
-import com.mis.parentapp.utilities.modals.GenericMenuModal
-import com.mis.parentapp.utilities.modals.MenuItem
+import com.mis.parentapp.utils.modals.GenericMenuModal
+import com.mis.parentapp.utils.modals.MenuItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ViewModelConstructorInComposable")

@@ -23,8 +23,8 @@ import com.mis.parentapp.network.ChatMessageDto
 import com.mis.parentapp.network.FacultyChatRetrofit
 import com.mis.parentapp.network.FacultyContactDto
 import com.mis.parentapp.network.ParentChatLoginRequest
-import com.mis.parentapp.utilities.cards.MessageCard
-import com.mis.parentapp.utilities.cards.MessageData
+import com.mis.parentapp.utils.cards.MessageCard
+import com.mis.parentapp.utils.cards.MessageData
 
 private val FacultyChatContacts = listOf(
     FacultyContactDto(

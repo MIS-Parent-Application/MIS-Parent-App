@@ -19,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Description
@@ -45,7 +44,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mis.parentapp.R
-import com.mis.parentapp.network.Child
 import com.mis.parentapp.network.CreatePaymentRequest
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.features.services.sections.SearchBarSection
@@ -56,7 +54,7 @@ import com.mis.parentapp.navigation.PaymentOptions
 import com.mis.parentapp.shared.StudentSharedViewModel
 import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ParentAppTheme
-import com.mis.parentapp.utilities.modals.ServiceAccountSwitchModal
+import com.mis.parentapp.utils.modals.ServiceAccountSwitchModal
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*

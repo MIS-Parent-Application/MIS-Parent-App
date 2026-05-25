@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <cache-path name="my_cache" path="." />
+    <!-- Allows sharing files downloaded to the public Downloads folder -->
+    <external-path name="external_files" path="." />
+    <!-- Allows sharing files downloaded to your app's private cache folder -->
+    <cache-path name="cache_files" path="." />
 </paths>

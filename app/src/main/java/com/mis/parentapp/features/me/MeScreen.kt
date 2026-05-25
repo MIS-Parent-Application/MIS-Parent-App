@@ -5,12 +5,9 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -32,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,7 +36,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.mis.parentapp.BuildConfig
-import com.mis.parentapp.R
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.me.sections.SettingsSection
 import com.mis.parentapp.features.me.sections.YourEssentialsSection
@@ -53,11 +48,13 @@ import com.mis.parentapp.navigation.Messages
 import com.mis.parentapp.navigation.Preference
 import com.mis.parentapp.network.AppVersionDto
 import com.mis.parentapp.network.RetrofitInstance
-import com.mis.parentapp.utilities.images.InitialsImageFallback
-import com.mis.parentapp.utilities.images.RemoteImage
+import com.mis.parentapp.utils.images.InitialsImageFallback
+import com.mis.parentapp.utils.images.RemoteImage
+import com.mis.parentapp.utils.installer.UpdateScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun MeScreen(
@@ -73,6 +70,7 @@ fun MeScreen(
     val headerHeight = if (isWide) (configuration.screenHeightDp.dp * 0.5f).coerceIn(300.dp, 500.dp)
                        else (configuration.screenHeightDp.dp * 0.42f).coerceIn(260.dp, 380.dp)
     var availableUpdate by remember { mutableStateOf<AppVersionDto?>(null) }
+    var downloadedApkFile by remember { mutableStateOf<File?>(null) }
 
     LaunchedEffect(Unit) {
         runCatching {
@@ -94,13 +92,17 @@ fun MeScreen(
                 )
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        openUpdateLink(context, update.apkUrl.orEmpty())
-                        availableUpdate = null
+                if (downloadedApkFile != null && downloadedApkFile!!.exists()) {
+                    UpdateScreen(downloadedFile = downloadedApkFile)
+                } else {
+                    Button(
+                        onClick = {
+                            openUpdateLink(context, update.apkUrl.orEmpty())
+                            availableUpdate = null
+                        }
+                    ) {
+                        Text("Download Update")
                     }
-                ) {
-                    Text("Update")
                 }
             },
             dismissButton = {
@@ -121,8 +123,8 @@ fun MeScreen(
             modifier = Modifier
                 .widthIn(max = 1200.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(24.dp), // Spacing between items
-            contentPadding = PaddingValues(bottom = 24.dp) // Extra bottom padding
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
                 Box(
@@ -148,9 +150,9 @@ fun MeScreen(
                                     )
                                 )
                         )
-                    } else {
+                    } else if (!userProfileViewModel.profileImageUrl.isNullOrBlank()) {
                         RemoteImage(
-                            url = parentBackgroundUrl,
+                            url = userProfileViewModel.profileImageUrl,
                             fallbackRes = userProfileViewModel.profileImageRes,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
@@ -177,6 +179,19 @@ fun MeScreen(
                                 )
                             }
                         )
+                    } else {
+                        InitialsImageFallback(
+                            name = userProfileViewModel.fullName,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(
+                                    RoundedCornerShape(
+                                        bottomStart = 32.dp,
+                                        bottomEnd = 32.dp
+                                    )
+                                ),
+                            isLarge = true
+                        )
                     }
 
                     // DARK OVERLAY
@@ -192,7 +207,7 @@ fun MeScreen(
                             .background(Color.Black.copy(alpha = 0.25f))
                     )
 
-                    // NAME + DETAILS + PROFILE (Match StudentScreen Layout)
+                    // NAME + DETAILS + PROFILE
                     Row(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -254,6 +269,7 @@ fun MeScreen(
                         "Announcements" -> navController?.navigate(Announcements)
                         "Meetings" -> navController?.navigate(Meeting)
                         "Feedbacks" -> navController?.navigate(Feedbacks)
+                        "Check for updates" -> checkForAppUpdate(context) { availableUpdate = it }
                     }
                 })
             }
@@ -263,7 +279,6 @@ fun MeScreen(
                         "Preferences" -> navController?.navigate(Preference)
                         "Data safety" -> navController?.navigate(DataSafety)
                         "Edit profile" -> navController?.navigate(EditProfile)
-                        "Check for updates" -> checkForAppUpdate(context)
                         "Sign out" -> {
                             authViewModel.signOut {
                                 onSignOutClick()
@@ -276,7 +291,7 @@ fun MeScreen(
     }
 }
 
-private fun checkForAppUpdate(context: android.content.Context) {
+private fun checkForAppUpdate(context: android.content.Context, onUpdateFound: (AppVersionDto) -> Unit) {
     CoroutineScope(Dispatchers.Main).launch {
         runCatching {
             RetrofitInstance.api.getAppVersion()
@@ -290,8 +305,7 @@ private fun checkForAppUpdate(context: android.content.Context) {
                     Toast.makeText(context, "Update available, but no download link is configured yet.", Toast.LENGTH_LONG).show()
                 }
                 else -> {
-                    Toast.makeText(context, "Opening version ${version.versionName} update.", Toast.LENGTH_LONG).show()
-                    openUpdateLink(context, apkUrl)
+                    onUpdateFound(version)
                 }
             }
         }.onFailure {
@@ -305,11 +319,3 @@ private fun openUpdateLink(context: android.content.Context, apkUrl: String) {
         Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     )
 }
-
-//@Preview(showBackground = true, widthDp = 360)
-//@Composable
-//private fun MeScreenPreview() {
-//    ParentAppTheme {
-//        MeScreen()
-//    }
-//}

@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
+import com.mis.parentapp.data.UserEntity
 import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.GetStartedScreen
@@ -63,6 +64,40 @@ fun AppNavigation(windowSizeClass: androidx.compose.material3.windowsizeclass.Wi
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
+
+    // --- ADD THIS CODE TO AUTO-LOGIN IN DEBUG MODE ---
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (BuildConfig.DEBUG) {
+            try {
+                // 1. Check if a user session already exists in your local DB
+                val currentUser = database.userDao().getCurrentUser()
+
+                if (currentUser == null) {
+                    // 2. Inject a mock active user session matching your backend test account
+                    database.userDao().registerUser(
+                        UserEntity(
+                            username = "dev_tester",
+                            password = "password123",
+                            fullName = "Debug User",
+                            email = "debug@example.com",
+                            lastLoginTime = System.currentTimeMillis()
+                        )
+                    )
+                }
+
+                // 3. Skip the splash/onboarding screens and land right on the MainContainer
+                navController.navigate(MainContainer) {
+                    popUpTo(OnBoarding) { inclusive = true }
+                }
+            } catch (e: Exception) {
+                // If the DB is corrupted or has a blob too big, clear it and let user re-login
+                if (e is android.database.sqlite.SQLiteBlobTooBigException) {
+                    database.userDao().clearUsers()
+                }
+                e.printStackTrace()
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = OnBoarding) {
         composable<OnBoarding> {

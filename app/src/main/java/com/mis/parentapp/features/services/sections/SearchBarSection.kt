@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.network.Child
 import androidx.compose.ui.text.TextStyle
-import com.mis.parentapp.utilities.images.InitialsImageFallback
-import com.mis.parentapp.utilities.images.RemoteImage
+import com.mis.parentapp.utils.images.InitialsImageFallback
+import com.mis.parentapp.utils.images.RemoteImage
 
 @Composable
 fun SearchBarSection(

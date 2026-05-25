@@ -86,6 +86,9 @@ interface ApiService {
     @GET("api/announcements")
     suspend fun getAnnouncements(): List<AnnouncementDto>
 
+    @POST("api/feedback")
+    suspend fun submitFeedback(@Body request: FeedbackRequest): FeedbackResponse
+
     @POST("api/2fa/send")
     suspend fun send2FACode(
         @Body body: Map<String, String>

@@ -25,6 +25,9 @@ class ChatViewModel : ViewModel() {
     var messages by mutableStateOf<List<ChatMessageDto>>(emptyList())
         private set
 
+    var isLoading by mutableStateOf(false)
+        private set
+
     var chatTextState by mutableStateOf("")
 
     var errorMessage by mutableStateOf<String?>(null)
@@ -45,6 +48,7 @@ class ChatViewModel : ViewModel() {
         currentContactId = contactId
         messages = emptyList()
         errorMessage = null
+        isLoading = true
         pollingJob?.cancel()
         socket?.disconnect()
 
@@ -112,8 +116,10 @@ class ChatViewModel : ViewModel() {
         }.onSuccess {
             messages = it
             errorMessage = null
+            isLoading = false
         }.onFailure {
             errorMessage = "Unable to refresh faculty chat history."
+            isLoading = false
         }
     }
 

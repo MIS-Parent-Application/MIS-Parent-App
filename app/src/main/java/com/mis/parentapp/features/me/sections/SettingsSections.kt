@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.utilities.cards.CategoryCard
-import com.mis.parentapp.utilities.cards.dataclass.Category
+import com.mis.parentapp.utils.cards.CategoryCard
+import com.mis.parentapp.utils.cards.dataclass.Category
 
 @Composable
 fun SettingsSection(onCategoryClick: (String) -> Unit){
@@ -32,7 +31,6 @@ fun SettingsSection(onCategoryClick: (String) -> Unit){
         Category(title = stringResource(id = R.string.preferences_btn_txt), icon = Icons.Filled.Palette),
         Category(title = stringResource(id = R.string.data_safety_btn_txt), icon = Icons.Filled.Shield),
         Category(title = stringResource(id = R.string.edit_profile_btn_txt), icon = Icons.Filled.Person),
-        Category(title = "Check for updates", icon = Icons.Filled.SystemUpdate),
         Category(title = stringResource(id = R.string.sign_out_btn_txt), icon = Icons.Filled.Logout)
     )
     Column(

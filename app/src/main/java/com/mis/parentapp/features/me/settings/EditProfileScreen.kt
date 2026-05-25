@@ -9,26 +9,27 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mis.parentapp.R
 import com.mis.parentapp.features.me.UserProfileViewModel
-import com.mis.parentapp.utilities.images.InitialsImageFallback
-import com.mis.parentapp.utilities.images.RemoteImage
+import com.mis.parentapp.utils.images.InitialsImageFallback
+import com.mis.parentapp.utils.images.RemoteImage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     userProfileViewModel: UserProfileViewModel = viewModel(),
@@ -38,6 +39,9 @@ fun EditProfileScreen(
     var email by remember { mutableStateOf(userProfileViewModel.email) }
     var phone by remember { mutableStateOf(userProfileViewModel.phoneNumber) }
     val context = LocalContext.current
+    
+    var showImageOptions by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -71,7 +75,7 @@ fun EditProfileScreen(
                         .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
                     contentScale = ContentScale.Crop
                 )
-            } else {
+            } else if (!userProfileViewModel.profileImageUrl.isNullOrBlank()) {
                 RemoteImage(
                     url = userProfileViewModel.profileImageUrl,
                     fallbackRes = userProfileViewModel.profileImageRes,
@@ -91,13 +95,21 @@ fun EditProfileScreen(
                         )
                     }
                 )
+            } else {
+                InitialsImageFallback(
+                    name = userProfileViewModel.fullName,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                )
             }
             Surface(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
                     .clickable { 
-                        launcher.launch("image/*")
+                        showImageOptions = true
                     },
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -152,6 +164,48 @@ fun EditProfileScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(text = "Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+
+    if (showImageOptions) {
+        ModalBottomSheet(
+            onDismissRequest = { showImageOptions = false },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Profile Picture",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                ListItem(
+                    headlineContent = { Text("Upload New Photo") },
+                    leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+                    modifier = Modifier.clickable {
+                        showImageOptions = false
+                        launcher.launch("image/*")
+                    }
+                )
+                
+                if (userProfileViewModel.profileBitmap != null || !userProfileViewModel.profileImageUrl.isNullOrBlank()) {
+                    ListItem(
+                        headlineContent = { Text("Remove Photo", color = MaterialTheme.colorScheme.error) },
+                        leadingContent = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        modifier = Modifier.clickable {
+                            showImageOptions = false
+                            userProfileViewModel.deleteProfileImage()
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }

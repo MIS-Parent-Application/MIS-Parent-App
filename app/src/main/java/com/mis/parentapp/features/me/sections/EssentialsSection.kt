@@ -11,7 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,8 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.ui.theme.AppTypes
-import com.mis.parentapp.utilities.cards.CategoryCard
-import com.mis.parentapp.utilities.cards.dataclass.Category
+import com.mis.parentapp.utils.cards.CategoryCard
+import com.mis.parentapp.utils.cards.dataclass.Category
 import com.mis.parentapp.R
 
 @Composable
@@ -30,7 +30,8 @@ fun YourEssentialsSection(onCategoryClick: (String) -> Unit){
     val categories = listOf(
         Category(title = stringResource(id = R.string.messages_btn_txt), icon = Icons.Filled.ChatBubble),
         Category(title = stringResource(id = R.string.announcements_btn_txt), icon = Icons.Filled.Campaign),
-        Category(title = stringResource(id = R.string.feedbacks_btn_txt), icon = Icons.Filled.Feedback)
+        Category(title = stringResource(id = R.string.feedbacks_btn_txt), icon = Icons.Filled.Feedback),
+        Category(title = "Check for updates", icon = Icons.Filled.SystemUpdate)
     )
     Column(
         modifier = Modifier.fillMaxWidth(),

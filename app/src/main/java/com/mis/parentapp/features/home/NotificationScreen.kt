@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.shared.StudentSharedViewModel
-import com.mis.parentapp.utilities.cards.NotificationCard
-import com.mis.parentapp.utilities.cards.NotificationData
-import com.mis.parentapp.utilities.cards.NotificationType
+import com.mis.parentapp.utils.cards.NotificationCard
+import com.mis.parentapp.utils.cards.NotificationData
+import com.mis.parentapp.utils.cards.NotificationType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

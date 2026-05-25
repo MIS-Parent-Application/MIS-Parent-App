@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -9,7 +12,7 @@ android {
     namespace = "com.mis.parentapp"
     compileSdk = 37
 
-    val localApiUrl = "http://127.0.0.1:3000/"
+    val localApiUrl = "https://mis-parent-app-production.up.railway.app/"
     val deployedApiUrl = (project.findProperty("PARENT_APP_API_URL") as String?)
         ?.takeIf { it.isNotBlank() }
         ?: localApiUrl
@@ -18,16 +21,29 @@ android {
         applicationId = "com.mis.parentapp"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", "\"$deployedApiUrl\"")
     }
-
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(FileInputStream(localPropertiesFile))
+    }
+    signingConfigs {
+        create("release") {
+            storeFile = localProperties.getProperty("KEYSTORE_FILE")?.let { file(it) }
+            storePassword = localProperties.getProperty("KEYSTORE_PASSWORD")
+            keyAlias = localProperties.getProperty("KEY_ALIAS")
+            keyPassword = localProperties.getProperty("KEY_PASSWORD")
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
+            isCrunchPngs = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

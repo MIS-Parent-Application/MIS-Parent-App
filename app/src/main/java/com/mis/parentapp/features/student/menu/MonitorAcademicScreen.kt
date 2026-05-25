@@ -66,7 +66,9 @@ data class AcademicGradeItem(
     val subjectName: String,
     val units: Int,
     val grade: Double,
-    val instructor: String
+    val instructor: String,
+    val remarks: String? = null,
+    val term: String? = null
 )
 
 data class AcademicPerformanceItem(
@@ -116,7 +118,9 @@ fun MonitorAcademicScreen(
                     subjectName = it.subjectName,
                     units = it.units,
                     grade = it.grade,
-                    instructor = it.instructor
+                    instructor = it.instructor,
+                    remarks = it.remarks,
+                    term = it.term
                 )
             }
         }.onSuccess {
@@ -226,7 +230,7 @@ fun AllTabContent(
     performanceEmptyMessage: String,
     onPerformanceClick: (AcademicPerformanceItem) -> Unit
 ) {
-    val leadAlert = performance.firstOrNull { it.type == "missing_input" || it.type == "low_score" }
+    val leadAlert = performance.firstOrNull { it.type == "missing_output" || it.type == "low_score" }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 80.dp)
@@ -380,7 +384,7 @@ fun PerformanceTabContent(
         if (performance.isEmpty()) {
             item { EmptyAcademicMessage(emptyMessage) }
         } else {
-            val missing = performance.filter { it.type == "missing_input" }
+            val missing = performance.filter { it.type == "missing_output" }
             val lowScores = performance.filter { it.type == "low_score" }
             val highScores = performance.filter { it.type == "high_score" }
 
@@ -622,7 +626,7 @@ fun GradientGradeCard(grade: AcademicGradeItem) {
                             text = grade.instructor,
                             style = AppTypes.type_Caption.copy(fontWeight = FontWeight.SemiBold),
                             color = Color(0xFF2E7D32),
-                            maxLines = 2,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             lineHeight = 14.sp
                         )
@@ -632,6 +636,14 @@ fun GradientGradeCard(grade: AcademicGradeItem) {
                             color = Color(0xFF2E7D32).copy(alpha = 0.82f),
                             maxLines = 1
                         )
+                        if (!grade.term.isNullOrBlank()) {
+                            Text(
+                                text = grade.term,
+                                style = AppTypes.type_M3_label_small.copy(fontWeight = FontWeight.Bold),
+                                color = Color(0xFF1B5E20),
+                                maxLines = 1
+                            )
+                        }
                     }
 
                     val isPassed = grade.grade <= 3.0
@@ -656,17 +668,26 @@ fun GradientGradeCard(grade: AcademicGradeItem) {
                 Spacer(modifier = Modifier.weight(1f))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = gradeText,
-                        fontSize = gradeFontSize,
-                        fontWeight = FontWeight.Light,
-                        color = Color(0xFF1B5E20),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(bottom = 4.dp, end = 10.dp)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = gradeText,
+                            fontSize = gradeFontSize,
+                            fontWeight = FontWeight.Light,
+                            color = Color(0xFF1B5E20),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .padding(bottom = 4.dp, end = 10.dp)
+                        )
+                        if (!grade.remarks.isNullOrBlank()) {
+                            Text(
+                                text = grade.remarks,
+                                style = AppTypes.type_Caption.copy(fontSize = 10.sp),
+                                color = if (grade.remarks.equals("Passed", true)) Color(0xFF2E7D32) else Color(0xFFD32F2F),
+                                maxLines = 1
+                            )
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .size(36.dp)

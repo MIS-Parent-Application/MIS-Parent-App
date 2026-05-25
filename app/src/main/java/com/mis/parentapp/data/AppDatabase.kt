@@ -13,9 +13,10 @@ import androidx.room.RoomDatabase
         AttendanceRecord::class,
         EventItem::class,
         StudentEntity::class,
-        SubjectScheduleEntity::class
+        SubjectScheduleEntity::class,
+        FeedbackEntity::class
     ],
-    version = 11, // Incremented version to fix integrity/schema mismatch
+    version = 12, // Incremented version to include FeedbackEntity
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDAO
     abstract fun studentMonitoringDao(): StudentMonitoringDao
     abstract fun eventDao(): EventDao
+    abstract fun feedbackDao(): FeedbackDAO
 
     companion object {
         @Volatile

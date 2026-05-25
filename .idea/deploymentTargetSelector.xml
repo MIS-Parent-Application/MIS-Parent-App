@@ -21,16 +21,24 @@
           </targets>
         </DialogSelection>
       </SelectionState>
-      <SelectionState runConfigName="BodyPreview">
+      <SelectionState runConfigName="useAppContext()">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-20T15:11:09.704331832Z">
+        <DropdownSelection timestamp="2026-05-20T18:24:31.492070900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=AEOB5TR8RKKJJBH6" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=763bb373" />
             </handle>
           </Target>
         </DropdownSelection>
-        <DialogSelection />
+        <DialogSelection>
+          <targets>
+            <Target type="DEFAULT_BOOT">
+              <handle>
+                <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\bins\.android\avd\Medium_Phone.avd" />
+              </handle>
+            </Target>
+          </targets>
+        </DialogSelection>
       </SelectionState>
     </selectionStates>
   </component>

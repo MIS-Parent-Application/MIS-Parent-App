@@ -1,7 +1,133 @@
-# MIS Parent App
+<div align="center">
+  <img src="app/src/main/res/drawable/school_logo.png" width="200px" alt="Colegio de Alicia Logo"/>
 
-[![Android Debug APK Build](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg)](https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml)
+  <h1>MIS Parent App - Full Stack Documentation</h1>
 
+  <p>
+    <a href="https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml"><img src="https://github.com/MIS-Parent-Application/MIS-Parent-App/actions/workflows/android.yml/badge.svg" alt="Android Debug APK Build"/></a>
+    <a href="https://railway.app/project/f7d6a086-3937-4fd3-bcfe-2162c3a63d7c?environmentId=3132c984-86de-492b-b247-f35e4200b009"><img src="https://img.shields.io/website?label=Railway%20Deployment&url=https%3A%2F%2Fmis-parent-app-production.up.railway.app%2Fapi%2Fapp%2Fversion&style=flat&color=131415" alt="Railway Deployment Status"/></a>
+  </p>
+
+  <p>
+    <a href="http://www.colegiodealicia.com/"><img src="https://img.shields.io/badge/Website-colegiodealicia.com-0066CC?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Website"/></a>
+    <a href="https://www.facebook.com/profile.php?id=61574573837221"><img src="https://img.shields.io/badge/Facebook-Official_Page-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook"/></a>
+    <a href="https://github.com/MIS-Parent-Application/MIS-Parent-App/releases/download/v1.0.1/app-release.apk"><img src="https://img.shields.io/badge/Download-MIS_Parent_App_APK-38B02D?style=for-the-badge&logo=android&logoColor=white" alt="Download MIS Parent App APK"/></a>
+    <a href="https://docs.google.com/document/d/12nX_p62XZBdJY3RFJh4MCzTqaZNwWht3/edit"><img src="https://img.shields.io/badge/Documentation-Google_Docs-EA4335?style=for-the-badge&logo=google-docs&logoColor=white" alt="Documentation"/></a>
+    <a href="https://www.figma.com/design/UamtqxiDJKrvsQHnHENeFs/Parent-App?node-id=0-1&t=8DO0y4AMdGC7fp55-1"><img src="https://img.shields.io/badge/UI_Design-Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white" alt="Figma Design"/></a>
+    <a href="https://drive.google.com/drive/folders/1lZW4yZSBHv25OFWngDQWTb3M-rbwzze3?usp=sharing"><img src="https://img.shields.io/badge/Project_Drive-Storage-FFBA08?style=for-the-badge&logo=googledrive&logoColor=white" alt="Google Drive Folder"/></a>
+  </p>
+</div>
+
+## 📌 Overview
+The **MIS Parent App** is a specialized mobile Management Information System designed to bridge the communication gap between educational institutions and parents. It allows parents to monitor their child's academic progress, attendance, and school activities in real-time through a secure, modern interface.
+
+---
+
+## 🏗️ System Architecture
+The project follows a **Client-Server architecture** with a modern mobile frontend and a multi-database backend.
+
+### 1. Frontend (Mobile)
+- **Framework:** Kotlin Jetpack Compose (Declarative UI)
+- **Local Persistence:** Room Database (SQLite) for offline caching and session management.
+- **Networking:** Retrofit 2 with OkHttp for RESTful communication.
+- **Navigation:** Type-safe Compose Navigation.
+- **Image Loading:** Custom RemoteImage implementation with initials fallback logic.
+
+### 2. Backend (API)
+- **Runtime:** Node.js (Express framework)
+- **Primary Database (SQLite):** Stores student records, schedules, grades, and core application data.
+- **Production Database (PostgreSQL):** Hosted on Railway; specifically handles user feedback and high-durability production logs.
+- **Email System:** Nodemailer (Gmail SMTP) for Two-Factor Authentication (2FA) codes.
+
+---
+
+## 🛠️ Technical Stack
+
+### Mobile Frontend
+- **Language:** Kotlin
+- **UI Architecture:** MVVM (Model-View-ViewModel)
+- **Concurrency:** Kotlin Coroutines & Flow
+- **Dependency Injection:** Manual ViewModel Factories
+- **Build System:** Gradle (Kotlin DSL)
+
+### Backend Services
+- **Language:** JavaScript (Node.js)
+- **Database Drivers:** `sqlite3` for local/core data, `pg` for production PostgreSQL.
+- **Security:** `crypto` for SHA-256 OTP hashing and session verification.
+- **Middleware:** `cors`, `express.json` (10mb limit for profile image uploads).
+
+---
+
+## 📡 API Documentation
+
+### Authentication (`/api/auth`)
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/login` | POST | Authenticates user; returns 2FA requirement status or dashboard data. |
+| `/verify-otp` | POST | Verifies the 6-digit email code and establishes a session. |
+| `/resend-otp` | POST | Invalidates old OTP and issues a fresh one via email. |
+
+### Parent & Student Data (`/api/parent`, `/api/student`)
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/parent/dashboard` | GET | Comprehensive data pull (parent info + list of all children). |
+| `/student/:id/attendance` | GET | Detailed subject-by-subject attendance breakdown. |
+| `/student/:id/grades` | GET | Official grades including Term (Prelim/Midterm) and Remarks. |
+| `/student/:id/academic-performance` | GET | Performance alerts (Missing outputs, High/Low scores). |
+| `/parent/profile` | PATCH | Updates email, phone, or profile image (supports Base64 upload). |
+
+### Communications & Feedback
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/announcements` | GET | Fetches school-wide and college-specific notifications. |
+| `/feedback` | POST | **(Postgres)** Submits user feedback directly to the production database. |
+| `/chat/history/:facultyId` | GET | Retrieves conversation history between a parent and a specific teacher. |
+| `/chat/send` | POST | Sends a new chat message to a faculty member. |
+
+---
+
+## 🗄️ Database Schemas
+
+### SQLite (Core Data)
+- `parents`: Basic info, contact details, and 2FA settings.
+- `students`: Academic profiles linked to parent accounts.
+- `academic_grades`: Official scores with term and instructor details.
+- `class_schedules`: Time, room, and subject mapping for daily tracking.
+- `notifications`: Alerts that populate "Recent Activities" and "Announcements".
+
+### PostgreSQL (Production Logs)
+- `parent_app_feedback`: Stores `user_email`, `feedback_type`, `message`, and `app_version` with automatic timestamps.
+
+---
+
+## 🚀 Deployment & Installation
+
+### Android (Mobile)
+1. **Download:** [Get the latest APK](https://github.com/MIS-Parent-Application/MIS-Parent-App/releases/download/v1.0.1/app-release.apk)
+2. **Installation:** Allow "Unknown Sources" in Android Settings.
+3. **Sign-in username:** jordan 
+4. **Sign-in password:** parent123
+5. **Debug Auto-Login:** The app includes a debug bypass for development (`dev_tester` account).
+
+### Backend (Railway)
+1. **Repository:** Connect the `backend/` directory to a Railway project.
+2. **Environment Variables:**
+   - `DATABASE_URL`: Your PostgreSQL connection string.
+   - `EMAIL_USER` / `EMAIL_PASS`: SMTP credentials for 2FA.
+   - `PORT`: (Default 3000).
+3. **Automatic Schema:** On startup, the backend verifies and creates necessary PostgreSQL tables automatically.
+
+---
+
+## ✨ Key Features & UX Enhancements
+- **Smart Performance Stats:** Dashboard calculates a weighted performance score (60% GPA, 30% Attendance, 10% Task records).
+- **Marquee UI:** Long student names and subject titles automatically pan (right-to-left) to maintain card symmetry.
+- **Data Safety:** Parents can toggle 2FA and clear local data directly from the Settings module.
+- **Integrated Feedback:** Direct line to app developers with Bug/Feature Request categorization.
+
+---
+
+## 🎨 Contributors
 <table style="border-collapse: collapse; border: none;">
   <tr>
     <td style="text-align:center; border: none;">
@@ -32,7 +158,7 @@
       </a>
     </td>
   <td style="text-align:center; border: none;">
-      <a href="https://github.com/Namkee">
+      <a href="https://github.com/Nathzy">
         <img src="https://res.cloudinary.com/dxolxqfc6/image/fetch/w_200,h_200,c_fill,g_face,r_max,f_auto/https://github.com/Namkee.png" width="100px;" alt="Namkee"/>
         <br />
         <sub><b>Jethro Nathaniel Cabahug</b></sub>
@@ -70,82 +196,11 @@
   </tr>
 </table>
 
-
-
-## Download And Install The APK
-
-Use this APK for phone testing and presentation:
-
-[Download MIS Parent App APK](https://raw.githubusercontent.com/MIS-Parent-Application/MIS-Parent-App/master/apk/MIS-Parent-App-debug.apk)
-
-The APK is connected to the deployed backend:
-
-`https://mis-parent-app-production.up.railway.app/`
-
-### Step-By-Step Android Installation
-
-1. Open this README on the Android phone.
-2. Tap **Download MIS Parent App APK**.
-3. Wait for the APK download to finish.
-4. Open the downloaded file from the browser download bar or from the phone's **Files / Downloads** folder.
-5. If Android shows **For your security, your phone is not allowed to install unknown apps from this source**, tap **Settings**.
-6. Turn on **Allow from this source** for the browser or file manager being used.
-7. Go back to the APK installer screen.
-8. Tap **Install**.
-9. After installation finishes, tap **Open**.
-10. Log in using the provided parent test account.
-11. If two-factor authentication is enabled, check the registered Gmail inbox for the verification code.
-12. Enter the newest code in the OTP screen. Do not reuse an old or expired code.
-
-If the phone says the app is blocked by Play Protect, choose **Install anyway** only for this school testing APK. This is expected because the APK is a debug build and is not from the Play Store.
-
-If GitHub opens a black **Unable to view file** screen instead of downloading, tap **Open in browser** first, then download from the browser. The APK cannot be previewed by GitHub; it must be downloaded.
-
-### Test Login
-
-Username:
-
-`jordan.mcclure@email.com`
-
-or
-
-`jordan`
-
-Password:
-
-`parent123`
-
-### Important Notes
-
-- The phone must have internet access because the app uses the online Railway backend.
-- If the APK was installed before, uninstall the old app first if login/session behavior looks outdated.
-- If OTP times out, request a fresh code and use the newest email only.
-- After merging changes to `master`, Railway redeploys the backend automatically.
-
-## 📌 Overview
-The **MIS Parent App** is a mobile application designed to help parents monitor and stay connected with their child's academic and school-related information in real time. It provides easy access to student records, updates, and communication tools through an intuitive and user-friendly interface.
-
-This app is part of a Management Information System (MIS) that improves transparency, communication, and engagement between parents and the school.
+---
+<div align="center">
+  <p>© 2026 Colegio de Alicia. All Rights Reserved.</p>
+</div>
 
 ---
-
-## ✨ Features
-- 📊 View student academic information
-- 📅 Monitor attendance and school updates
-- 🔔 Receive real-time notifications
-- 👨‍👩‍👧 Stay connected with school announcements
-- 📱 User-friendly and accessible interface
-
----
-
-## 🎨 Design & Documentation
-
-- 📄 **Project Documentation:**  
-  https://docs.google.com/document/d/12nX_p62XZBdJY3RFJh4MCzTqaZNwWht3/edit
-
-- 🎨 **Figma Prototype:**  
-  https://www.figma.com/design/UamtqxiDJKrvsQHnHENeFs/Parent-App?node-id=0-1&t=8DO0y4AMdGC7fp55-1
-
----
-
-## 🏗️ Project Structure
+*Documentation Version: 1.1.0*  
+*Last Updated: May 2026*

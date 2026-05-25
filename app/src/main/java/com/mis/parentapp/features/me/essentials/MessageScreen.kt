@@ -32,6 +32,7 @@ fun MessageScreen(
     val messages = viewModel.messages
     val errorMessage = viewModel.errorMessage
     val parentChatId = viewModel.parentChatId
+    val isLoading = viewModel.isLoading
 
     // Scroll to bottom when new messages arrive
     LaunchedEffect(messages.size) {
@@ -68,20 +69,26 @@ fun MessageScreen(
             )
         }
         
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
-        ) {
-            items(messages) { item ->
-                ChatBubble(
-                    content = item.message,
-                    time = item.created_at?.replace("T", " ")?.take(16) ?: "",
-                    isOutgoing = item.sender_id == parentChatId
-                )
+        if (isLoading) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
+            ) {
+                items(messages) { item ->
+                    ChatBubble(
+                        content = item.message,
+                        time = item.created_at?.replace("T", " ")?.take(16) ?: "",
+                        isOutgoing = item.sender_id == parentChatId
+                    )
+                }
             }
         }
     }
