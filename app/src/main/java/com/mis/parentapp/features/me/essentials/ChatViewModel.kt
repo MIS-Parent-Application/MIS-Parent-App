@@ -61,10 +61,12 @@ class ChatViewModel : ViewModel() {
             }.onSuccess {
                 messages = it
                 errorMessage = null
+                isLoading = false
                 connectSocket(contactId)
                 startPollingFallback(contactId)
             }.onFailure {
                 errorMessage = "Unable to connect to the faculty chat backend."
+                isLoading = false
             }
         }
     }

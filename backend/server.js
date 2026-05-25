@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-const sqlite3 = require('sqlite3').verbose();
 const nodemailer = require('nodemailer');
 const { Pool } = require('pg');
 
@@ -12,16 +11,18 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Railway PostgreSQL Connection Pool Configuration
+// Railway PostgreSQL Connection Pool Configuration. PostgreSQL is the single
+// backend datastore for parent, student, academic, payment, chat, and feedback data.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Required for production connections on Railway
-  }
+  ssl: process.env.DATABASE_SSL === 'false'
+    ? false
+    : process.env.DATABASE_URL
+      ? { rejectUnauthorized: false }
+      : false
 });
 
 const PORT = process.env.PORT || 3000;
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'mis_parent_app.db');
 const UPLOAD_DIR = path.join(__dirname, 'data', 'uploads');
 const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES || 15);
 const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
@@ -48,9 +49,7 @@ app.get('/api/app/version', (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const db = new sqlite3.Database(DB_PATH);
 app.use('/media/uploads', express.static(UPLOAD_DIR));
 
 const twoFACodes = {};
@@ -59,7 +58,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: getEmailPassword(),
   },
 });
 
@@ -74,22 +73,12 @@ function asyncHandler(handler) {
 
 // Server Health Validation check Route
 app.get('/api/health', (req, res) => {
-    res.json({ status: "healthy", database: process.env.DATABASE_URL ? "postgres" : "sqlite" });
-});
-
-// App Update Manifest Fetch Route
-app.get('/api/app/version', (req, res) => {
-    res.json({
-        latestVersionCode: APP_VERSION_CODE,
-        latestVersionName: APP_VERSION_NAME,
-        downloadUrl: APP_APK_URL,
-        releaseNotes: APP_RELEASE_NOTES
-    });
+    res.json({ status: "healthy", database: "postgres" });
 });
 
 // Submit Feedback into Postgres Database with Local Philippine Timestamp
 app.post('/api/feedback', async (req, res) => {
-    const { userEmail, feedbackType, message, deviceInfo } = req.body;
+    const { userEmail, feedbackType, message, deviceInfo, appVersion } = req.body;
 
     if (!feedbackType || !message) {
         return res.status(400).json({ error: "Feedback type and message are required fields." });
@@ -109,7 +98,7 @@ app.post('/api/feedback', async (req, res) => {
             userEmail,
             feedbackType,
             message,
-            deviceInfo || APP_VERSION_NAME,
+            deviceInfo || appVersion || APP_VERSION_NAME,
             phTimestamp
         ];
 
@@ -318,6 +307,202 @@ app.get('/api/student/:id/academic-performance', asyncHandler(async (req, res) =
     res.json(rows.map(mapAcademicPerformance));
 }));
 
+app.get('/api/parent/security', asyncHandler(async (req, res) => {
+    const parentId = Number(req.query.parentId || 1);
+    const parent = await get('SELECT id, email, phone, two_factor_enabled FROM parents WHERE id = ?', [parentId]);
+    if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+    }
+    res.json({
+        parentId: parent.id,
+        email: parent.email,
+        phone: parent.phone,
+        twoFactorEnabled: Boolean(parent.two_factor_enabled)
+    });
+}));
+
+app.patch('/api/parent/security', asyncHandler(async (req, res) => {
+    const parentId = Number(req.body?.parentId || 1);
+    const enabled = Boolean(req.body?.twoFactorEnabled);
+    const updated = await get(
+        `UPDATE parents
+         SET two_factor_enabled = ?
+         WHERE id = ?
+         RETURNING id, email, phone, two_factor_enabled`,
+        [enabled ? 1 : 0, parentId]
+    );
+    if (!updated) {
+        return res.status(404).json({ error: 'Parent not found' });
+    }
+    res.json({
+        parentId: updated.id,
+        email: updated.email,
+        phone: updated.phone,
+        twoFactorEnabled: Boolean(updated.two_factor_enabled)
+    });
+}));
+
+app.patch('/api/parent/profile', asyncHandler(async (req, res) => {
+    const parentId = Number(req.body?.parentId || 1);
+    const parent = await get('SELECT * FROM parents WHERE id = ?', [parentId]);
+    if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    let profileImageUrl = req.body?.profileImageUrl;
+    if (typeof req.body?.profileImageData === 'string') {
+        if (req.body.profileImageData.trim() === '') {
+            profileImageUrl = '';
+        } else {
+            profileImageUrl = saveBase64Image(
+                req.body.profileImageData,
+                req.body.profileImageMimeType,
+                `parent-${parentId}`
+            );
+        }
+    }
+
+    const updated = await get(
+        `UPDATE parents
+         SET email = COALESCE(?, email),
+             phone = COALESCE(?, phone),
+             profile_image_url = COALESCE(?, profile_image_url),
+             background_image_url = COALESCE(?, background_image_url)
+         WHERE id = ?
+         RETURNING *`,
+        [
+            nullableString(req.body?.email),
+            nullableString(req.body?.phone),
+            profileImageUrl === undefined ? null : profileImageUrl,
+            profileImageUrl === undefined ? null : profileImageUrl,
+            parentId
+        ]
+    );
+    res.json(await getParent(updated.id));
+}));
+
+app.get('/api/student/:id/studyload', asyncHandler(async (req, res) => {
+    const student = await getStudent(Number(req.params.id), true);
+    if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+    }
+    res.json(student.studyLoad);
+}));
+
+app.patch('/api/student/:id/photos', asyncHandler(async (req, res) => {
+    const studentId = Number(req.params.id);
+    const student = await get('SELECT * FROM students WHERE id = ?', [studentId]);
+    if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+    }
+
+    let profileImageUrl = req.body?.profileImageUrl;
+    if (typeof req.body?.profileImageData === 'string' && req.body.profileImageData.trim() !== '') {
+        profileImageUrl = saveBase64Image(
+            req.body.profileImageData,
+            req.body.profileImageMimeType,
+            `student-${studentId}`
+        );
+    }
+
+    const backgroundImageUrl = req.body?.backgroundImageUrl ?? profileImageUrl;
+    await run(
+        `UPDATE students
+         SET profile_image_url = COALESCE(?, profile_image_url),
+             background_image_url = COALESCE(?, background_image_url)
+         WHERE id = ?`,
+        [
+            profileImageUrl === undefined ? null : profileImageUrl,
+            backgroundImageUrl === undefined ? null : backgroundImageUrl,
+            studentId
+        ]
+    );
+    const updated = await getStudent(studentId);
+    res.json(updated);
+}));
+
+app.get('/api/student/:id/payments', asyncHandler(async (req, res) => {
+    const rows = await all(
+        'SELECT * FROM payment_records WHERE student_id = ? ORDER BY id DESC',
+        [Number(req.params.id)]
+    );
+    res.json(rows.map(mapPayment));
+}));
+
+app.post('/api/student/:id/payments', asyncHandler(async (req, res) => {
+    const studentId = Number(req.params.id);
+    const created = await get(
+        `INSERT INTO payment_records
+         (student_id, invoice_number, purchased_item, payment_option, paid_date, total_amount, pdf_breakdown, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING *`,
+        [
+            studentId,
+            req.body?.invoiceNumber,
+            req.body?.purchasedItem,
+            req.body?.paymentOption,
+            req.body?.paidDate,
+            Number(req.body?.totalAmount || 0),
+            req.body?.pdfBreakdown || '',
+            req.body?.status || 'Paid'
+        ]
+    );
+    res.status(201).json(mapPayment(created));
+}));
+
+app.get('/api/faculty', asyncHandler(async (req, res) => {
+    const rows = await all('SELECT * FROM faculty_contacts ORDER BY name');
+    res.json(rows.map(mapFaculty));
+}));
+
+app.post('/api/auth/parent-login', asyncHandler(async (req, res) => {
+    const parentName = String(req.body?.parentName || '').trim();
+    const parent = await get(
+        `SELECT * FROM parents
+         WHERE LOWER(name) = LOWER(?)
+         ORDER BY id
+         LIMIT 1`,
+        [parentName]
+    ) || await get('SELECT * FROM parents WHERE id = ?', [1]);
+
+    res.json({
+        status: 'success',
+        token: `parent-chat-token-${parent.id}`,
+        parent_data: {
+            userId: `parent_${parent.id}`,
+            parentName: parent.name
+        }
+    });
+}));
+
+app.get('/api/chat/history/:facultyId', asyncHandler(async (req, res) => {
+    const facultyId = req.params.facultyId;
+    const parentId = String(req.query.parentId || 'parent_1');
+    const rows = await all(
+        `SELECT * FROM chat_messages
+         WHERE (sender_id = ? AND receiver_id = ?)
+            OR (sender_id = ? AND receiver_id = ?)
+         ORDER BY created_at ASC, id ASC`,
+        [parentId, facultyId, facultyId, parentId]
+    );
+    res.json(rows.map(mapChatMessage));
+}));
+
+app.post('/api/chat/send', asyncHandler(async (req, res) => {
+    const created = await get(
+        `INSERT INTO chat_messages (sender_id, receiver_id, message, created_at)
+         VALUES (?, ?, ?, ?)
+         RETURNING *`,
+        [
+            req.body?.sender_id || 'parent_1',
+            req.body?.receiver_id,
+            req.body?.message,
+            new Date().toISOString()
+        ]
+    );
+    res.status(201).json(mapChatMessage(created));
+}));
+
 // ==========================================
 // SECURITY & 2FA ENDPOINTS
 // ==========================================
@@ -365,45 +550,60 @@ app.post('/api/2fa/toggle', (req, res) => {
 });
 
 // ==========================================
-// SQLITE PROMISE WRAPPERS & CORE SCHEMAS
+// POSTGRES PROMISE WRAPPERS & CORE SCHEMAS
 // ==========================================
 
-function run(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function onRun(error) {
-            if (error) reject(error);
-            else resolve(this);
-        });
-    });
+function toPostgresSql(sql) {
+    let index = 0;
+    return sql
+        .replace(/\?/g, () => `$${++index}`)
+        .replace(/REAL/gi, 'DOUBLE PRECISION');
 }
 
-function get(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (error, row) => {
-            if (error) reject(error);
-            else resolve(row);
-        });
-    });
+function normalizeRow(row) {
+    if (!row) return row;
+    if (Object.prototype.hasOwnProperty.call(row, 'count')) {
+        row.count = Number(row.count);
+    }
+    return row;
 }
 
-function all(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (error, rows) => {
-            if (error) reject(error);
-            else resolve(rows);
-        });
-    });
+async function run(sql, params = []) {
+    return pool.query(toPostgresSql(sql), params);
+}
+
+async function get(sql, params = []) {
+    const result = await pool.query(toPostgresSql(sql), params);
+    return normalizeRow(result.rows[0]);
+}
+
+async function all(sql, params = []) {
+    const result = await pool.query(toPostgresSql(sql), params);
+    return result.rows.map(normalizeRow);
+}
+
+function toPostgresColumnDefinition(columnDefinition) {
+    return columnDefinition
+        .replace(/INTEGER/gi, 'INTEGER')
+        .replace(/REAL/gi, 'DOUBLE PRECISION');
 }
 
 async function ensureColumn(tableName, columnName, columnDefinition) {
-    const columns = await all(`PRAGMA table_info(${tableName})`);
-    if (!columns.some(column => column.name === columnName)) {
-        await run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
+    const existing = await get(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = ? AND column_name = ?`,
+        [tableName, columnName]
+    );
+    if (!existing) {
+        await run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${toPostgresColumnDefinition(columnDefinition)}`);
     }
 }
 
 async function initDatabase() {
-    await run('PRAGMA foreign_keys = ON');
+    if (!process.env.DATABASE_URL) {
+        throw new Error('DATABASE_URL is required. The backend now uses PostgreSQL for all app data.');
+    }
 
     try {
         await pool.query(`
@@ -438,7 +638,7 @@ async function initDatabase() {
 
     await run(`
         CREATE TABLE IF NOT EXISTS parent_accounts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             parent_id INTEGER NOT NULL,
@@ -453,7 +653,7 @@ async function initDatabase() {
             expires_at TEXT NOT NULL,
             attempts INTEGER NOT NULL DEFAULT 0,
             used INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            created_at TEXT NOT NULL DEFAULT (now()::text),
             FOREIGN KEY(parent_id) REFERENCES parents(id)
         )
     `);
@@ -469,7 +669,7 @@ async function initDatabase() {
             year TEXT NOT NULL,
             class_teacher TEXT NOT NULL,
             attendance TEXT NOT NULL,
-            gpa REAL NOT NULL,
+            gpa DOUBLE PRECISION NOT NULL,
             pending_payments INTEGER NOT NULL DEFAULT 0,
             profile_image_url TEXT NOT NULL DEFAULT '',
             background_image_url TEXT NOT NULL DEFAULT ''
@@ -489,7 +689,7 @@ async function initDatabase() {
     `);
     await run(`
         CREATE TABLE IF NOT EXISTS class_schedules (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             subject TEXT NOT NULL,
             room TEXT NOT NULL,
@@ -502,7 +702,7 @@ async function initDatabase() {
     `);
     await run(`
         CREATE TABLE IF NOT EXISTS study_load_subjects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             schedule_number TEXT NOT NULL,
             course_number TEXT NOT NULL,
@@ -555,11 +755,11 @@ async function initDatabase() {
 
     await run(`
         CREATE TABLE IF NOT EXISTS academic_grades (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             subject_name TEXT NOT NULL,
             units INTEGER NOT NULL,
-            grade REAL NOT NULL,
+            grade DOUBLE PRECISION NOT NULL,
             instructor TEXT NOT NULL,
             remarks TEXT NOT NULL DEFAULT '',
             term TEXT NOT NULL,
@@ -568,7 +768,7 @@ async function initDatabase() {
     `);
     await run(`
         CREATE TABLE IF NOT EXISTS academic_performance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             type TEXT NOT NULL,
             title TEXT NOT NULL,
@@ -589,7 +789,7 @@ async function initDatabase() {
     `);
     await run(`
         CREATE TABLE IF NOT EXISTS attendance_subjects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             subject_name TEXT NOT NULL,
             instructor TEXT NOT NULL,
@@ -602,13 +802,13 @@ async function initDatabase() {
     `);
     await run(`
         CREATE TABLE IF NOT EXISTS payment_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             student_id INTEGER NOT NULL,
             invoice_number TEXT NOT NULL UNIQUE,
             purchased_item TEXT NOT NULL,
             payment_option TEXT NOT NULL,
             paid_date TEXT NOT NULL,
-            total_amount REAL NOT NULL,
+            total_amount DOUBLE PRECISION NOT NULL,
             pdf_breakdown TEXT NOT NULL DEFAULT '',
             status TEXT NOT NULL DEFAULT 'Paid',
             FOREIGN KEY(student_id) REFERENCES students(id)
@@ -625,11 +825,11 @@ async function initDatabase() {
     `);
     await run(`
         CREATE TABLE IF NOT EXISTS chat_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             sender_id TEXT NOT NULL,
             receiver_id TEXT NOT NULL,
             message TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            created_at TEXT NOT NULL DEFAULT (now()::text)
         )
     `);
 
@@ -910,6 +1110,53 @@ function mapAttendance(row) {
     };
 }
 
+function mapPayment(row) {
+    return {
+        id: row.id,
+        studentId: row.student_id,
+        invoiceNumber: row.invoice_number,
+        purchasedItem: row.purchased_item,
+        paymentOption: row.payment_option,
+        paidDate: row.paid_date,
+        totalAmount: Number(row.total_amount),
+        pdfBreakdown: row.pdf_breakdown,
+        status: row.status
+    };
+}
+
+function mapFaculty(row) {
+    return {
+        facultyId: row.faculty_id,
+        name: row.name,
+        department: row.department,
+        email: row.email,
+        subject: row.subject
+    };
+}
+
+function mapChatMessage(row) {
+    return {
+        id: row.id,
+        sender_id: row.sender_id,
+        receiver_id: row.receiver_id,
+        message: row.message,
+        created_at: row.created_at
+    };
+}
+
+function nullableString(value) {
+    if (value === undefined || value === null) return null;
+    return String(value);
+}
+
+function saveBase64Image(base64Data, mimeType, prefix) {
+    const extension = String(mimeType || '').includes('png') ? 'png' : 'jpg';
+    const fileName = `${prefix}-${Date.now()}.${extension}`;
+    const filePath = path.join(UPLOAD_DIR, fileName);
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    return `/media/uploads/${fileName}`;
+}
+
 // ==========================================
 // CORE DATA ACCESS FUNCTIONS
 // ==========================================
@@ -1044,6 +1291,25 @@ function hashOtp(code) {
     return crypto.createHash('sha256').update(`${code}:${OTP_SECRET}`).digest('hex');
 }
 
+function getEmailPassword() {
+    return String(process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS || '')
+        .replace(/\s+/g, '')
+        .trim();
+}
+
+async function sendLoginOtpEmail(parent, code) {
+    if (!process.env.EMAIL_USER || !getEmailPassword()) {
+        throw new Error('Email OTP is not configured. Set EMAIL_USER and EMAIL_APP_PASSWORD or EMAIL_PASS.');
+    }
+    await transporter.sendMail({
+        from: process.env.EMAIL_FROM || `Colegio De Alicia <${process.env.EMAIL_USER}>`,
+        to: parent.email,
+        subject: 'Colegio De Alicia Parent App Verification Code',
+        text: `Your Colegio De Alicia Parent App verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`,
+        html: `<p>Your Colegio De Alicia Parent App verification code is:</p><h2>${code}</h2><p>This code expires in ${OTP_TTL_MINUTES} minutes.</p>`
+    });
+}
+
 async function issueLoginOtp(parent) {
     const code = String(crypto.randomInt(100000, 999999));
     const otpId = crypto.randomBytes(24).toString('hex');
@@ -1055,8 +1321,8 @@ async function issueLoginOtp(parent) {
         [otpId, parent.id, hashOtp(code), expiresAt]
     );
 
-    // Mock sending email
-    console.log(`[MOCK EMAIL] OTP for ${parent.email}: ${code}`);
+    await sendLoginOtpEmail(parent, code);
+    console.log(`OTP email sent to ${parent.email.replace(/(..)(.*)(@.*)/, '$1***$3')}`);
 
     return {
         otpToken: otpId,

@@ -2,12 +2,15 @@ package com.mis.parentapp.features.me.essentials
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -48,8 +52,10 @@ fun MessagesScreen(onMessageClick: (MessageData) -> Unit) {
     var contacts by remember { mutableStateOf(FacultyChatContacts) }
     var lastMessages by remember { mutableStateOf<Map<String, ChatMessageDto>>(emptyMap()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
+        isLoading = true
         runCatching {
             val login = FacultyChatRetrofit.api.parentLogin(ParentChatLoginRequest("Mrs. Santerna"))
             val latest = FacultyChatContacts.associate { contact ->
@@ -64,9 +70,11 @@ fun MessagesScreen(onMessageClick: (MessageData) -> Unit) {
             contacts = FacultyChatContacts
             lastMessages = latest
             errorMessage = null
+            isLoading = false
         }.onFailure {
             contacts = FacultyChatContacts
             errorMessage = "Unable to connect to the faculty chat backend."
+            isLoading = false
         }
     }
 
@@ -91,25 +99,36 @@ fun MessagesScreen(onMessageClick: (MessageData) -> Unit) {
             )
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(contacts) { contact ->
-                val latest = lastMessages[contact.facultyId]
-                val message = MessageData(
-                    id = contact.facultyId,
-                    senderName = contact.name,
-                    lastMessage = latest?.message ?: "${contact.subject} - ${contact.department}",
-                    timestamp = latest?.created_at?.toMessageDate().orEmpty(),
-                    imageRes = null,
-                    gradientColors = listOf(Color(0xFF267D1E), Color(0xFFDEF731))
-                )
-                MessageCard(
-                    message = message,
-                    onClick = { onMessageClick(message) }
-                )
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(contacts) { contact ->
+                    val latest = lastMessages[contact.facultyId]
+                    val message = MessageData(
+                        id = contact.facultyId,
+                        senderName = contact.name,
+                        lastMessage = latest?.message ?: "${contact.subject} - ${contact.department}",
+                        timestamp = latest?.created_at?.toMessageDate().orEmpty(),
+                        imageRes = null,
+                        gradientColors = listOf(Color(0xFF267D1E), Color(0xFFDEF731))
+                    )
+                    MessageCard(
+                        message = message,
+                        onClick = { onMessageClick(message) }
+                    )
+                }
             }
         }
     }
