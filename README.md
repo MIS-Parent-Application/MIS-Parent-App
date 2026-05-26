@@ -11,7 +11,7 @@
   <p>
     <a href="http://www.colegiodealicia.com/"><img src="https://img.shields.io/badge/Website-colegiodealicia.com-0066CC?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Website"/></a>
     <a href="https://www.facebook.com/profile.php?id=61574573837221"><img src="https://img.shields.io/badge/Facebook-Official_Page-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook"/></a>
-    <a href="https://github.com/MIS-Parent-Application/MIS-Parent-App/releases/download/v1.0.1/app-release.apk"><img src="https://img.shields.io/badge/Download-MIS_Parent_App_APK-38B02D?style=for-the-badge&logo=android&logoColor=white" alt="Download MIS Parent App APK"/></a>
+    <a href="https://github.com/MIS-Parent-Application/MIS-Parent-App/releases/download/v1.0.2/app-release.apk"><img src="https://img.shields.io/badge/Download-MIS_Parent_App_APK-38B02D?style=for-the-badge&logo=android&logoColor=white" alt="Download MIS Parent App APK"/></a>
     <a href="https://docs.google.com/document/d/12nX_p62XZBdJY3RFJh4MCzTqaZNwWht3/edit"><img src="https://img.shields.io/badge/Documentation-Google_Docs-EA4335?style=for-the-badge&logo=google-docs&logoColor=white" alt="Documentation"/></a>
     <a href="https://www.figma.com/design/UamtqxiDJKrvsQHnHENeFs/Parent-App?node-id=0-1&t=8DO0y4AMdGC7fp55-1"><img src="https://img.shields.io/badge/UI_Design-Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white" alt="Figma Design"/></a>
     <a href="https://drive.google.com/drive/folders/1lZW4yZSBHv25OFWngDQWTb3M-rbwzze3?usp=sharing"><img src="https://img.shields.io/badge/Project_Drive-Storage-FFBA08?style=for-the-badge&logo=googledrive&logoColor=white" alt="Google Drive Folder"/></a>
@@ -103,7 +103,7 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 ## 🚀 Deployment & Installation
 
 ### Android (Mobile)
-1. **Download:** [Get the latest APK](https://github.com/MIS-Parent-Application/MIS-Parent-App/releases/download/v1.0.1/app-release.apk)
+1. **Download:** [Get the latest APK](https://github.com/MIS-Parent-Application/MIS-Parent-App/releases/download/v1.0.2/app-release.apk)
 2. **Installation:** Allow "Unknown Sources" in Android Settings.
 3. **Sign-in username:** jordan 
 4. **Sign-in password:** parent123
