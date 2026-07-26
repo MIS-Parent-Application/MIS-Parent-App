@@ -1,5 +1,5 @@
-<div align="center">
-  <img src="app/src/main/res/drawable/school_logo.png" width="200px" alt="Colegio de Alicia Logo"/>
+<div style="text-align: center;">
+  <img src="app/src/main/res/drawable/school_logo.png" width="240" alt="Colegio de Alicia Logo"/>
 
   <h1>MIS Parent App - Full Stack Documentation</h1>
 
@@ -197,7 +197,7 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 </table>
 
 ---
-<div align="center">
+<div style="text-align: center;">
   <p>© 2026 Colegio de Alicia. All Rights Reserved.</p>
 </div>
 
