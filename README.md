@@ -36,7 +36,7 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 ### 2. Backend (API)
 - **Runtime:** Node.js (Express framework)
 - **Primary Database (SQLite):** Stores student records, schedules, grades, and core application data.
-- **Production Database (PostgreSQL):** Hosted on Railway; specifically handles user feedback and high-durability production logs.
+- **Production Database (PostgreSQL):** Hosted on Supabase; specifically handles user feedback and high-durability production logs.
 - **Email System:** Nodemailer (Gmail SMTP) for Two-Factor Authentication (2FA) codes.
 
 ---
@@ -202,5 +202,5 @@ The project follows a **Client-Server architecture** with a modern mobile fronte
 </div>
 
 ---
-*Documentation Version: 1.1.0*  
-*Last Updated: May 2026*
+*Documentation Version: 1.2.0*  
+*Last Updated: July 2026*
