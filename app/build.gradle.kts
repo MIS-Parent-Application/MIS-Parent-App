@@ -19,7 +19,7 @@ android {
     }
 
     val primaryApiUrl = localProperties.getProperty("API_BASE_URL") 
-        ?: "https://mis-parent-app-production.up.railway.app/"
+        ?: "https://zqrptajhwbrbxzwdstpg.supabase.co"
     val facultyChatApiUrl = localProperties.getProperty("FACULTY_CHAT_BASE_URL")
         ?: "https://eldroid-backend-express.onrender.com/"
 
