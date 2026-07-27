@@ -22,6 +22,7 @@ android {
         ?: "https://zqrptajhwbrbxzwdstpg.supabase.co"
     val facultyChatApiUrl = localProperties.getProperty("FACULTY_CHAT_BASE_URL")
         ?: "https://eldroid-backend-express.onrender.com/"
+    val supabaseKey = localProperties.getProperty("SUPABASE_KEY") ?: ""
 
     defaultConfig {
         applicationId = "com.mis.parentapp"
@@ -33,6 +34,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", "\"$primaryApiUrl\"")
         buildConfigField("String", "FACULTY_CHAT_BASE_URL", "\"$facultyChatApiUrl\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$primaryApiUrl\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"$supabaseKey\"")
     }
 
     signingConfigs {
@@ -123,4 +126,5 @@ dependencies {
     implementation(platform(libs.bom))
     implementation(libs.postgrest.kt)
     implementation(libs.auth.kt)
+    implementation(libs.ktor.client.android)
 }

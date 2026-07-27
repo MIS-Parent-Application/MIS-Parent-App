@@ -3,6 +3,7 @@ package com.mis.parentapp.network
 import android.content.Context
 import com.mis.parentapp.BuildConfig
 import com.mis.parentapp.data.AppDatabase
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +47,14 @@ object RetrofitInstance {
                     .header("Pragma", "no-cache")
                 
                 // Automatically attach Bearer token if available
-                sessionToken?.let {
+                // Priority: Local sessionToken, then Supabase session
+                val tokenToUse = sessionToken ?: try {
+                    SupabaseInstance.client.auth.currentSessionOrNull()?.accessToken
+                } catch (e: Exception) {
+                    null
+                }
+
+                tokenToUse?.let {
                     requestBuilder.header("Authorization", "Bearer $it")
                 }
                 

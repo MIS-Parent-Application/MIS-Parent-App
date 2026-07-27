@@ -59,7 +59,7 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
 
     fun resendOtp(
         otpToken: String,
-        onSuccess: (String, Int) -> Unit,
+        onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
@@ -67,8 +67,8 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
             val result = repository.resendOtp(otpToken)
             _isLoading.value = false
 
-            result.onSuccess { response ->
-                onSuccess(response.otpToken, response.retryAfterSeconds)
+            result.onSuccess {
+                onSuccess()
             }.onFailure { error ->
                 onError(error.message ?: "Unable to resend verification code")
             }

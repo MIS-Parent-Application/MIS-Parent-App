@@ -3,12 +3,12 @@
 -- 1. Enable RLS
 -- ALL tables should have RLS enabled eventually.
 
--- 2. Parents Table
+-- 2. Parents Table (Modified to link with Supabase Auth)
 CREATE TABLE IF NOT EXISTS parents (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT auth.uid(),
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    phone TEXT NOT NULL,
+    phone TEXT,
     profile_image_url TEXT NOT NULL DEFAULT '',
     background_image_url TEXT NOT NULL DEFAULT '',
     two_factor_enabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS students (
 
 -- 4. Junction Table for Parents and Students
 CREATE TABLE IF NOT EXISTS parent_students (
-    parent_id INTEGER NOT NULL REFERENCES parents(id) ON DELETE CASCADE,
+    parent_id UUID NOT NULL REFERENCES parents(id) ON DELETE CASCADE,
     student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     PRIMARY KEY(parent_id, student_id)
 );
@@ -157,7 +157,31 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Row Level Security (RLS) Examples
--- To truly secure this, you should use Supabase Auth uid()
--- ALTER TABLE parents ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Parents can view their own data" ON parents FOR SELECT USING (auth.uid() = id::text::uuid);
+-- --- SUPABASE AUTH TRIGGER ---
+-- Automatically create a parent profile when a user signs up
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.parents (id, name, email)
+  VALUES (new.id, COALESCE(new.raw_user_meta_data->>'full_name', new.email), new.email);
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- Row Level Security (RLS)
+ALTER TABLE parents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Parents can view their own data" ON parents FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Parents can update their own data" ON parents FOR UPDATE USING (auth.uid() = id);
+
+ALTER TABLE parent_students ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Parents can view their students junction" ON parent_students FOR SELECT USING (auth.uid() = parent_id);
+
+-- Students data access (simplified example)
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Parents can view their students" ON students FOR SELECT
+USING (id IN (SELECT student_id FROM parent_students WHERE parent_id = auth.uid()));

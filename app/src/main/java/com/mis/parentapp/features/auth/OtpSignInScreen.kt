@@ -196,10 +196,9 @@ fun OtpSignInScreen(
                         onClick = {
                             viewModel.resendOtp(
                                 otpToken = currentOtpToken,
-                                onSuccess = { newOtpToken, retryAfterSeconds ->
-                                    currentOtpToken = newOtpToken
+                                onSuccess = {
                                     code = ""
-                                    resendCooldown = retryAfterSeconds
+                                    resendCooldown = 60
                                     Toast.makeText(context, "A new code was sent", Toast.LENGTH_SHORT).show()
                                 },
                                 onError = { message ->
