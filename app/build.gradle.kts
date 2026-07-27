@@ -116,4 +116,9 @@ dependencies {
     implementation(libs.socket.io.client)
 
     implementation(libs.androidx.core.splashscreen)
+
+    // Supabase
+    implementation(platform(libs.bom))
+    implementation(libs.postgrest.kt)
+    implementation(libs.auth.kt)
 }

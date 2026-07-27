@@ -3,6 +3,7 @@
 # Cleaned up duplicates, kept the highest versions
 
 agp = "9.3.1"
+bom = "3.7.0"
 coreKtx = "1.19.0"
 coreSplashscreen = "1.2.0"
 junit = "4.13.2"
@@ -31,6 +32,8 @@ uiText = "1.11.4"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
+bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -56,6 +59,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version = "3.0.0" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version = "3.0.0" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = "1.11.0" }
