@@ -479,10 +479,21 @@ function mapAttendance(r) { return { id: r.id, studentId: r.student_id, subjectN
 function mapAcademicPerformance(r) { return { id: r.id, studentId: r.student_id, type: r.type, title: r.title, subject: r.subject, teacher: r.teacher, summary: r.summary, details: r.details, criteria: r.criteria, imageUrl: r.image_url, score: r.score, status: r.status, assignedDate: r.assigned_date, dueDate: r.due_date, timeAgo: r.time_ago, isPositive: Boolean(r.is_positive) }; }
 
 function saveBase64Image(base64Data, mimeType, prefix) {
-    const ext = mimeType.includes('png') ? 'png' : 'jpg';
+    if (!base64Data) return null;
+
+    // Remove Data URI prefix if present (e.g., "data:image/png;base64,")
+    const base64String = base64Data.replace(/^data:image\/\w+;base64,/, "");
+
+    const ext = mimeType?.includes('png') ? 'png' : 'jpg';
     const name = `${prefix}-${Date.now()}.${ext}`;
-    fs.writeFileSync(path.join(UPLOAD_DIR, name), Buffer.from(base64Data, 'base64'));
-    return `/media/uploads/${name}`;
+
+    try {
+        fs.writeFileSync(path.join(UPLOAD_DIR, name), Buffer.from(base64String, 'base64'));
+        return `/media/uploads/${name}`;
+    } catch (err) {
+        console.error('Failed to save base64 image:', err.message);
+        return null;
+    }
 }
 
 function nullableString(v) { return (v === undefined || v === null) ? null : String(v).trim(); }
