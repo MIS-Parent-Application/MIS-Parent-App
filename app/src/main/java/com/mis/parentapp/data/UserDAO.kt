@@ -23,6 +23,9 @@ interface UserDAO {
     @Query("UPDATE users SET profileImageUri = :uri, profileImageBlob = :blob WHERE username = :username")
     suspend fun updateProfileImage(username: String, uri: String?, blob: ByteArray?)
 
+    @Query("UPDATE users SET twoFactorEnabled = :twoFactor, loginAlertsEnabled = :alerts WHERE username = :username")
+    suspend fun updateSecuritySettings(username: String, twoFactor: Boolean, alerts: Boolean)
+
     @Query("SELECT * FROM users LIMIT 1")
     suspend fun getCurrentUser(): UserEntity?
 

@@ -60,7 +60,9 @@ fun TrackAttendanceScreen(
         errorMessage = null
         val studentId = selectedStudent?.id ?: return@LaunchedEffect
         runCatching {
-            RetrofitInstance.api.getStudentAttendance(studentId).map {
+            RetrofitInstance.api.getStudentAttendance(idFilter = "eq.$studentId")
+        }.onSuccess { list ->
+            attendanceList = list.map {
                 SubjectAttendance(
                     subjectName = it.subjectName,
                     instructor = it.instructor,
@@ -68,8 +70,6 @@ fun TrackAttendanceScreen(
                     totalDays = it.totalDays
                 )
             }
-        }.onSuccess {
-            attendanceList = it
         }.onFailure {
             errorMessage = "Unable to load attendance from the server."
         }

@@ -36,15 +36,15 @@ fun MeetingScreen() {
 
     LaunchedEffect(Unit) {
         runCatching {
-            RetrofitInstance.api.getFacultyContacts().map {
+            RetrofitInstance.api.getFacultyContacts()
+        }.onSuccess { list ->
+            contacts = list.map {
                 ContactData(
                     name = it.name,
                     email = it.email,
                     imageRes = null
                 )
             }
-        }.onSuccess {
-            contacts = it
             errorMessage = null
         }.onFailure {
             errorMessage = "Unable to load meeting contacts from the server."

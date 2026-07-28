@@ -28,8 +28,8 @@ android {
         applicationId = "com.mis.parentapp"
         minSdk = 24
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 175
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", "\"$primaryApiUrl\"")
@@ -121,10 +121,12 @@ dependencies {
     implementation(libs.socket.io.client)
 
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.okhttp.logging)
 
     // Supabase
     implementation(platform(libs.bom))
     implementation(libs.postgrest.kt)
     implementation(libs.auth.kt)
     implementation(libs.ktor.client.android)
+    implementation(libs.okhttp.logging)
 }

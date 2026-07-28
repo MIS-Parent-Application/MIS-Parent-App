@@ -29,6 +29,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedbacksScreen(
+    userProfileViewModel: com.mis.parentapp.features.me.UserProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onOpenTeacherMessages: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -44,6 +45,7 @@ fun FeedbacksScreen(
     var expanded by remember { mutableStateOf(false) }
     
     val savedFeedbacks by feedbackDao.getAllFeedbacks().collectAsState(initial = emptyList())
+    val userEmail = userProfileViewModel.email
 
     Column(
         modifier = Modifier
@@ -158,22 +160,26 @@ fun FeedbacksScreen(
                         feedbackDao.insertFeedback(feedback)
                         
                         // 2. Send to Postgres via Backend
+                        val request = FeedbackRequest(
+                            userEmail = userEmail,
+                            feedbackType = selectedType,
+                            message = "[$subjectText] $feedbackText",
+                            appVersion = BuildConfig.VERSION_NAME
+                        )
+                        android.util.Log.d("FeedbacksScreen", "Submitting Feedback: $request")
+                        
                         runCatching {
-                            RetrofitInstance.api.submitFeedback(
-                                FeedbackRequest(
-                                    userEmail = "parent@example.com", // In a real app, use the logged in user's email
-                                    feedbackType = selectedType,
-                                    message = "[$subjectText] $feedbackText",
-                                    appVersion = BuildConfig.VERSION_NAME
-                                )
-                            )
+                            RetrofitInstance.api.submitFeedback(request)
                         }.onSuccess { response ->
-                            if (response.success) {
-                                println("Feedback successfully sent to server: ${response.message}")
+                            if (response.isSuccessful) {
+                                android.util.Log.d("FeedbacksScreen", "Feedback successfully sent to server (201 Created)")
+                            } else {
+                                val errorBody = response.errorBody()?.string()
+                                android.util.Log.e("FeedbacksScreen", "Server rejected feedback: ${response.code()} - $errorBody")
                             }
                         }.onFailure {
                             // Even if network fails, it's saved locally
-                            println("Network feedback submission failed: ${it.message}")
+                            android.util.Log.e("FeedbacksScreen", "Network feedback submission failed", it)
                         }
                         
                         Toast.makeText(context, "Feedback submitted successfully!", Toast.LENGTH_SHORT).show()

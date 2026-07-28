@@ -92,6 +92,7 @@ import com.mis.parentapp.features.auth.UsernameSignInScreen
 import com.mis.parentapp.features.home.HomeScreen
 import com.mis.parentapp.features.me.AboutScreen
 import com.mis.parentapp.features.me.MeScreen
+import com.mis.parentapp.features.me.UserProfileViewModel
 import com.mis.parentapp.features.me.essentials.ChatViewModel
 import com.mis.parentapp.features.student.StudentScreen
 import com.mis.parentapp.navigation.About
@@ -157,7 +158,11 @@ fun MainScreen(
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
-    val userProfileViewModel: com.mis.parentapp.features.me.UserProfileViewModel = viewModel()
+    val userProfileViewModel: UserProfileViewModel = viewModel()
+
+    androidx.compose.runtime.LaunchedEffect(currentDestination) {
+        // No longer refreshing every time to ensure smooth transitions
+    }
 
     val bottomTabs = listOf(
         BottomTab("Home", Home, Icons.Filled.Home, Icons.Outlined.Home),
@@ -268,8 +273,10 @@ fun MainScreen(
                         navController = navController,
                         startDestination = Home,
                         modifier = Modifier.padding(innerPadding),
-                        enterTransition = { fadeIn(tween(300)) },
-                        exitTransition = { fadeOut(tween(300)) }
+                        enterTransition = com.mis.parentapp.navigation.NavTransitions.enterTransition,
+                        exitTransition = com.mis.parentapp.navigation.NavTransitions.exitTransition,
+                        popEnterTransition = com.mis.parentapp.navigation.NavTransitions.popEnterTransition,
+                        popExitTransition = com.mis.parentapp.navigation.NavTransitions.popExitTransition
                     ) {
                         mainNavGraph(
                             navController,
@@ -361,30 +368,10 @@ fun MainScreen(
                         top = if (isSolidTopBar) innerPadding.calculateTopPadding() else 0.dp,
                         bottom = innerPadding.calculateBottomPadding()
                     ),
-                    enterTransition = {
-                        fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Left,
-                            animationSpec = tween(300)
-                        )
-                    },
-                    exitTransition = {
-                        fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Left,
-                            animationSpec = tween(300)
-                        )
-                    },
-                    popEnterTransition = {
-                        fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Right,
-                            animationSpec = tween(300)
-                        )
-                    },
-                    popExitTransition = {
-                        fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                            AnimatedContentTransitionScope.SlideDirection.Right,
-                            animationSpec = tween(300)
-                        )
-                    }
+                    enterTransition = com.mis.parentapp.navigation.NavTransitions.enterTransition,
+                    exitTransition = com.mis.parentapp.navigation.NavTransitions.exitTransition,
+                    popEnterTransition = com.mis.parentapp.navigation.NavTransitions.popEnterTransition,
+                    popExitTransition = com.mis.parentapp.navigation.NavTransitions.popExitTransition
                 ) {
                     mainNavGraph(
                         navController,

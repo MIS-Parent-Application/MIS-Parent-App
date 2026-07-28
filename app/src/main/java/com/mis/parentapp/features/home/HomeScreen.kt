@@ -138,26 +138,27 @@ fun Body(
     val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
     LaunchedEffect(Unit) {
+        if (studentVM != null && studentVM.students.isNotEmpty()) {
+            return@LaunchedEffect
+        }
+        
         try {
-            // Note: getDashboard() no longer needs parentId as param
-            // it is inferred from the session token on the server.
-            val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM?.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
+            val parentId = userProfileViewModel.actualParentId.ifBlank {
+                RetrofitInstance.tryGetSessionId().orEmpty()
+            }
+            if (parentId.isBlank()) return@LaunchedEffect
+
+            val junctions = RetrofitInstance.api.getParentStudents(parentIdFilter = "eq.$parentId")
+            val children = junctions.map { it.students }
+            
+            val announcements = RetrofitInstance.api.getAnnouncements()
+            val unreadCount = announcements.size // Simple count for now
+            
+            studentVM?.updateStudents(children, unreadCount)
             dashboardError = null
         } catch (e: Exception) {
             e.printStackTrace()
-            val errorMsg = if (e is retrofit2.HttpException) {
-                try {
-                    val errorBody = e.response()?.errorBody()?.string()
-                    val json = com.google.gson.Gson().fromJson(errorBody, com.google.gson.JsonObject::class.java)
-                    json.get("error").asString
-                } catch (_: Exception) {
-                    "Server Error: ${e.code()}"
-                }
-            } else {
-                e.localizedMessage ?: "Unknown connection error"
-            }
-            dashboardError = "Load Failed: $errorMsg"
+            dashboardError = "Load Failed: ${e.localizedMessage}"
         }
     }
 

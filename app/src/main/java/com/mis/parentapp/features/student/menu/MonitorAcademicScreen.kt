@@ -113,7 +113,9 @@ fun MonitorAcademicScreen(
         performanceMessage = null
         val studentId = selectedStudent?.id ?: return@LaunchedEffect
         runCatching {
-            RetrofitInstance.api.getStudentGrades(studentId).map {
+            RetrofitInstance.api.getStudentGrades(idFilter = "eq.$studentId")
+        }.onSuccess { list ->
+            grades = list.map {
                 AcademicGradeItem(
                     subjectName = it.subjectName,
                     units = it.units,
@@ -123,14 +125,14 @@ fun MonitorAcademicScreen(
                     term = it.term
                 )
             }
-        }.onSuccess {
-            grades = it
         }.onFailure {
             gradesMessage = "Unable to load grades from the server."
         }
 
         runCatching {
-            RetrofitInstance.api.getAcademicPerformance(studentId).map {
+            RetrofitInstance.api.getAcademicPerformance(idFilter = "eq.$studentId")
+        }.onSuccess { list ->
+            performance = list.map {
                 AcademicPerformanceItem(
                     id = it.id,
                     type = it.type,
@@ -149,8 +151,6 @@ fun MonitorAcademicScreen(
                     isPositive = it.isPositive
                 )
             }
-        }.onSuccess {
-            performance = it
         }.onFailure {
             performanceMessage = "Unable to load performance records from the server."
         }

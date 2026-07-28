@@ -123,7 +123,9 @@ fun ServicesScreen(
     LaunchedEffect(selectedStudent?.id) {
         val studentId = selectedStudent?.id ?: return@LaunchedEffect
         runCatching {
-            RetrofitInstance.api.getStudentPayments(studentId).map {
+            RetrofitInstance.api.getStudentPayments(idFilter = "eq.$studentId")
+        }.onSuccess { list ->
+            val records = list.map {
                 PaymentRecord(
                     invoiceNumber = it.invoiceNumber,
                     purchasedItem = it.purchasedItem,
@@ -133,9 +135,8 @@ fun ServicesScreen(
                     pdfBreakdown = it.pdfBreakdown
                 )
             }
-        }.onSuccess {
-            paymentHistory.value = it
-            invoiceCounter.intValue = it.size + 1
+            paymentHistory.value = records
+            invoiceCounter.intValue = records.size + 1
         }
     }
 
@@ -166,8 +167,8 @@ fun ServicesScreen(
                         val savedRecords = records.map { record ->
                             runCatching {
                                 RetrofitInstance.api.createStudentPayment(
-                                    studentId,
                                     CreatePaymentRequest(
+                                        studentId = studentId,
                                         invoiceNumber = record.invoiceNumber,
                                         purchasedItem = record.purchasedItem,
                                         paymentOption = record.paymentOption,
@@ -175,7 +176,7 @@ fun ServicesScreen(
                                         totalAmount = record.totalAmount,
                                         pdfBreakdown = record.pdfBreakdown
                                     )
-                                ).let {
+                                ).firstOrNull()?.let {
                                     PaymentRecord(
                                         invoiceNumber = it.invoiceNumber,
                                         purchasedItem = it.purchasedItem,
@@ -184,7 +185,7 @@ fun ServicesScreen(
                                         totalAmount = it.totalAmount,
                                         pdfBreakdown = it.pdfBreakdown
                                     )
-                                }
+                                } ?: record
                             }.getOrElse { record }
                         }
                         paymentHistory.value = savedRecords + paymentHistory.value

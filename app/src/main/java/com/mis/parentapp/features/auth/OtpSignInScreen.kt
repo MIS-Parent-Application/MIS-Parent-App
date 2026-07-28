@@ -4,20 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
@@ -50,6 +38,17 @@ import com.mis.parentapp.ui.theme.AppTypes
 import com.mis.parentapp.ui.theme.ColorsDefaultTheme
 import kotlinx.coroutines.delay
 
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OtpSignInScreen(
     username: String,
@@ -60,13 +59,33 @@ fun OtpSignInScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onSignInSuccess: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var code by remember { mutableStateOf("") }
     var currentOtpToken by remember(otpToken) { mutableStateOf(otpToken) }
     var resendCooldown by remember { mutableStateOf(60) }
+    var isFocused by remember { mutableStateOf(value = false) }
+    val isKeyboardVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
+
+    // Clear focus when keyboard is hidden
+    LaunchedEffect(isKeyboardVisible) {
+        if (!isKeyboardVisible) {
+            focusManager.clearFocus()
+            isFocused = false
+        }
+    }
+
+    val offsetY by animateDpAsState(
+        targetValue = if (isFocused && isKeyboardVisible) (-120).dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "offsetAnimation"
+    )
 
     LaunchedEffect(resendCooldown) {
         if (resendCooldown > 0) {
@@ -103,6 +122,7 @@ fun OtpSignInScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .offset { IntOffset(0, offsetY.value.toInt()) }
                 .padding(24.dp)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -167,13 +187,16 @@ fun OtpSignInScreen(
             ) {
                 TextField(
                     value = code,
-                    onValueChange = { value ->
-                        code = value.filter { it.isDigit() }.take(6)
+                    onValueChange = { newValue: String ->
+                        code = newValue.filter { char: Char -> char.isDigit() }.take(6)
                     },
-                    placeholder = { Text("Verification code", color = Color.Gray) },
+                    placeholder = { 
+                        Text(text = "Verification code", color = Color.Gray) 
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(8.dp))
+                        .onFocusChanged { focusState -> isFocused = focusState.isFocused },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = ColorsDefaultTheme.color_Surface,
                         unfocusedContainerColor = ColorsDefaultTheme.color_Surface,
@@ -192,10 +215,10 @@ fun OtpSignInScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(
-                        enabled = !isLoading && resendCooldown == 0,
+                        enabled = (!isLoading && resendCooldown == 0),
                         onClick = {
                             viewModel.resendOtp(
-                                otpToken = currentOtpToken,
+                                email = email,
                                 onSuccess = {
                                     code = ""
                                     resendCooldown = 60
@@ -253,7 +276,7 @@ fun OtpSignInScreen(
                         onClick = {
                             if (code.length == 6) {
                                 viewModel.verifyOtp(
-                                    username = username,
+                                    username = email, // Use the normalized email from Supabase
                                     pass = password,
                                     otpToken = currentOtpToken,
                                     code = code,

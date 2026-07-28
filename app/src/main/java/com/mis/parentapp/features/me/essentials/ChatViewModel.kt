@@ -10,10 +10,12 @@ import com.mis.parentapp.network.FacultyChatRetrofit
 import com.mis.parentapp.network.ParentChatLoginRequest
 import io.socket.client.IO
 import io.socket.client.Socket
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -54,12 +56,15 @@ class ChatViewModel : ViewModel() {
 
         viewModelScope.launch {
             runCatching {
-                val login = FacultyChatRetrofit.api.parentLogin(ParentChatLoginRequest(ParentChatName))
+                withContext(Dispatchers.IO) {
+                    val login = FacultyChatRetrofit.api.parentLogin(ParentChatLoginRequest(ParentChatName))
+                    val history = FacultyChatRetrofit.api.getChatHistory(contactId, "Bearer ${login.token}").data
+                    Pair(login, history)
+                }
+            }.onSuccess { (login, history) ->
                 chatToken = login.token
                 parentChatId = login.parent_data.userId
-                FacultyChatRetrofit.api.getChatHistory(contactId, "Bearer ${login.token}").data
-            }.onSuccess {
-                messages = it
+                messages = history
                 errorMessage = null
                 isLoading = false
                 connectSocket(contactId)
@@ -114,7 +119,9 @@ class ChatViewModel : ViewModel() {
     private suspend fun refreshHistory(contactId: String) {
         val token = chatToken ?: return
         runCatching {
-            FacultyChatRetrofit.api.getChatHistory(contactId, "Bearer $token").data
+            withContext(Dispatchers.IO) {
+                FacultyChatRetrofit.api.getChatHistory(contactId, "Bearer $token").data
+            }
         }.onSuccess {
             messages = it
             errorMessage = null

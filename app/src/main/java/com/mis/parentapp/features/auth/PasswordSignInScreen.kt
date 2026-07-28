@@ -3,20 +3,7 @@ package com.mis.parentapp.features.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -46,9 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mis.parentapp.R
 import com.mis.parentapp.ui.theme.AppTypes
@@ -75,12 +61,12 @@ fun PasswordSignInScreen(
     viewModel: AuthViewModel,
     onBack: () -> Unit,
     onSignInSuccess: () -> Unit,
+    modifier: Modifier = Modifier,
     onOtpRequired: (String, String, String) -> Unit = { _, _, _ -> },
-    modifier: Modifier = Modifier
 ) {
     var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var isFocused by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(value = false) }
+    var isFocused by remember { mutableStateOf(value = false) }
     val isKeyboardVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
 
@@ -92,7 +78,6 @@ fun PasswordSignInScreen(
         }
     }
 
-    val density = androidx.compose.ui.platform.LocalDensity.current
     val offsetY by animateDpAsState(
         targetValue = if (isFocused && isKeyboardVisible) (-120).dp else 0.dp,
         animationSpec = spring(
@@ -101,6 +86,7 @@ fun PasswordSignInScreen(
         ),
         label = "offsetAnimation"
     )
+
     val context = androidx.compose.ui.platform.LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -132,6 +118,7 @@ fun PasswordSignInScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .offset { IntOffset(0, offsetY.value.toInt()) }
                 .padding(24.dp)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -189,12 +176,14 @@ fun PasswordSignInScreen(
             ) {
                 TextField(
                     value = password,
-                    onValueChange = { password = it },
-                    placeholder = { Text(stringResource(id = R.string.password_hint), color = Color.Gray) },
+                    onValueChange = { newValue: String -> password = newValue },
+                    placeholder = { 
+                        Text(text = stringResource(id = R.string.password_hint), color = Color.Gray) 
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .onFocusChanged { isFocused = it.isFocused },
+                        .onFocusChanged { focusState -> isFocused = focusState.isFocused },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = ColorsDefaultTheme.color_Surface,
                         unfocusedContainerColor = ColorsDefaultTheme.color_Surface,

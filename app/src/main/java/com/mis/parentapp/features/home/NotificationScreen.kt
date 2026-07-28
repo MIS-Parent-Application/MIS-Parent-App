@@ -40,8 +40,9 @@ fun NotificationScreen(
         isLoading = true
         errorMessage = null
         try {
+            val filter = selectedStudent?.id?.let { "eq.$it" }
             notifications = RetrofitInstance.api
-                .getNotifications(selectedStudent?.id)
+                .getNotifications(idFilter = filter)
                 .map { dto ->
                     NotificationData(
                         id = dto.id.toString(),

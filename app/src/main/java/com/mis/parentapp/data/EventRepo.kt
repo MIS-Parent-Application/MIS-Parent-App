@@ -3,8 +3,10 @@ package com.mis.parentapp.data
 import com.mis.parentapp.network.ApiService
 import com.mis.parentapp.network.CalendarEventDto
 import com.mis.parentapp.network.RetrofitInstance
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -24,13 +26,16 @@ class EventRepository(
     }
 
     suspend fun refreshEvents(studentId: Int? = null) {
-        val syncedEvents = api.getCalendarEvents(studentId).map { it.toEventItem() }
-        recentEvents.value = syncedEvents
-            .filter { it.eventType == "RECENT" }
-            .sortedWith(compareByDescending<EventItem> { it.date }.thenBy { it.time })
-        upcomingEvents.value = syncedEvents
-            .filter { it.eventType == "UPCOMING" }
-            .sortedWith(compareBy<EventItem> { it.date }.thenBy { it.time })
+        withContext(Dispatchers.IO) {
+            val filter = studentId?.let { "eq.$it" }
+            val syncedEvents = api.getCalendarEvents(idFilter = filter).map { it.toEventItem() }
+            recentEvents.value = syncedEvents
+                .filter { it.eventType == "RECENT" }
+                .sortedWith(compareByDescending<EventItem> { it.date }.thenBy { it.time })
+            upcomingEvents.value = syncedEvents
+                .filter { it.eventType == "UPCOMING" }
+                .sortedWith(compareBy<EventItem> { it.date }.thenBy { it.time })
+        }
     }
 
     private fun CalendarEventDto.toEventItem(): EventItem {

@@ -66,7 +66,9 @@ fun StudyLoadScreen(
         isLoading = true
         errorMessage = null
         try {
-            subjects = selectedStudent?.let { RetrofitInstance.api.getStudyLoad(it.id) } ?: emptyList()
+            subjects = selectedStudent?.let { 
+                RetrofitInstance.api.getStudyLoad(idFilter = "eq.${it.id}") 
+            } ?: emptyList()
         } catch (e: Exception) {
             errorMessage = "Unable to load study load."
             subjects = selectedStudent?.studyLoad ?: emptyList()

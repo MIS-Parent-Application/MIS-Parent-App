@@ -16,7 +16,7 @@ import androidx.room.RoomDatabase
         SubjectScheduleEntity::class,
         FeedbackEntity::class
     ],
-    version = 13, // Incremented version to include FeedbackEntity
+    version = 14, // Incremented version to include security settings in UserEntity
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

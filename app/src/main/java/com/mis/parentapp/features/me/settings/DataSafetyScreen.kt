@@ -29,6 +29,13 @@ fun DataSafetyScreen(
     var show2FADialog by remember { mutableStateOf(false) }
     var pending2FAToggle by remember { mutableStateOf(false) }
 
+    LaunchedEffect(userProfileViewModel.errorMessage) {
+        userProfileViewModel.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            userProfileViewModel.errorMessage = null
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -69,7 +76,7 @@ fun DataSafetyScreen(
         SafetyControl(
             title = "Two-Factor Authentication",
             description = "Add an extra layer of security to your account.",
-            enabled = userProfileViewModel.twoFactorEnabled,
+            enabled = if (show2FADialog) pending2FAToggle else userProfileViewModel.twoFactorEnabled,
 
             onToggle = {
 

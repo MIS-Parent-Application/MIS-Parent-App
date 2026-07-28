@@ -53,7 +53,8 @@ fun CalendarScreen(
         isLoading = true
         errorMessage = null
         try {
-            events = RetrofitInstance.api.getCalendarEvents(selectedStudent?.id)
+            val filter = selectedStudent?.id?.let { "eq.$it" }
+            events = RetrofitInstance.api.getCalendarEvents(idFilter = filter)
         } catch (e: Exception) {
             errorMessage = "Unable to load calendar."
         } finally {

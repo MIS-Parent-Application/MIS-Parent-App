@@ -8,9 +8,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,7 +22,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mis.parentapp.core.MainScreen
 import com.mis.parentapp.data.AppDatabase
-import com.mis.parentapp.data.UserEntity
 import com.mis.parentapp.data.UserRepository
 import com.mis.parentapp.features.auth.AuthViewModel
 import com.mis.parentapp.features.auth.GetStartedScreen
@@ -37,13 +40,33 @@ import com.mis.parentapp.shared.ThemeMode
 import com.mis.parentapp.ui.theme.ParentAppTheme
 
 class MainActivity : ComponentActivity() {
+    private var isCheckingAuth by mutableStateOf(true)
+    private var initialDestination: Any by mutableStateOf(OnBoarding)
+
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { isCheckingAuth }
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val database = AppDatabase.getDatabase(this)
+        val userRepository = UserRepository(database.userDao())
+
+        lifecycleScope.launch {
+            try {
+                if (userRepository.isUserLoggedIn()) {
+                    initialDestination = MainContainer
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isCheckingAuth = false
+            }
+        }
+
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
             val settingsViewModel: AppSettingsViewModel = viewModel()
@@ -53,28 +76,24 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
             ParentAppTheme(darkTheme = darkTheme) {
-                AppNavigation(windowSizeClass)
+                if (!isCheckingAuth) {
+                    AppNavigation(windowSizeClass, initialDestination)
+                }
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation(windowSizeClass: androidx.compose.material3.windowsizeclass.WindowSizeClass) {
+fun AppNavigation(
+    windowSizeClass: androidx.compose.material3.windowsizeclass.WindowSizeClass,
+    initialDestination: Any
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val database = remember { AppDatabase.getDatabase(context) }
     val userRepository = remember { UserRepository(database.userDao()) }
     val authViewModel = remember { AuthViewModel(userRepository) }
-
-    // --- REDIRECT TO DASHBOARD IF ALREADY LOGGED IN ---
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        if (authViewModel.isUserLoggedIn()) {
-            navController.navigate(MainContainer) {
-                popUpTo(OnBoarding) { inclusive = true }
-            }
-        }
-    }
 
     // --- INITIALIZE SERVER-SIDE SESSION LISTENER ---
     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -91,7 +110,14 @@ fun AppNavigation(windowSizeClass: androidx.compose.material3.windowsizeclass.Wi
     }
 
 
-    NavHost(navController = navController, startDestination = OnBoarding) {
+    NavHost(
+        navController = navController,
+        startDestination = initialDestination,
+        enterTransition = com.mis.parentapp.navigation.NavTransitions.enterTransition,
+        exitTransition = com.mis.parentapp.navigation.NavTransitions.exitTransition,
+        popEnterTransition = com.mis.parentapp.navigation.NavTransitions.popEnterTransition,
+        popExitTransition = com.mis.parentapp.navigation.NavTransitions.popExitTransition
+    ) {
         composable<OnBoarding> {
             GetStartedScreen(
                 onNavigateToSignIn = { bgId ->

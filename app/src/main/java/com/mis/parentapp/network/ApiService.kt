@@ -3,91 +3,116 @@ package com.mis.parentapp.network
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Body
-import retrofit2.http.POST
 import retrofit2.http.PATCH
-import retrofit2.http.Path
+import retrofit2.http.POST
 import retrofit2.http.Query
+import retrofit2.http.Header
 
 interface ApiService {
 
-    @GET("api/app/version")
-    suspend fun getAppVersion(): AppVersionDto
+    @GET("rest/v1/app_versions")
+    suspend fun getAppVersion(
+        @Query("select") columns: String = "*"
+    ): List<AppVersionDto>
 
-    @POST("api/auth/login")
-    suspend fun login(@Body request: LoginRequest): LoginResponse
+    @GET("rest/v1/faculty")
+    suspend fun getFacultyContacts(
+        @Query("select") columns: String = "*"
+    ): List<FacultyContactDto>
 
-    @POST("api/auth/verify-otp")
-    suspend fun verifyOtp(@Body request: VerifyOtpRequest): LoginResponse
+    @GET("rest/v1/payments")
+    suspend fun getStudentPayments(
+        @Query("student_id") idFilter: String,
+        @Query("select") columns: String = "*"
+    ): List<PaymentRecordDto>
 
-    @POST("api/auth/resend-otp")
-    suspend fun resendOtp(@Body request: ResendOtpRequest): ResendOtpResponse
-
-    @POST("api/auth/parent-login")
-    suspend fun parentChatLogin(@Body request: ParentChatLoginRequest): ParentChatLoginResponse
-
-    @GET("api/parent/dashboard")
-    suspend fun getDashboard(): ParentDashboard
-
-    @GET("api/parent/security")
-    suspend fun getParentSecurity(@Query("parentId") parentId: Int = 1): ParentSecuritySettingsDto
-
-    @PATCH("api/parent/security")
-    suspend fun updateParentSecurity(@Body request: UpdateParentSecurityRequest): ParentSecuritySettingsDto
-
-    @PATCH("api/parent/profile")
-    suspend fun updateParentProfile(@Body request: ParentProfileUpdateRequest): Parent
-
-    @GET("api/notifications")
-    suspend fun getNotifications(@Query("studentId") studentId: Int? = null): List<NotificationDto>
-
-    @GET("api/calendar")
-    suspend fun getCalendarEvents(@Query("studentId") studentId: Int? = null): List<CalendarEventDto>
-
-    @GET("api/student/{id}/studyload")
-    suspend fun getStudyLoad(@Path("id") studentId: Int): List<StudyLoadSubject>
-
-    @PATCH("api/student/{id}/photos")
-    suspend fun updateStudentPhotos(
-        @Path("id") studentId: Int,
-        @Body request: StudentPhotoUpdateRequest
-    ): Child
-
-    @GET("api/student/{id}/grades")
-    suspend fun getStudentGrades(@Path("id") studentId: Int): List<GradeDto>
-
-    @GET("api/student/{id}/academic-performance")
-    suspend fun getAcademicPerformance(@Path("id") studentId: Int): List<AcademicPerformanceDto>
-
-    @GET("api/student/{id}/attendance")
-    suspend fun getStudentAttendance(@Path("id") studentId: Int): List<AttendanceDto>
-
-    @GET("api/student/{id}/payments")
-    suspend fun getStudentPayments(@Path("id") studentId: Int): List<PaymentRecordDto>
-
-    @POST("api/student/{id}/payments")
+    @POST("rest/v1/payments")
     suspend fun createStudentPayment(
-        @Path("id") studentId: Int,
-        @Body request: CreatePaymentRequest
-    ): PaymentRecordDto
+        @Body request: CreatePaymentRequest,
+        @Header("Prefer") prefer: String = "return=representation"
+    ): List<PaymentRecordDto>
 
-    @GET("api/faculty")
-    suspend fun getFacultyContacts(): List<FacultyContactDto>
+    @GET("rest/v1/parents")
+    suspend fun getParentProfile(
+        @Query("id") idFilter: String,
+        @Query("select") columns: String = "*"
+    ): List<Parent>
 
-    @GET("api/chat/history/{facultyId}")
-    suspend fun getChatHistory(
-        @Path("facultyId") facultyId: String,
-        @Query("parentId") parentId: String = "parent_1"
-    ): List<ChatMessageDto>
+    @GET("rest/v1/parents")
+    suspend fun getParentSecurity(
+        @Query("id") idFilter: String,
+        @Query("select") columns: String = "id,email,phone,two_factor_enabled"
+    ): List<ParentSecuritySettingsDto>
 
-    @POST("api/chat/send")
-    suspend fun sendChatMessage(@Body request: SendChatMessageRequest): ChatMessageDto
+    @PATCH("rest/v1/parents")
+    suspend fun updateParentSecurity(
+        @Query("id") idFilter: String,
+        @Body request: UpdateParentSecurityRequest,
+        @Header("Prefer") prefer: String = "return=representation"
+    ): List<ParentSecuritySettingsDto>
 
-    @GET("api/announcements")
-    suspend fun getAnnouncements(): List<AnnouncementDto>
+    @PATCH("rest/v1/parents")
+    suspend fun updateParentProfile(
+        @Query("id") idFilter: String,
+        @Body request: ParentProfileUpdateRequest,
+        @Header("Prefer") prefer: String = "return=representation"
+    ): List<Parent>
 
-    @POST("api/feedback")
-    suspend fun submitFeedback(@Body request: FeedbackRequest): FeedbackResponse
+    @GET("rest/v1/notifications")
+    suspend fun getNotifications(
+        @Query("student_id") idFilter: String? = null,
+        @Query("select") columns: String = "*"
+    ): List<NotificationDto>
 
-    @POST("api/auth/logout")
-    suspend fun logout(): Response<Unit>
+    @GET("rest/v1/calendar_events")
+    suspend fun getCalendarEvents(
+        @Query("student_id") idFilter: String? = null,
+        @Query("select") columns: String = "*"
+    ): List<CalendarEventDto>
+
+    @GET("rest/v1/study_load_subjects")
+    suspend fun getStudyLoad(
+        @Query("student_id") idFilter: String,
+        @Query("select") columns: String = "*"
+    ): List<StudyLoadSubject>
+
+    @GET("rest/v1/academic_grades")
+    suspend fun getStudentGrades(
+        @Query("student_id") idFilter: String,
+        @Query("select") columns: String = "*"
+    ): List<GradeDto>
+
+    @GET("rest/v1/academic_performance")
+    suspend fun getAcademicPerformance(
+        @Query("student_id") idFilter: String,
+        @Query("select") columns: String = "*"
+    ): List<AcademicPerformanceDto>
+
+    @GET("rest/v1/attendance_subjects")
+    suspend fun getStudentAttendance(
+        @Query("student_id") idFilter: String,
+        @Query("select") columns: String = "*"
+    ): List<AttendanceDto>
+
+    @GET("rest/v1/announcements")
+    suspend fun getAnnouncements(
+        @Query("select") columns: String = "*"
+    ): List<AnnouncementDto>
+
+    @POST("rest/v1/parent_app_feedback")
+    suspend fun submitFeedback(
+        @Body request: FeedbackRequest,
+        @Header("Prefer") prefer: String = "return=minimal"
+    ): Response<Unit>
+
+    // Support for children fetching
+    @GET("rest/v1/parent_students")
+    suspend fun getParentStudents(
+        @Query("parent_id") parentIdFilter: String,
+        @Query("select") columns: String = "students(*)"
+    ): List<ParentStudentJunctionResponse>
 }
+
+data class ParentStudentJunctionResponse(
+    val students: Child
+)

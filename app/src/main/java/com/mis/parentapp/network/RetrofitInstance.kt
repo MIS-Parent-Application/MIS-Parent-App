@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -27,6 +28,14 @@ object RetrofitInstance {
         onUnauthorized = callback
     }
 
+    fun tryGetSessionId(): String? {
+        return try {
+            SupabaseInstance.client.auth.currentSessionOrNull()?.user?.id
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun resolveMediaUrl(url: String?): String? {
         val cleanUrl = url?.trim().orEmpty()
         if (cleanUrl.isBlank()) return null
@@ -35,16 +44,22 @@ object RetrofitInstance {
     }
 
     private val okHttpClient: OkHttpClient by lazy {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
         OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(90, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .callTimeout(90, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
             .addInterceptor { chain ->
                 val originalRequest = chain.request()
                 val requestBuilder = originalRequest.newBuilder()
                     .header("Cache-Control", "no-cache, no-store, must-revalidate")
                     .header("Pragma", "no-cache")
+                    .header("apikey", BuildConfig.SUPABASE_KEY)
                 
                 // Automatically attach Bearer token if available
                 // Priority: Local sessionToken, then Supabase session

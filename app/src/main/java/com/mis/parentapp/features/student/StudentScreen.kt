@@ -73,9 +73,18 @@ fun StudentScreen(
     val isWide = configuration.screenWidthDp >= 600
 
     LaunchedEffect(Unit) {
+        if (studentVM.students.isNotEmpty()) return@LaunchedEffect
+        
         try {
-            val dashboard = RetrofitInstance.api.getDashboard()
-            studentVM.updateStudents(dashboard.children, dashboard.unreadAnnouncements)
+            // Need the current parent UUID to fetch students
+            val session = RetrofitInstance.tryGetSessionId() ?: ""
+            if (session.isNotBlank()) {
+                val junctions = RetrofitInstance.api.getParentStudents(parentIdFilter = "eq.$session")
+                val children = junctions.map { it.students }
+                if (children.isNotEmpty()) {
+                    studentVM.updateStudents(children)
+                }
+            }
         } catch (_: Exception) {
             errorMessage = "Unable to load student data."
         }

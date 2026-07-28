@@ -31,7 +31,15 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
                     is LoginResult.RequiresOtp -> onOtpRequired(loginResult.otpToken, loginResult.email)
                 }
             }.onFailure { error ->
-                onError(error.message ?: "Login failed")
+                android.util.Log.e("AuthViewModel", "Sign in failed", error)
+                val message = when {
+                    error.message?.contains("timeout", ignoreCase = true) == true -> 
+                        "Connection timed out. Please check your internet or try again."
+                    error.message?.contains("network", ignoreCase = true) == true ->
+                        "Network error. Please check your connection."
+                    else -> error.message ?: "Login failed"
+                }
+                onError(message)
             }
         }
     }
@@ -52,19 +60,29 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
             result.onSuccess {
                 onSuccess()
             }.onFailure { error ->
-                onError(error.message ?: "Verification failed")
+                android.util.Log.e("AuthViewModel", "OTP verification failed", error)
+                val message = if (error is io.github.jan.supabase.auth.exception.AuthRestException) {
+                    when (error.error) {
+                        "invalid_grant" -> "Invalid or expired code. Please try again."
+                        "over_confirmation_rate_limit" -> "Too many attempts. Please wait a while."
+                        else -> error.description ?: "Verification failed: ${error.error}"
+                    }
+                } else {
+                    error.message ?: "Verification failed"
+                }
+                onError(message)
             }
         }
     }
 
     fun resendOtp(
-        otpToken: String,
+        email: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.resendOtp(otpToken)
+            val result = repository.resendOtp(email)
             _isLoading.value = false
 
             result.onSuccess {

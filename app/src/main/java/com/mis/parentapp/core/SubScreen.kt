@@ -296,30 +296,10 @@ fun SubScreen(
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                enterTransition = {
-                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(300)
-                    )
-                },
-                exitTransition = {
-                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(300)
-                    )
-                },
-                popEnterTransition = {
-                    fadeIn(animationSpec = tween(300)) + slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(300)
-                    )
-                },
-                popExitTransition = {
-                    fadeOut(animationSpec = tween(300)) + slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(300)
-                    )
-                }
+                enterTransition = com.mis.parentapp.navigation.NavTransitions.enterTransition,
+                exitTransition = com.mis.parentapp.navigation.NavTransitions.exitTransition,
+                popEnterTransition = com.mis.parentapp.navigation.NavTransitions.popEnterTransition,
+                popExitTransition = com.mis.parentapp.navigation.NavTransitions.popExitTransition
             ) {
                 composable<Notification> {
                     NotificationScreen(
@@ -427,6 +407,7 @@ fun SubScreen(
                 }
                 composable<Feedbacks> {
                     FeedbacksScreen(
+                        userProfileViewModel = userProfileViewModel ?: viewModel(),
                         onOpenTeacherMessages = {
                             navController.navigate(Messages)
                         }

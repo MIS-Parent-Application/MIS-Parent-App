@@ -75,8 +75,9 @@ fun MeScreen(
     LaunchedEffect(Unit) {
         runCatching {
             RetrofitInstance.api.getAppVersion()
-        }.onSuccess { version ->
-            if (version.versionCode > BuildConfig.VERSION_CODE && !version.apkUrl.isNullOrBlank()) {
+        }.onSuccess { versions ->
+            val version = versions.firstOrNull()
+            if (version != null && version.versionCode > BuildConfig.VERSION_CODE && !version.apkUrl.isNullOrBlank()) {
                 availableUpdate = version
             }
         }
@@ -295,7 +296,8 @@ private fun checkForAppUpdate(context: android.content.Context, onUpdateFound: (
     CoroutineScope(Dispatchers.Main).launch {
         runCatching {
             RetrofitInstance.api.getAppVersion()
-        }.onSuccess { version ->
+        }.onSuccess { versions ->
+            val version = versions.firstOrNull() ?: return@onSuccess
             val apkUrl = version.apkUrl.orEmpty()
             when {
                 version.versionCode <= BuildConfig.VERSION_CODE -> {

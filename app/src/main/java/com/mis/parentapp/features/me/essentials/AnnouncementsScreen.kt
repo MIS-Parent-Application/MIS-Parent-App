@@ -36,7 +36,9 @@ fun AnnouncementsScreen() {
 
     LaunchedEffect(Unit) {
         runCatching {
-            RetrofitInstance.api.getAnnouncements().map {
+            RetrofitInstance.api.getAnnouncements()
+        }.onSuccess { list ->
+            announcements = list.map {
                 AnnouncementData(
                     id = it.id.toString(),
                     title = it.title,
@@ -49,8 +51,6 @@ fun AnnouncementsScreen() {
                     }
                 )
             }
-        }.onSuccess {
-            announcements = it
             errorMessage = null
         }.onFailure {
             errorMessage = "Unable to load announcements from the server."

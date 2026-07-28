@@ -14,7 +14,9 @@ data class UserEntity(
     val profileImageUri: String? = null,
     val profileImageBlob: ByteArray? = null,
     val lastLoginTime: Long = 0L,
-    val sessionToken: String? = null
+    val sessionToken: String? = null,
+    val twoFactorEnabled: Boolean = false,
+    val loginAlertsEnabled: Boolean = false
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -34,6 +36,8 @@ data class UserEntity(
             if (!profileImageBlob.contentEquals(other.profileImageBlob)) return false
         } else if (other.profileImageBlob != null) return false
         if (lastLoginTime != other.lastLoginTime) return false
+        if (twoFactorEnabled != other.twoFactorEnabled) return false
+        if (loginAlertsEnabled != other.loginAlertsEnabled) return false
 
         return true
     }
@@ -48,6 +52,8 @@ data class UserEntity(
         result = 31 * result + (profileImageUri?.hashCode() ?: 0)
         result = 31 * result + (profileImageBlob?.contentHashCode() ?: 0)
         result = 31 * result + lastLoginTime.hashCode()
+        result = 31 * result + twoFactorEnabled.hashCode()
+        result = 31 * result + loginAlertsEnabled.hashCode()
         return result
     }
 }

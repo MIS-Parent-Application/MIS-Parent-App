@@ -56,33 +56,39 @@ data class ResendOtpResponse(
 )
 
 data class ParentSecuritySettingsDto(
-    val parentId: Int,
+    @SerializedName("id")
+    val parentId: String,
     val email: String,
     val phone: String,
+    @SerializedName("two_factor_enabled")
     val twoFactorEnabled: Boolean
 )
 
 data class UpdateParentSecurityRequest(
-    val parentId: Int = 1,
+    @SerializedName("two_factor_enabled")
     val twoFactorEnabled: Boolean
 )
 
 data class Parent(
-    val id: Int,
+    val id: String,
     val name: String,
     val email: String,
     val phone: String,
-    val children: List<Int>,
+    val children: List<Int> = emptyList(),
+    @SerializedName("profile_image_url")
     val profileImageUrl: String? = null,
+    @SerializedName("background_image_url")
     val backgroundImageUrl: String? = null
 )
 
 data class ParentProfileUpdateRequest(
-    val parentId: Int = 1,
     val email: String? = null,
     val phone: String? = null,
+    @SerializedName("profile_image_url")
     val profileImageUrl: String? = null,
+    @SerializedName("profile_image_data")
     val profileImageData: String? = null,
+    @SerializedName("profile_image_mime_type")
     val profileImageMimeType: String? = null
 )
 
@@ -225,6 +231,8 @@ data class PaymentRecordDto(
 )
 
 data class CreatePaymentRequest(
+    @SerializedName("student_id")
+    val studentId: Int,
     val invoiceNumber: String,
     val purchasedItem: String,
     val paymentOption: String,
@@ -277,9 +285,13 @@ data class SendChatMessageRequest(
 )
 
 data class FeedbackRequest(
+    @SerializedName("user_email")
     val userEmail: String?,
+    @SerializedName("feedback_type")
     val feedbackType: String,
+    @SerializedName("message")
     val message: String,
+    @SerializedName("app_version")
     val appVersion: String
 )
 
