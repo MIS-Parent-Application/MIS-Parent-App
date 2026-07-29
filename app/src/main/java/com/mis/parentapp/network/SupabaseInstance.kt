@@ -4,6 +4,7 @@ import com.mis.parentapp.BuildConfig
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.annotations.SupabaseInternal
 import io.ktor.client.plugins.HttpTimeout
 import kotlin.time.Duration.Companion.seconds
@@ -16,6 +17,7 @@ object SupabaseInstance {
     ) {
         install(Auth)
         install(Postgrest)
+        install(Storage)
         
         httpConfig {
             install(HttpTimeout) {

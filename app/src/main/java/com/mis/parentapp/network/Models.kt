@@ -75,6 +75,8 @@ data class Parent(
     val email: String,
     val phone: String,
     val children: List<Int> = emptyList(),
+    @SerializedName("two_factor_enabled")
+    val twoFactorEnabled: Boolean = false,
     @SerializedName("profile_image_url")
     val profileImageUrl: String? = null,
     @SerializedName("background_image_url")
@@ -95,21 +97,28 @@ data class ParentProfileUpdateRequest(
 data class Child(
     val id: Int,
     val name: String,
+    @SerializedName("roll_number")
     val rollNumber: String,
     val grade: String,
     val section: String,
     val program: String,
     val course: String,
     val year: String,
+    @SerializedName("class_teacher")
     val classTeacher: String,
     val attendance: String,
     val gpa: Double,
+    @SerializedName("pending_payments")
     val pendingPayments: Int,
     val notificationCount: Int = 0,
     val performancePercentage: Int = 0,
+    @SerializedName("profile_image_url")
     val profileImageUrl: String? = null,
+    @SerializedName("background_image_url")
     val backgroundImageUrl: String? = null,
+    @SerializedName("class_schedules")
     val schedules: List<ClassSchedule> = emptyList(),
+    @SerializedName("study_load_subjects")
     val studyLoad: List<StudyLoadSubject> = emptyList()
 )
 
@@ -125,7 +134,9 @@ data class ClassSchedule(
     val room: String,
     val instructor: String,
     val day: String,
+    @SerializedName("start_time")
     val startTime: String,
+    @SerializedName("end_time")
     val endTime: String
 )
 
@@ -136,24 +147,30 @@ data class StudyLoadSubject(
     val instructor: String,
     val schedule: String,
     val room: String,
+    @SerializedName("schedule_number")
     val scheduleNumber: String = "",
+    @SerializedName("course_number")
     val courseNumber: String = code,
     val time: String = schedule,
     val days: String = "",
     val remarks: String = "",
     val semester: String = "2nd Sem.",
     val schoolYear: String = "S.Y. 2025-2026",
+    @SerializedName("date_enrolled")
     val dateEnrolled: String = ""
 )
 
 data class NotificationDto(
     val id: Int,
+    @SerializedName("student_id")
     val studentId: Int?,
     val text: String,
     val type: String,
     val time: String,
     val category: String,
+    @SerializedName("is_new")
     val isNew: Boolean,
+    @SerializedName("image_url")
     val imageUrl: String? = null
 )
 
@@ -165,6 +182,7 @@ data class CalendarEventDto(
     val time: String,
     val description: String,
     val status: String,
+    @SerializedName("image_url")
     val imageUrl: String?
 )
 
@@ -174,12 +192,15 @@ data class AnnouncementDto(
     val content: String,
     val category: String,
     val urgent: Boolean,
+    @SerializedName("image_url")
     val imageUrl: String? = null
 )
 
 data class GradeDto(
     val id: Int,
+    @SerializedName("student_id")
     val studentId: Int,
+    @SerializedName("subject_name")
     val subjectName: String,
     val units: Int,
     val grade: Double,
@@ -190,6 +211,7 @@ data class GradeDto(
 
 data class AcademicPerformanceDto(
     val id: Int,
+    @SerializedName("student_id")
     val studentId: Int,
     val type: String,
     val title: String,
@@ -198,34 +220,52 @@ data class AcademicPerformanceDto(
     val summary: String,
     val details: String,
     val criteria: String,
+    @SerializedName("image_url")
     val imageUrl: String?,
     val score: String?,
     val status: String,
+    @SerializedName("assigned_date")
     val assignedDate: String,
+    @SerializedName("due_date")
     val dueDate: String,
+    @SerializedName("time_ago")
     val timeAgo: String,
+    @SerializedName("is_positive")
     val isPositive: Boolean
 )
 
 data class AttendanceDto(
     val id: Int,
+    @SerializedName("student_id")
     val studentId: Int,
+    @SerializedName("subject_name")
     val subjectName: String,
     val instructor: String,
+    @SerializedName("present_days")
     val presentDays: Int,
+    @SerializedName("total_days")
     val totalDays: Int,
+    @SerializedName("late_days")
     val lateDays: Int,
+    @SerializedName("absent_days")
     val absentDays: Int
 )
 
 data class PaymentRecordDto(
     val id: Int,
+    @SerializedName("student_id")
     val studentId: Int,
+    @SerializedName("invoiceNumber")
     val invoiceNumber: String,
+    @SerializedName("purchasedItem")
     val purchasedItem: String,
+    @SerializedName("paymentOption")
     val paymentOption: String,
+    @SerializedName("paidDate")
     val paidDate: String,
+    @SerializedName("totalAmount")
     val totalAmount: Double,
+    @SerializedName("pdfBreakdown")
     val pdfBreakdown: String,
     val status: String
 )
@@ -243,6 +283,7 @@ data class CreatePaymentRequest(
 )
 
 data class FacultyContactDto(
+    @SerializedName("facultyId")
     val facultyId: String,
     val name: String,
     val department: String,

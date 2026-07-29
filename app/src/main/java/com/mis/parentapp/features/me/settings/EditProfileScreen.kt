@@ -1,5 +1,8 @@
 package com.mis.parentapp.features.me.settings
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,13 +19,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mis.parentapp.features.me.UserProfileViewModel
@@ -43,6 +44,8 @@ fun EditProfileScreen(
     var showImageOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
+    val isSaving = userProfileViewModel.isSavingProfile
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
@@ -52,10 +55,18 @@ fun EditProfileScreen(
         }
     }
 
-    // Update local state when ViewModel data is loaded
-    LaunchedEffect(userProfileViewModel.fullName) { name = userProfileViewModel.fullName }
-    LaunchedEffect(userProfileViewModel.email) { email = userProfileViewModel.email }
-    LaunchedEffect(userProfileViewModel.phoneNumber) { phone = userProfileViewModel.phoneNumber }
+    // Error handling
+    LaunchedEffect(userProfileViewModel.errorMessage) {
+        userProfileViewModel.errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            userProfileViewModel.errorMessage = null
+        }
+    }
+
+    // Sync state when data loads
+    LaunchedEffect(userProfileViewModel.fullName) { if (!isSaving) name = userProfileViewModel.fullName }
+    LaunchedEffect(userProfileViewModel.email) { if (!isSaving) email = userProfileViewModel.email }
+    LaunchedEffect(userProfileViewModel.phoneNumber) { if (!isSaving) phone = userProfileViewModel.phoneNumber }
 
     Column(
         modifier = Modifier
@@ -65,14 +76,16 @@ fun EditProfileScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.BottomEnd) {
+            val imageModifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+
             if (userProfileViewModel.profileBitmap != null) {
                 Image(
                     bitmap = userProfileViewModel.profileBitmap!!,
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    modifier = imageModifier,
                     contentScale = ContentScale.Crop
                 )
             } else if (!userProfileViewModel.profileImageUrl.isNullOrBlank()) {
@@ -80,35 +93,27 @@ fun EditProfileScreen(
                     url = userProfileViewModel.profileImageUrl,
                     fallbackRes = userProfileViewModel.profileImageRes,
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    modifier = imageModifier,
                     contentScale = ContentScale.Crop,
                     fallbackContent = {
                         InitialsImageFallback(
                             name = userProfileViewModel.fullName,
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            modifier = imageModifier
                         )
                     }
                 )
             } else {
                 InitialsImageFallback(
                     name = userProfileViewModel.fullName,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                    modifier = imageModifier
                 )
             }
+            
             Surface(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .clickable { 
+                    .clickable(enabled = !isSaving) { 
                         showImageOptions = true
                     },
                 color = MaterialTheme.colorScheme.primary,
@@ -122,12 +127,12 @@ fun EditProfileScreen(
 
         OutlinedTextField(
             value = name,
-            onValueChange = { /* name = it */ },
+            onValueChange = { },
             label = { Text("Full Name") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             readOnly = true,
-            enabled = false
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -137,7 +142,9 @@ fun EditProfileScreen(
             onValueChange = { email = it },
             label = { Text("Email Address") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isSaving,
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -147,23 +154,36 @@ fun EditProfileScreen(
             onValueChange = { phone = it },
             label = { Text("Phone Number") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isSaving,
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = { 
-                userProfileViewModel.updateProfile(name, email, phone)
-                onSaveSuccess()
+                userProfileViewModel.updateProfile(name, email, phone) {
+                    Toast.makeText(context, "Changes saved successfully", Toast.LENGTH_SHORT).show()
+                    onSaveSuccess()
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
+            enabled = !isSaving,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text(text = "Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(text = "Save Changes", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 

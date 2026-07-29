@@ -67,6 +67,7 @@ interface ApiService {
     @GET("rest/v1/calendar_events")
     suspend fun getCalendarEvents(
         @Query("student_id") idFilter: String? = null,
+        @Query("or") orFilter: String? = null,
         @Query("select") columns: String = "*"
     ): List<CalendarEventDto>
 
@@ -84,7 +85,7 @@ interface ApiService {
 
     @GET("rest/v1/academic_performance")
     suspend fun getAcademicPerformance(
-        @Query("student_id") idFilter: String,
+        @Query("student_id") idFilter: String? = null,
         @Query("select") columns: String = "*"
     ): List<AcademicPerformanceDto>
 
@@ -109,7 +110,7 @@ interface ApiService {
     @GET("rest/v1/parent_students")
     suspend fun getParentStudents(
         @Query("parent_id") parentIdFilter: String,
-        @Query("select") columns: String = "students(*)"
+        @Query("select") columns: String = "students(*,class_schedules(*),study_load_subjects(*))"
     ): List<ParentStudentJunctionResponse>
 }
 

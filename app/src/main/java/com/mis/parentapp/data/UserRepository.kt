@@ -38,18 +38,18 @@ class UserRepository(private val userDao: UserDAO) {
             val session = SupabaseInstance.client.auth.currentSessionOrNull()
             val user = session?.user ?: throw Exception("Login failed: No session established")
             
-            // 2. Fetch user security settings to check if 2FA is enabled
-            Log.d("UserRepository", "Fetching security settings for ${user.id}")
-            val securitySettings = try {
+            // 2. Fetch user profile to check 2FA and get existing profile data
+            Log.d("UserRepository", "Fetching profile for ${user.id}")
+            val parentProfile = try {
                 withTimeout(10.seconds) {
-                    RetrofitInstance.api.getParentSecurity(idFilter = "eq.${user.id}").firstOrNull()
+                    RetrofitInstance.api.getParentProfile(idFilter = "eq.${user.id}").firstOrNull()
                 }
             } catch (e: Exception) {
-                Log.e("UserRepository", "Security check failed/timed out", e)
+                Log.e("UserRepository", "Profile fetch failed/timed out", e)
                 null
             }
             
-            val is2FAEnabled = securitySettings?.twoFactorEnabled ?: false
+            val is2FAEnabled = parentProfile?.twoFactorEnabled ?: false
             Log.d("UserRepository", "2FA Enabled: $is2FAEnabled")
             
             if (is2FAEnabled) {
@@ -94,6 +94,7 @@ class UserRepository(private val userDao: UserDAO) {
                     token = session.accessToken,
                     email = user.email,
                     fullName = user.userMetadata?.get("full_name")?.toString() ?: user.email,
+                    profileImageUrl = parentProfile?.profileImageUrl,
                     twoFactorEnabled = is2FAEnabled,
                     loginAlertsEnabled = false // Default
                 )
@@ -122,12 +123,24 @@ class UserRepository(private val userDao: UserDAO) {
             val session = SupabaseInstance.client.auth.currentSessionOrNull()
             val user = session?.user ?: throw Exception("Verification failed: Session not established")
             
+            // Fetch parent profile to get the existing image URL and security settings
+            Log.d("UserRepository", "verifyOtp: Fetching profile for ${user.id}")
+            val parentProfile = try {
+                withTimeout(10.seconds) {
+                    RetrofitInstance.api.getParentProfile(idFilter = "eq.${user.id}").firstOrNull()
+                }
+            } catch (e: Exception) {
+                Log.e("UserRepository", "verifyOtp: Profile fetch failed", e)
+                null
+            }
+
             val userEntity = saveLoggedInUser(
                 username = emailToVerify,
                 pass = pass,
                 token = session.accessToken,
                 email = user.email,
                 fullName = user.userMetadata?.get("full_name")?.toString() ?: user.email,
+                profileImageUrl = parentProfile?.profileImageUrl,
                 twoFactorEnabled = true, // We are here because OTP was required
                 loginAlertsEnabled = false // Default
             )
@@ -170,6 +183,7 @@ class UserRepository(private val userDao: UserDAO) {
         token: String,
         email: String?,
         fullName: String?,
+        profileImageUrl: String? = null,
         twoFactorEnabled: Boolean = false,
         loginAlertsEnabled: Boolean = false
     ): UserEntity {
@@ -184,6 +198,7 @@ class UserRepository(private val userDao: UserDAO) {
             fullName = fullName,
             email = email,
             phoneNumber = null, // Can be fetched from user metadata if available
+            profileImageUri = profileImageUrl,
             lastLoginTime = currentTime,
             sessionToken = token,
             twoFactorEnabled = twoFactorEnabled,

@@ -5,40 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +48,18 @@ import com.mis.parentapp.utils.images.RemoteImage
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+
+// Pull to refresh support
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,6 +105,7 @@ fun HomeScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Body(
     modifier: Modifier = Modifier,
@@ -137,33 +124,38 @@ fun Body(
     var dashboardError by remember { mutableStateOf<String?>(null) }
     val selectedBackendStudentId = studentVM?.selectedStudent?.id
 
-    LaunchedEffect(Unit) {
-        if (studentVM != null && studentVM.students.isNotEmpty()) {
+    LaunchedEffect(userProfileViewModel.actualParentId) {
+        val parentId = userProfileViewModel.actualParentId
+        if (parentId.isBlank() || parentId == "null") {
             return@LaunchedEffect
         }
-        
-        try {
-            val parentId = userProfileViewModel.actualParentId.ifBlank {
-                RetrofitInstance.tryGetSessionId().orEmpty()
-            }
-            if (parentId.isBlank()) return@LaunchedEffect
 
-            val junctions = RetrofitInstance.api.getParentStudents(parentIdFilter = "eq.$parentId")
-            val children = junctions.map { it.students }
-            
-            val announcements = RetrofitInstance.api.getAnnouncements()
-            val unreadCount = announcements.size // Simple count for now
-            
-            studentVM?.updateStudents(children, unreadCount)
-            dashboardError = null
-        } catch (e: Exception) {
-            e.printStackTrace()
-            dashboardError = "Load Failed: ${e.localizedMessage}"
+        if (studentVM != null && studentVM.students.isEmpty()) {
+            try {
+                val junctions = try {
+                    RetrofitInstance.api.getParentStudents(parentIdFilter = "eq.$parentId")
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                
+                val children = junctions.map { it.students }
+                val announcements = try {
+                    RetrofitInstance.api.getAnnouncements()
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                
+                val unreadCount = announcements.size
+                studentVM.updateStudents(children, unreadCount)
+                dashboardError = null
+            } catch (_: Exception) {
+                dashboardError = "Update Failed"
+            }
         }
     }
 
-    LaunchedEffect(selectedBackendStudentId) {
-        if (selectedBackendStudentId != null) {
+    LaunchedEffect(selectedBackendStudentId, userProfileViewModel.actualParentId) {
+        if (userProfileViewModel.actualParentId.isNotBlank()) {
             eventViewModel.refreshData(selectedBackendStudentId)
         }
     }
@@ -179,184 +171,273 @@ fun Body(
     val configuration = LocalConfiguration.current
     val isWide = configuration.screenWidthDp >= 600
 
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item { Spacer(modifier = Modifier.height(if (isWide) 16.dp else 36.dp)) }
+    val isRefreshing by eventViewModel.isLoading.collectAsState()
+    
+    // Smooth Pull to Refresh Logic
+    var dragOffset by remember { mutableStateOf(0f) }
+    val maxDragOffset = 400f
+    
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (isRefreshing) 200f else dragOffset,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
+        label = "pullOffset"
+    )
 
-        //STUDENT SELECTOR
-        item {
-            Column(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth().padding(top = 16.dp)) {
-                dashboardError?.let { message ->
-                    Text(
-                        text = message,
-                        color = MaterialTheme.colorScheme.error,
-                        style = AppTypes.type_Body_Small,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < 0 && dragOffset > 0) {
+                    val consumed = if (dragOffset + available.y < 0) -dragOffset else available.y
+                    dragOffset += consumed
+                    return Offset(0f, consumed)
                 }
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    //PARENT PIC
-                    item {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(end = 12.dp)
-                        ) {
-                            if (userProfileViewModel.profileBitmap != null) {
-                                Image(
-                                    bitmap = userProfileViewModel.profileBitmap!!,
-                                    contentDescription = "Parent Profile",
-                                    modifier = Modifier
-                                        .requiredSize(50.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                RemoteImage(
-                                    url = userProfileViewModel.profileImageUrl,
-                                    fallbackRes = R.drawable.parent_pic,
-                                    contentDescription = "Parent Profile",
-                                    modifier = Modifier
-                                        .requiredSize(50.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentScale = ContentScale.Crop,
-                                    fallbackContent = {
-                                        InitialsImageFallback(
-                                            name = userProfileViewModel.fullName,
-                                            modifier = Modifier
-                                                .requiredSize(50.dp)
-                                                .clip(CircleShape)
-                                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                        )
-                                    }
-                                )
-                            }
+                return Offset.Zero
+            }
 
-                            Text(
-                                text = "Me",
-                                style = AppTypes.type_Caption,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.padding(top = 8.dp)
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0 && !isRefreshing) {
+                    dragOffset = (dragOffset + available.y * 0.5f).coerceAtMost(maxDragOffset)
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (dragOffset >= maxDragOffset * 0.6f && !isRefreshing) {
+                    userProfileViewModel.refresh()
+                }
+                dragOffset = 0f
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
+        
+        // The Loading Icon (Z-indexed to stay on top)
+        if (animatedOffset > 10f || isRefreshing) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(80.dp)
+                    .zIndex(10f),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .graphicsLayer {
+                            // Subtle fade and scale as you pull
+                            val progress = (animatedOffset / 150f).coerceIn(0f, 1f)
+                            alpha = progress
+                            scaleX = progress.coerceIn(0.7f, 1f)
+                            scaleY = progress.coerceIn(0.7f, 1f)
+                        },
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 8.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(26.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp
+                            )
+                        } else {
+                            CircularProgressIndicator(
+                                progress = { (dragOffset / maxDragOffset).coerceIn(0f, 1f) },
+                                modifier = Modifier.size(26.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp
                             )
                         }
                     }
-
-                    //STUDENT SELECTORS
-                    items(students) { studentWrapper ->
-                        StudentSelectorItem(
-                            student = studentWrapper.student,
-                            profileImageUrl = studentWrapper.profileImageUrl,
-                            isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
-                            onClick = {
-                                studentVM?.students
-                                    ?.firstOrNull { it.id.toString() == studentWrapper.student.studentId }
-                                    ?.let { studentVM.selectStudent(it) }
-                            }
-                        )
-                    }
                 }
             }
         }
 
-        // CONTENT WRAPPER
-        item {
-            Column(
-                modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                if (isWide) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .offset { androidx.compose.ui.unit.IntOffset(0, animatedOffset.toInt()) },
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item { Spacer(modifier = Modifier.height(if (isWide) 16.dp else 36.dp)) }
+
+            //STUDENT SELECTOR
+            item {
+                Column(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth().padding(top = 16.dp)) {
+                    dashboardError?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = AppTypes.type_Body_Small,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            selectedStudent?.let { studentWithSchedules ->
-                                val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
-                                StudentPresenceHeader(
-                                    student = studentWithSchedules.student,
-                                    profileImageUrl = studentWithSchedules.profileImageUrl,
-                                    isInClass = schedulePair.first.schedule != null
+                        //PARENT PIC
+                        item {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(end = 12.dp)
+                            ) {
+                                if (userProfileViewModel.profileBitmap != null) {
+                                    Image(
+                                        bitmap = userProfileViewModel.profileBitmap!!,
+                                        contentDescription = "Parent Profile",
+                                        modifier = Modifier
+                                            .requiredSize(50.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    RemoteImage(
+                                        url = userProfileViewModel.profileImageUrl,
+                                        fallbackRes = R.drawable.parent_pic,
+                                        contentDescription = "Parent Profile",
+                                        modifier = Modifier
+                                            .requiredSize(50.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                                        contentScale = ContentScale.Crop,
+                                        fallbackContent = {
+                                            InitialsImageFallback(
+                                                name = userProfileViewModel.fullName,
+                                                modifier = Modifier
+                                                    .requiredSize(50.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            )
+                                        }
+                                    )
+                                }
+
+                                Text(
+                                    text = "Me",
+                                    style = AppTypes.type_Caption,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.padding(top = 8.dp)
                                 )
-                                Spacer(modifier = Modifier.height(24.dp))
-                                ScheduleSection(now = schedulePair.first, next = schedulePair.second)
                             }
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            selectedStudent?.student?.let { child ->
-                                QuickStatsSection(
-                                    attendance = "${(child.attendanceScore * 100).toInt()}%",
-                                    gpa = child.gpa.toString(),
-                                    performance = "${child.performanceScore}%",
-                                    notifications = child.notificationCount.toString()
-                                )
-                            }
+
+                        //STUDENT SELECTORS
+                        items(students) { studentWrapper ->
+                            StudentSelectorItem(
+                                student = studentWrapper.student,
+                                profileImageUrl = studentWrapper.profileImageUrl,
+                                isSelected = selectedStudent?.student?.studentId == studentWrapper.student.studentId,
+                                onClick = {
+                                    studentVM?.students
+                                        ?.firstOrNull { it.id.toString() == studentWrapper.student.studentId }
+                                        ?.let { studentVM.selectStudent(it) }
+                                }
+                            )
                         }
-                    }
-                } else {
-                    // PRESENCE HEADER
-                    selectedStudent?.let { studentWithSchedules ->
-                        val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
-                        StudentPresenceHeader(
-                            student = studentWithSchedules.student,
-                            profileImageUrl = studentWithSchedules.profileImageUrl,
-                            isInClass = schedulePair.first.schedule != null
-                        )
-                    }
-
-                    // SCHEDULE LISTS
-                    selectedStudent?.let { studentWithSchedules ->
-                        val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
-                        ScheduleSection(now = schedulePair.first, next = schedulePair.second)
-                    }
-
-                    // QUICK STATS
-                    selectedStudent?.student?.let { child ->
-                        QuickStatsSection(
-                            attendance = "${(child.attendanceScore * 100).toInt()}%",
-                            gpa = child.gpa.toString(),
-                            performance = "${child.performanceScore}%",
-                            notifications = child.notificationCount.toString()
-                        )
                     }
                 }
             }
-        }
 
-        //UPCOMING EVENTS
-        item {
-            Box(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
-                EventHorizontalSection(
-                    title = "Upcoming Events",
-                    events = upcomingEvents,
-                    onSeeAllClick = onUpcomingSeeAll,
-                    onEventClick = onUpcomingEventClick
-                )
+            // CONTENT WRAPPER
+            item {
+                Column(
+                    modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    if (isWide) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                selectedStudent?.let { studentWithSchedules ->
+                                    val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                                    StudentPresenceHeader(
+                                        student = studentWithSchedules.student,
+                                        profileImageUrl = studentWithSchedules.profileImageUrl,
+                                        isInClass = schedulePair.first.schedule != null
+                                    )
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    ScheduleSection(now = schedulePair.first, next = schedulePair.second)
+                                }
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                selectedStudent?.student?.let { child ->
+                                    QuickStatsSection(
+                                        attendance = "${(child.attendanceScore * 100).toInt()}%",
+                                        gpa = child.gpa.toString(),
+                                        performance = "${child.performanceScore}%",
+                                        notifications = child.notificationCount.toString()
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // PRESENCE HEADER
+                        selectedStudent?.let { studentWithSchedules ->
+                            val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                            StudentPresenceHeader(
+                                student = studentWithSchedules.student,
+                                profileImageUrl = studentWithSchedules.profileImageUrl,
+                                isInClass = schedulePair.first.schedule != null
+                            )
+                        }
+
+                        // SCHEDULE LISTS
+                        selectedStudent?.let { studentWithSchedules ->
+                            val schedulePair = resolveHomeSchedulePair(studentWithSchedules.schedules)
+                            ScheduleSection(now = schedulePair.first, next = schedulePair.second)
+                        }
+
+                        // QUICK STATS
+                        selectedStudent?.student?.let { child ->
+                            QuickStatsSection(
+                                attendance = "${(child.attendanceScore * 100).toInt()}%",
+                                gpa = child.gpa.toString(),
+                                performance = "${child.performanceScore}%",
+                                notifications = child.notificationCount.toString()
+                            )
+                        }
+                    }
+                }
             }
-        }
 
-        //RECENT ACTIVITIES
-        item {
-            Box(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
-                EventHorizontalSection(
-                    title = "Recent Activities",
-                    events = recentEvents,
-                    onSeeAllClick = onRecentSeeAll,
-                    onEventClick = onRecentEventClick
-                )
+            //UPCOMING EVENTS
+            item {
+                Box(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
+                    EventHorizontalSection(
+                        title = "Upcoming Events",
+                        events = upcomingEvents,
+                        onSeeAllClick = onUpcomingSeeAll,
+                        onEventClick = onUpcomingEventClick
+                    )
+                }
             }
-        }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+            //RECENT ACTIVITIES
+            item {
+                Box(modifier = Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
+                    EventHorizontalSection(
+                        title = "Recent Activities",
+                        events = recentEvents,
+                        onSeeAllClick = onRecentSeeAll,
+                        onEventClick = onRecentEventClick
+                    )
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
     }
 }
 
@@ -774,7 +855,7 @@ private fun endMinutesFromRange(value: String): Int = minutesFromTime(value.subs
 private fun minutesFromTime(value: String): Int {
     val parts = value.split(":")
     val hour = parts.getOrNull(0)?.toIntOrNull() ?: 0
-    val minute = parts.getOrNull(1)?.take(2)?.toIntOrNull() ?: 0
+    val minute = parts.getOrNull(1)?.toIntOrNull() ?: 0
     return hour * 60 + minute
 }
 

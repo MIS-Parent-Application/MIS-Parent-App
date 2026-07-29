@@ -4,7 +4,6 @@ import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -18,7 +17,7 @@ import com.mis.parentapp.network.RetrofitInstance
 import com.mis.parentapp.network.ParentProfileUpdateRequest
 import com.mis.parentapp.network.UpdateParentSecurityRequest
 import com.mis.parentapp.network.SupabaseInstance
-import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,10 +40,15 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
     var actualParentId: String = ""
         private set
 
-    // Data Safety states
+    // Status states
     var twoFactorEnabled by mutableStateOf(false)
     var loginAlertsEnabled by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
+    var isSavingProfile by mutableStateOf(false)
+
+    // Pending data to be saved
+    private var pendingImageBytes: ByteArray? = null
+    private var pendingImageUri: String? = null
 
     private fun getSafeParentId(): String? {
         if (actualParentId.isNotBlank() && actualParentId != "server" && actualParentId != "null") return actualParentId
@@ -107,7 +111,6 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                     try {
                         val errorBody = e.response()?.errorBody()?.string()
                         val json = com.google.gson.Gson().fromJson(errorBody, com.google.gson.JsonObject::class.java)
-                        // Postgrest errors usually have 'message', 'details', or 'hint'
                         json.get("message")?.asString 
                             ?: json.get("details")?.asString 
                             ?: json.get("error")?.asString 
@@ -141,12 +144,9 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
 
     fun requestDataExport() {
         // Logic for requesting data export
-        // For now, just a mock action
     }
 
     private fun loadProfileData() {
-        if (currentUsername != null && actualParentId.isNotBlank()) return
-        
         val parentId = getSafeParentId()
         
         viewModelScope.launch {
@@ -171,20 +171,16 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // If the blob is too big, we might want to clear it to avoid future crashes
-                if (e.message?.contains("Row too big", ignoreCase = true) == true) {
-                    currentUsername?.let { username ->
-                        viewModelScope.launch(Dispatchers.IO) {
-                            userDao.updateProfileImage(username, null, null)
-                        }
-                    }
-                }
             }
 
-            if (parentId == null) return@launch
+            // 2. Fetch fresh data from API
+            if (parentId == null || parentId == "null") {
+                android.util.Log.d("UserProfileViewModel", "No valid Parent ID yet, skipping API load")
+                return@launch
+            }
 
-            // 2. Load from API to update
             try {
+                android.util.Log.d("UserProfileViewModel", "Fetching fresh profile for Parent ID: $parentId")
                 val parents = withContext(Dispatchers.IO) {
                     RetrofitInstance.api.getParentProfile(idFilter = "eq.$parentId")
                 }
@@ -199,9 +195,20 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                     
                     isPrimaryGuardian = parentRow.children.isNotEmpty()
                     loadSecuritySettings()
+                    
+                    // Sync with local DB
+                    currentUsername?.let { username ->
+                        viewModelScope.launch(Dispatchers.IO) {
+                            userDao.updateProfile(username, parentRow.name, parentRow.email, parentRow.phone)
+                            val currentUser = userDao.getCurrentUser()
+                            userDao.updateProfileImage(username, parentRow.profileImageUrl, currentUser?.profileImageBlob)
+                        }
+                    }
+                } else {
+                    android.util.Log.w("UserProfileViewModel", "No profile record found in 'parents' table for UUID: $parentId")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("UserProfileViewModel", "API Profile load failed", e)
             }
         }
     }
@@ -230,7 +237,6 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                 twoFactorEnabled = it.twoFactorEnabled
                 email = it.email
                 phoneNumber = it.phone
-                // Keep local DB in sync
                 currentUsername?.let { username ->
                     viewModelScope.launch(Dispatchers.IO) {
                         userDao.updateSecuritySettings(username, it.twoFactorEnabled, loginAlertsEnabled)
@@ -240,56 +246,99 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun updateProfile(newName: String, newEmail: String, newPhone: String) {
+    fun updateProfile(newName: String, newEmail: String, newPhone: String, onSuccess: () -> Unit = {}) {
         val parentId = getSafeParentId()
-        fullName = newName
-        email = newEmail
-        phoneNumber = newPhone
-        
+        if (parentId == null) {
+            errorMessage = "No active session. Please re-login."
+            return
+        }
+
+        isSavingProfile = true
+        errorMessage = null
+
         viewModelScope.launch {
-            currentUsername?.let { username ->
-                viewModelScope.launch(Dispatchers.IO) {
-                    userDao.updateProfile(username, newName, newEmail, newPhone)
+            try {
+                var finalImageUrl = profileImageUrl
+
+                // 1. If we have a pending image, upload it first
+                if (pendingImageBytes != null) {
+                    android.util.Log.d("UserProfileViewModel", "Uploading new profile picture...")
+                    val fileName = "avatar_${parentId}.jpg"
+                    val bucket = SupabaseInstance.client.storage.from("avatars")
+                    
+                    val publicUrl = withContext(Dispatchers.IO) {
+                        try {
+                            bucket.upload(fileName, pendingImageBytes!!) {
+                                upsert = true
+                            }
+                            bucket.publicUrl(fileName)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            null
+                        }
+                    }
+                    
+                    if (publicUrl != null) {
+                        finalImageUrl = publicUrl
+                        android.util.Log.d("UserProfileViewModel", "Upload success. URL: $publicUrl")
+                    } else {
+                        throw Exception("Failed to upload image to Supabase Storage.")
+                    }
                 }
-            }
-            if (parentId == null) return@launch
-            
-            runCatching {
-                withContext(Dispatchers.IO) {
+
+                // 2. Update the profile record in the database
+                val responseList = withContext(Dispatchers.IO) {
                     RetrofitInstance.api.updateParentProfile(
                         idFilter = "eq.$parentId",
                         request = ParentProfileUpdateRequest(
                             email = newEmail,
-                            phone = newPhone
+                            phone = newPhone,
+                            profileImageUrl = finalImageUrl
                         )
                     )
                 }
-            }.onSuccess { list ->
-                list.firstOrNull()?.let {
-                    fullName = it.name
-                    email = it.email
-                    phoneNumber = it.phone
-                    profileImageUrl = it.profileImageUrl
-                    backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
+
+                val result = responseList.firstOrNull()
+                if (result != null) {
+                    fullName = result.name
+                    email = result.email
+                    phoneNumber = result.phone
+                    profileImageUrl = result.profileImageUrl
+                    backgroundImageUrl = result.backgroundImageUrl ?: result.profileImageUrl
+
+                    // 3. Update local cache
+                    currentUsername?.let { username ->
+                        withContext(Dispatchers.IO) {
+                            userDao.updateProfile(username, result.name, result.email, result.phone)
+                            userDao.updateProfileImage(username, result.profileImageUrl, pendingImageBytes)
+                        }
+                    }
+
+                    pendingImageBytes = null // Clear pending after success
+                    onSuccess()
+                    android.util.Log.d("UserProfileViewModel", "Profile saved successfully")
+                } else {
+                    throw Exception("Profile update failed: Record not found on server.")
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                errorMessage = e.localizedMessage ?: "Failed to save changes."
+            } finally {
+                isSavingProfile = false
             }
         }
     }
     
     fun updateProfileImage(inputStream: InputStream?, uri: Uri?) {
-        val parentId = getSafeParentId()
         viewModelScope.launch {
             try {
-                val compressedBytes = withContext(Dispatchers.IO) {
+                val processed = withContext(Dispatchers.IO) {
                     val rawBytes = inputStream?.use { it.readBytes() } ?: return@withContext null
                     
-                    // 1. Decode with inSampleSize to avoid OOM if image is huge
-                    val options = BitmapFactory.Options().apply {
-                        inJustDecodeBounds = true
-                    }
+                    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                     BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size, options)
                     
-                    val maxSize = 800 // Max dimension for profile pic
+                    val maxSize = 800
                     var inSampleSize = 1
                     if (options.outHeight > maxSize || options.outWidth > maxSize) {
                         val halfHeight = options.outHeight / 2
@@ -299,68 +348,29 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
                         }
                     }
                     
-                    val decodeOptions = BitmapFactory.Options().apply {
+                    val decodedBitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size, BitmapFactory.Options().apply {
                         this.inSampleSize = inSampleSize
-                    }
-                    val decodedBitmap = BitmapFactory.decodeByteArray(rawBytes, 0, rawBytes.size, decodeOptions) ?: return@withContext null
+                    }) ?: return@withContext null
                     
-                    // 2. Further resize to be more efficient if needed
                     val scaledBitmap = if (decodedBitmap.width > maxSize || decodedBitmap.height > maxSize) {
                         val ratio = decodedBitmap.width.toFloat() / decodedBitmap.height.toFloat()
-                        val width: Int
-                        val height: Int
-                        if (ratio > 1) {
-                            width = maxSize
-                            height = (maxSize / ratio).toInt()
-                        } else {
-                            height = maxSize
-                            width = (maxSize * ratio).toInt()
-                        }
+                        val width: Int; val height: Int
+                        if (ratio > 1) { width = maxSize; height = (maxSize / ratio).toInt() }
+                        else { height = maxSize; width = (maxSize * ratio).toInt() }
                         Bitmap.createScaledBitmap(decodedBitmap, width, height, true)
-                    } else {
-                        decodedBitmap
-                    }
+                    } else decodedBitmap
 
-                    // 3. Compress to JPEG (significant size reduction)
                     val outputStream = ByteArrayOutputStream()
                     scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
-                    outputStream.toByteArray()
+                    Pair(scaledBitmap, outputStream.toByteArray())
                 } ?: return@launch
                 
-                val decodedBitmap = withContext(Dispatchers.IO) {
-                    BitmapFactory.decodeByteArray(compressedBytes, 0, compressedBytes.size)
-                }
-                profileBitmap = decodedBitmap?.asImageBitmap()
+                // Update local preview and set pending data
+                profileBitmap = processed.first.asImageBitmap()
+                pendingImageBytes = processed.second
+                pendingImageUri = uri?.toString()
                 
-                currentUsername?.let { username ->
-                    viewModelScope.launch(Dispatchers.IO) {
-                        userDao.updateProfileImage(username, uri?.toString(), compressedBytes)
-                    }
-                }
-                
-                if (parentId == null) return@launch
-
-                val mimeType = "image/jpeg" // We forced JPEG compression
-                val base64 = Base64.encodeToString(compressedBytes, Base64.NO_WRAP)
-                
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        RetrofitInstance.api.updateParentProfile(
-                            idFilter = "eq.$parentId",
-                            request = ParentProfileUpdateRequest(
-                                email = email,
-                                phone = phoneNumber,
-                                profileImageData = base64,
-                                profileImageMimeType = mimeType
-                            )
-                        )
-                    }
-                }.onSuccess { list ->
-                    list.firstOrNull()?.let {
-                        profileImageUrl = it.profileImageUrl
-                        backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
-                    }
-                }
+                android.util.Log.d("UserProfileViewModel", "New photo selected. Pending save.")
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -369,39 +379,39 @@ class UserProfileViewModel(application: Application) : AndroidViewModel(applicat
 
     fun deleteProfileImage() {
         val parentId = getSafeParentId()
+        if (parentId == null) return
+
+        isSavingProfile = true
         viewModelScope.launch {
             try {
-                profileBitmap = null
-                profileImageUrl = null
-                
-                currentUsername?.let { username ->
-                    viewModelScope.launch(Dispatchers.IO) {
-                        userDao.updateProfileImage(username, null, null)
-                    }
-                }
-                
-                if (parentId == null) return@launch
-
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        RetrofitInstance.api.updateParentProfile(
-                            idFilter = "eq.$parentId",
-                            request = ParentProfileUpdateRequest(
-                                email = email,
-                                phone = phoneNumber,
-                                profileImageData = "", // Empty string to indicate removal
-                                profileImageMimeType = ""
-                            )
+                // Update on server
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitInstance.api.updateParentProfile(
+                        idFilter = "eq.$parentId",
+                        request = ParentProfileUpdateRequest(
+                            email = email,
+                            phone = phoneNumber,
+                            profileImageUrl = "" // Remove URL
                         )
-                    }
-                }.onSuccess { list ->
-                    list.firstOrNull()?.let {
-                        profileImageUrl = it.profileImageUrl
-                        backgroundImageUrl = it.backgroundImageUrl ?: it.profileImageUrl
+                    )
+                }
+
+                if (response.isNotEmpty()) {
+                    profileBitmap = null
+                    profileImageUrl = null
+                    pendingImageBytes = null
+                    
+                    currentUsername?.let { username ->
+                        withContext(Dispatchers.IO) {
+                            userDao.updateProfileImage(username, null, null)
+                        }
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                errorMessage = "Failed to remove image."
+            } finally {
+                isSavingProfile = false
             }
         }
     }

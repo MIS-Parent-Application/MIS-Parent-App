@@ -27,15 +27,58 @@ class EventRepository(
 
     suspend fun refreshEvents(studentId: Int? = null) {
         withContext(Dispatchers.IO) {
-            val filter = studentId?.let { "eq.$it" }
-            val syncedEvents = api.getCalendarEvents(idFilter = filter).map { it.toEventItem() }
-            recentEvents.value = syncedEvents
-                .filter { it.eventType == "RECENT" }
-                .sortedWith(compareByDescending<EventItem> { it.date }.thenBy { it.time })
-            upcomingEvents.value = syncedEvents
-                .filter { it.eventType == "UPCOMING" }
-                .sortedWith(compareBy<EventItem> { it.date }.thenBy { it.time })
+            val orFilter = if (studentId != null) {
+                "(student_id.is.null,student_id.eq.$studentId)"
+            } else {
+                "(student_id.is.null)"
+            }
+            
+            android.util.Log.d("EventRepository", "Refreshing events with filter: $orFilter")
+
+            // 1. Fetch Upcoming Events from calendar_events
+            val upcomingFromApi = try {
+                val response = api.getCalendarEvents(orFilter = orFilter)
+                android.util.Log.d("EventRepository", "Fetched ${response.size} calendar events")
+                response.map { it.toEventItem() }
+            } catch (e: Exception) {
+                android.util.Log.e("EventRepository", "Failed to fetch upcoming events: ${e.message}")
+                emptyList()
+            }
+
+            // 2. Fetch Recent Activities from academic_performance
+            val recentFromApi = try {
+                val studentFilter = studentId?.let { "eq.$it" }
+                val response = api.getAcademicPerformance(idFilter = studentFilter)
+                android.util.Log.d("EventRepository", "Fetched ${response.size} academic performance items")
+                response.map { it.toEventItem() }
+            } catch (e: Exception) {
+                android.util.Log.e("EventRepository", "Failed to fetch recent activities: ${e.message}")
+                emptyList()
+            }
+
+            val syncedUpcoming = upcomingFromApi.filter { it.eventType == "UPCOMING" }
+            val syncedRecent = (upcomingFromApi.filter { it.eventType == "RECENT" } + recentFromApi)
+                .distinctBy { it.id.toString() + it.title }
+
+            upcomingEvents.value = syncedUpcoming.sortedWith(compareBy<EventItem> { it.date }.thenBy { it.time })
+            recentEvents.value = syncedRecent.sortedWith(compareByDescending<EventItem> { it.date }.thenBy { it.time })
+            
+            android.util.Log.d("EventRepository", "Final State - Upcoming: ${upcomingEvents.value.size}, Recent: ${recentEvents.value.size}")
         }
+    }
+
+    private fun com.mis.parentapp.network.AcademicPerformanceDto.toEventItem(): EventItem {
+        return EventItem(
+            id = id,
+            title = title,
+            category = type,
+            date = assignedDate,
+            time = timeAgo,
+            description = summary,
+            eventType = "RECENT",
+            status = status,
+            imageUrl = imageUrl ?: "event2.jpg"
+        )
     }
 
     private fun CalendarEventDto.toEventItem(): EventItem {
